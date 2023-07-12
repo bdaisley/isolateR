@@ -11,6 +11,7 @@ abif_fasta2 <- function(folder=NULL,
   
   # function requirements------------------------------------------------------------
   #checking for required packages; installing those not yet installed
+  if(require(dplyr)==FALSE) install.packages('dplyr')
   if(require(seqinr)==FALSE) install.packages('seqinr')
   if(require(stringr)==FALSE) install.packages('stringr')
   if(require(sangerseqR)==FALSE){
@@ -33,6 +34,7 @@ abif_fasta2 <- function(folder=NULL,
   }
   
   #loading required packages
+  library(dplyr)
   library(seqinr)
   library(stringr)
   library(sangerseqR)
