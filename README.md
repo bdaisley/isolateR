@@ -14,11 +14,9 @@ Step 1: Source the following function from this repository
 ```r
 source("https://raw.githubusercontent.com/bdaisley/sangerseq2taxonomy/main/R_functions/functions-abif_fasta2.R")
 ```
-Step 2: Set working paths to where .ab1 files are located
+Step 2: Set working paths to where <code>.ab1</code> files are located
 ```r
-folder.name <- "2023_07_06" #Note: this is the folder name only, not entired path
-setwd(paste("~/Sanger_sequencing_results/", folder.name, sep="")) #Note: this the entire path *before* the folder name above
-sanger.path <- getwd()
+sanger.path <- "C:/Users/Brendan/Documents/Sanger_sequencing_results/2023_07_06"
 ```
 Step 3: Run function of interest to process .ab1 files
 ```r
