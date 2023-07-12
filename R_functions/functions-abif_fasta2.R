@@ -221,7 +221,7 @@ abif_fasta2 <- function(folder=NULL,
   
   checkseq_react <- reactable(checkseq.sub,
                               fullWidth=FALSE, searchable = TRUE, bordered = TRUE, resizable =TRUE, #width = 1200,
-                              defaultPageSize=15, highlight = TRUE, showSortable = TRUE, compact=TRUE, wrap = TRUE, #highlight=TRUE,
+                              defaultPageSize=100, highlight = TRUE, showSortable = TRUE, compact=TRUE, wrap = TRUE, #highlight=TRUE,
                               #theme = reactableTheme(headerStyle = list(wrap=TRUE)),
                               theme = reactableTheme(                  #borderColor = "#555",
                                 headerStyle = list(
