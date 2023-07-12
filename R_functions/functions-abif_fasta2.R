@@ -329,7 +329,7 @@ abif_fasta2 <- function(folder=NULL,
                                                                                                       fill_gradient = TRUE,
                                                                                                       background = 'transparent',
                                                                                                       number_fmt = scales::comma_format(accuracy = 0.1),
-                                                                                                      round_edges = FALSE, align_bars="left")) )) %>% add_title(paste("Output for project: 2023_07_06", sep=""))  #unlist(strsplit(folder, '/'))[length(unlist(strsplit(folder, '/')))]
+                                                                                                      round_edges = FALSE, align_bars="left")) )) %>% add_title(paste("Output for project: ", unlist(strsplit(folder, '/'))[length(unlist(strsplit(folder, '/')))], sep=""))  #unlist(strsplit(folder, '/'))[length(unlist(strsplit(folder, '/')))]
   #phred_trim = colDef(data_bars(checkseq.sub$phred_trim, text_position = "none", fill_color="#6f86ab"))
   #phred_raw = colDef(minWidth= 50, headerStyle = list(wrap=FALSE)),
   #phred_trim = colDef(minWidth= 50, headerStyle = list(wrap=FALSE)),
