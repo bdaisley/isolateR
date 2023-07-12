@@ -12,6 +12,11 @@ abif_fasta2 <- function(folder=NULL,
   # function requirements------------------------------------------------------------
   #checking for required packages; installing those not yet installed
   if(require(dplyr)==FALSE) install.packages('dplyr')
+  if(require(Biostrings)==FALSE){
+    if (!require("BiocManager", quietly = TRUE))
+      install.packages("BiocManager")
+    BiocManager::install("Biostrings")
+  }
   if(require(seqinr)==FALSE) install.packages('seqinr')
   if(require(stringr)==FALSE) install.packages('stringr')
   if(require(sangerseqR)==FALSE){
@@ -35,6 +40,7 @@ abif_fasta2 <- function(folder=NULL,
   
   #loading required packages
   library(dplyr)
+  library(Biostrings)
   library(seqinr)
   library(stringr)
   library(sangerseqR)
@@ -215,7 +221,7 @@ abif_fasta2 <- function(folder=NULL,
   
   checkseq_react <- reactable(checkseq.sub,
                               fullWidth=FALSE, searchable = TRUE, bordered = TRUE, resizable =TRUE, #width = 1200,
-                              defaultPageSize=1000, highlight = TRUE, showSortable = TRUE, compact=TRUE, wrap = TRUE, #highlight=TRUE,
+                              defaultPageSize=15, highlight = TRUE, showSortable = TRUE, compact=TRUE, wrap = TRUE, #highlight=TRUE,
                               #theme = reactableTheme(headerStyle = list(wrap=TRUE)),
                               theme = reactableTheme(                  #borderColor = "#555",
                                 headerStyle = list(
@@ -323,7 +329,7 @@ abif_fasta2 <- function(folder=NULL,
                                                                                                       fill_gradient = TRUE,
                                                                                                       background = 'transparent',
                                                                                                       number_fmt = scales::comma_format(accuracy = 0.1),
-                                                                                                      round_edges = FALSE, align_bars="left")) ))
+                                                                                                      round_edges = FALSE, align_bars="left")) )) %>% add_title(paste("Output for project: 2023_07_06", sep=""))  #unlist(strsplit(folder, '/'))[length(unlist(strsplit(folder, '/')))]
   #phred_trim = colDef(data_bars(checkseq.sub$phred_trim, text_position = "none", fill_color="#6f86ab"))
   #phred_raw = colDef(minWidth= 50, headerStyle = list(wrap=FALSE)),
   #phred_trim = colDef(minWidth= 50, headerStyle = list(wrap=FALSE)),
@@ -366,12 +372,15 @@ abif_fasta2 <- function(folder=NULL,
     write.csv(file=file.path(path, 'V3-V6seq_check.csv'), checkseq.sub %>% select(-spark_raw))
   }
   
-  #export as one FASTA file
-  if(export_fasta == TRUE) {
+  #export trimmed sequences in FASTA file
+  if(export_fasta == TRUE & reversecomp==FALSE) {
     write.fasta(sequences=trimlist, names=abif_files, as.string=TRUE, nbchar = 1000,
                 file.out=fname_out)
   }
-  
+  else if(export_fasta == TRUE & reversecomp==TRUE) {
+    write.fasta(sequences=Biostrings::reverseComplement(DNAStringSet(paste(trimlist))), names=abif_files, as.string=TRUE, nbchar = 1000,
+                file.out=fname_out)
+  }
   #write.csv(file="fails.csv",failseq)
   
 }
