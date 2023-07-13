@@ -15,27 +15,27 @@ abif_fasta2 <- function(folder=NULL,
   if(require(Biostrings)==FALSE){
     if (!require("BiocManager", quietly = TRUE))
       install.packages("BiocManager")
-    BiocManager::install("Biostrings")
+    BiocManager::install("Biostrings", update = FALSE)
   }
   if(require(seqinr)==FALSE) install.packages('seqinr')
   if(require(stringr)==FALSE) install.packages('stringr')
   if(require(sangerseqR)==FALSE){
     if (!require("BiocManager", quietly = TRUE))
       install.packages("BiocManager")
-    BiocManager::install("sangerseqR")
+    BiocManager::install("sangerseqR", update = FALSE)
   }
   if(require(sangeranalyseR)==FALSE){
     if (!require("BiocManager", quietly = TRUE))
       install.packages("BiocManager")
-    BiocManager::install("sangeranalyseR")
+    BiocManager::install("sangeranalyseR", update = FALSE)
   }
   if(require(reactable)==FALSE) install.packages('reactable')
   if(require(reactablefmtr)==FALSE) install.packages('reactablefmtr')
   if(require(pander)==FALSE) install.packages('pander')
   if(require(dataui)==FALSE){
     if (!require("BiocManager", quietly = TRUE))
-      install.packages("remotes")
-    remotes::install_github("timelyportfolio/dataui")
+      install.packages("remotes", update = FALSE)
+    remotes::install_github("timelyportfolio/dataui", upgrade="never")
   }
   
   #loading required packages
@@ -166,7 +166,7 @@ abif_fasta2 <- function(folder=NULL,
     #:::::::::::::::::::::::::::::::
     rawsparklist[[i]] <- c(abif1@QualityReport@qualityPhredScores, rep(0.1, 810-length(abif1@QualityReport@qualityPhredScores)))
     trimsparklist[[i]] <- abif.scores
-    rawlist[[i]] <- paste(abif1@primarySeq)
+    rawlist[[i]] <- paste(abif1@primarySeqRaw)
     trimlist[[i]] <- paste(abif)
     #rawlist[[i]] <- paste(Biostrings::reverseComplement(DNAStringSet(paste(abif1@primarySeq))))
     #trimlist[[i]] <- paste(Biostrings::reverseComplement(DNAStringSet(abif)))
@@ -378,7 +378,7 @@ abif_fasta2 <- function(folder=NULL,
                 file.out=fname_out)
   }
   else if(export_fasta == TRUE & reversecomp==TRUE) {
-    write.fasta(sequences=Biostrings::reverseComplement(DNAStringSet(paste(trimlist))), names=abif_files, as.string=TRUE, nbchar = 1000,
+    write.fasta(sequences=as.list(paste(Biostrings::reverseComplement(DNAStringSet(unlist(trimlist.man))))), names=abif_files, as.string=TRUE, nbchar = 1000,
                 file.out=fname_out)
   }
   #write.csv(file="fails.csv",failseq)
