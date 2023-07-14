@@ -71,20 +71,20 @@ get_os <- function(){
   tolower(os)
 }
 
-get_os()=="windows"
 if(identical(usearch_files, character(0))){
-  if (get_os()=="windows") {
+#if(usearch_files == "yes"){
+  if (paste(get_os())=="windows") {
   download.file("https://drive5.com/downloads/usearch11.0.667_win32.exe.gz", file.path(path, 'ncbi_database/usearch11.0.667_win32.exe.gz'), mode='wb')
   }
-  if (get_os()=="osx") {
+  if (paste(get_os())=="osx") {
     download.file("https://drive5.com/downloads/usearch11.0.667_win32.exe.gz", file.path(path, 'ncbi_database/usearch11.0.667_win32.exe.gz'), mode='wb')
   }
-  if (get_os()=="linux") {
+  if (paste(get_os())=="linux") {
     download.file("https://drive5.com/downloads/usearch11.0.667_win32.exe.gz", file.path(path, 'ncbi_database/usearch11.0.667_win32.exe.gz'), mode='wb')
   }
 }
 
-  
+
 #if(identical(usearch_files, character(0))){
 #  if (grepl('w|W', .Platform$OS.type)) {
 #  ## we are on Windows
