@@ -77,10 +77,10 @@ if(identical(usearch_files, character(0))){
   download.file("https://drive5.com/downloads/usearch11.0.667_win32.exe.gz", file.path(path, 'ncbi_database/usearch11.0.667_win32.exe.gz'), mode='wb')
   }
   if (paste(get_os())=="osx") {
-    download.file("https://drive5.com/downloads/usearch11.0.667_win32.exe.gz", file.path(path, 'ncbi_database/usearch11.0.667_win32.exe.gz'), mode='wb')
+    download.file("https://drive5.com/downloads/usearch11.0.667_i86osx32.gz", file.path(path, 'ncbi_database/usearch11.0.667_i86osx32.gz'), mode='wb')
   }
   if (paste(get_os())=="linux") {
-    download.file("https://drive5.com/downloads/usearch11.0.667_win32.exe.gz", file.path(path, 'ncbi_database/usearch11.0.667_win32.exe.gz'), mode='wb')
+    download.file("https://drive5.com/downloads/usearch11.0.667_i86linux32.gz", file.path(path, 'ncbi_database/usearch11.0.667_i86linux32.gz'), mode='wb')
   }
 }
 
