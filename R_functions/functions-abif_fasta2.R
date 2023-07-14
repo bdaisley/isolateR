@@ -3,6 +3,7 @@
 #------------------------------------------------------------------------------------
 abif_fasta2 <- function(folder=NULL,
                         export_html=TRUE,
+                        export_csv=TRUE,
                         export_fasta=TRUE,
                         export_fasta_revcomp=TRUE,
                         verbose=TRUE,
@@ -409,7 +410,7 @@ abif_fasta2 <- function(folder=NULL,
                        "\033[0;", 32, "m", " ", unlist(strsplit(fname_html, '/'))[length(unlist(strsplit(fname_html, '/')))],"\033[0m","\n")))
   }
   
-  if(export_html==TRUE) {
+  if(export_csv==TRUE) {
     fname_csv <- paste0(fname, ".csv", sep="")
     write.csv(file=fname_csv, checkseq.sub %>% select(-spark_raw))
     message(cat(paste0("\033[97;", 40, "m","CSV file successfully exported: ", "\033[0m",
