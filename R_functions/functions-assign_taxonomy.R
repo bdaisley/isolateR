@@ -274,7 +274,7 @@ merged.df3 <- merged.df2 %>% select(sample,species,ID,Ns,length,query_seq,NCBI_a
                              mutate(species2 = species) %>% 
                              mutate(genus= paste(str_split_fixed(genus, ";", 3)[,1])) %>%
                              mutate(species2= paste(str_split_fixed(species2, " ", 3)[,1],str_split_fixed(species2, " ", 3)[,2], sep="_")) %>%
-                             mutate(species2 = ifelse(species2=="No_match", "", species2)) %>% 
+                             mutate(species2 = ifelse(species2=="No_match_", "", species2)) %>% 
                              #mutate(genus = str_split_fixed(genus, ";", 2)[,1]) %>%
                              #mutate(species2 = gsub("_|No_match", "", .$species2, fixed=TRUE)) %>% 
                              mutate(species_colors = dplyr::case_when(genus != "" ~ "green", TRUE ~ "red")) %>% 
