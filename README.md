@@ -20,10 +20,13 @@ sanger.path <- "C:/Users/Brendan/Documents/Sanger_sequencing_results/2023_07_06"
 ```
 Step 3: Run function of interest to process <code>.ab1</code> files
 ```r
-abif_fasta2(folder=sanger.path, 
+abif_fasta2(folder=sanger.path,
             export_html=TRUE,
+            export_csv=TRUE,
             export_fasta=TRUE,
             export_fasta_revcomp=TRUE,
+			quality_cutoff = 25,
+            sliding_window_size = 15
             verbose=TRUE)
 ```
 Step 4: Inspect data via interactive reactable output
