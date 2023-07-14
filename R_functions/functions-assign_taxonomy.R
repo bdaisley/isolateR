@@ -47,7 +47,7 @@ if(!file.exists(file.path(path, 'ncbi_database/bacteria.16SrRNA.fna.gz'))){
                 file.path(path, 'ncbi_database/bacteria.16SrRNA.fna.gz'), mode='wb')
 }
 
-gz_files <- str_subset(files, 'usearch')
+gz_files <- stringr::str_subset(files, 'usearch')
 
 
 #:::::::::::::::::::::::::::
@@ -55,7 +55,7 @@ gz_files <- str_subset(files, 'usearch')
 #:::::::::::::::::::::::::::
 message(cat(paste0("\n", "\033[97;", 40, "m","Determining operating system...", "\033[0m", "\n")))
 
-usearch_files <- str_subset(files, 'usearch')
+usearch_files <- stringr::str_subset(files, 'usearch')
 
 get_os <- function(){
   sysinf <- Sys.info()
@@ -73,10 +73,10 @@ get_os <- function(){
   tolower(os)
 }
 
-message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is = ", paste(get_os()), "\033[0m", "\n")))
-
 if(identical(usearch_files, character(0))){
-#if(usearch_files == "yes"){
+  message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is = ", paste(get_os()), "\033[0m", "\n")))
+  #message(cat(paste0("\n", "\033[0;", 32, "m","Attempting download...", paste(get_os()), "\033[0m", "\n")))
+  #if(usearch_files == "yes"){
   if (paste(get_os())=="windows") {
   download.file("https://drive5.com/downloads/usearch11.0.667_win32.exe.gz", file.path(path, 'ncbi_database/usearch11.0.667_win32.exe.gz'), mode='wb')
     message(cat(paste0("\n", "\033[0;", 32, "m","Download complete.", "\033[0m", "\n")))
