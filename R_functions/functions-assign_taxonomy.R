@@ -53,6 +53,8 @@ gz_files <- str_subset(files, 'usearch')
 #:::::::::::::::::::::::::::
 #Download USEARCH software
 #:::::::::::::::::::::::::::
+message(cat(paste0("\n", "\033[97;", 40, "m","Determining operating system...", "\033[0m", "\n")))
+
 usearch_files <- str_subset(files, 'usearch')
 
 get_os <- function(){
@@ -60,28 +62,34 @@ get_os <- function(){
   if (!is.null(sysinf)){
     os <- sysinf['sysname']
     if (os == 'Darwin')
-      os <- "osx"
+      os <- "osx-mac"
   } else { ## mystery machine
     os <- .Platform$OS.type
     if (grepl("^darwin", R.version$os))
-      os <- "osx"
+      os <- "osx-mac"
     if (grepl("linux-gnu", R.version$os))
       os <- "linux"
   }
   tolower(os)
 }
 
+message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is = ", paste(get_os), "\033[0m", "\n")))
+
 if(identical(usearch_files, character(0))){
 #if(usearch_files == "yes"){
   if (paste(get_os())=="windows") {
   download.file("https://drive5.com/downloads/usearch11.0.667_win32.exe.gz", file.path(path, 'ncbi_database/usearch11.0.667_win32.exe.gz'), mode='wb')
-  }
+    message(cat(paste0("\n", "\033[0;", 32, "m","Download complete.", "\033[0m", "\n")))
+    }
   if (paste(get_os())=="osx") {
     download.file("https://drive5.com/downloads/usearch11.0.667_i86osx32.gz", file.path(path, 'ncbi_database/usearch11.0.667_i86osx32.gz'), mode='wb')
-  }
+    message(cat(paste0("\n", "\033[0;", 32, "m","Download complete.", "\033[0m", "\n")))
+
+    }
   if (paste(get_os())=="linux") {
     download.file("https://drive5.com/downloads/usearch11.0.667_i86linux32.gz", file.path(path, 'ncbi_database/usearch11.0.667_i86linux32.gz'), mode='wb')
-  }
+    message(cat(paste0("\n", "\033[0;", 32, "m","Download complete.", "\033[0m", "\n")))
+    }
 }
 
 
@@ -110,6 +118,8 @@ lapply(gz_files, R.utils::gunzip, remove = FALSE, overwrite=TRUE)
 #::::::::::::
 #Stage paths
 #::::::::::::
+message(cat(paste0("\n", "\033[0;", 32, "m","Staging files", "\033[0m", "\n")))
+
 setwd(path)
 query.fasta <- "V3-V6seq.FASTA"
 db.fasta <- "ncbi_database/bacteria.16SrRNA.fna"
