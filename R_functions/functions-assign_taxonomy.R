@@ -3,7 +3,8 @@ assign_taxonomy <- function(folder=NULL,
                             export_csv=TRUE,
                             verbose=TRUE,
                             exclude=NULL,
-                            skip_classification=FALSE){
+                            skip_search=FALSE,
+                            quick_search=TRUE){
   
   # function requirements------------------------------------------------------------
 #checking for required packages; installing those not yet installed
@@ -43,7 +44,7 @@ path <- str_replace_all(folder, '\\\\', '/')
 suppressWarnings(dir.create(file.path(path, 'ncbi_database')))
 files  <- dir(file.path(path, 'ncbi_database'), full.names = TRUE)
 
-if(skip_classification==FALSE){
+if(skip_search==FALSE){
 #:::::::::::::::::::::::::::::::::
 #Download NCBI 16S rRNA database
 #:::::::::::::::::::::::::::::::::
@@ -161,7 +162,13 @@ message(cat(paste0("\n", "\033[97;", 40, "m","Searching query sequences against 
 
 #system2(usearch.path, paste(" --usearch_global ", query.fasta, " --db ", db.fasta, " --output_no_hits --blast6out ", b6.out, " --uc ", uc.out, " --id 0.7 --maxaccepts 0 --maxrejects 0 --top_hits_only --strand both --threads 1 ", sep=""), stdout="", stderr="")
 #system2(vsearch.path, paste(" --usearch_global ", query.fasta, " --db ", db.fasta, " --output_no_hits --blast6out ", b6.out, " --uc ", uc.out, " --id 0.7 --maxaccepts 0 --maxrejects 0 --top_hits_only --strand both --threads 1 ", sep=""), stdout="", stderr="")
-system2(vsearch.path, paste(" --usearch_global ", query.fasta, " --db ", db.fasta, " --blast6out ", b6.out, " --uc ", uc.out, " --id 0.7 --top_hits_only --strand both --threads 1 ", sep=""), stdout="", stderr="")
+if(quick_search==TRUE){
+  system2(vsearch.path, paste(" --usearch_global ", query.fasta, " --db ", db.fasta, " --blast6out ", b6.out, " --uc ", uc.out, " --id 0.7 --maxaccepts 100 --maxrejects 100 --top_hits_only --strand both --threads 1 ", sep=""), stdout="", stderr="")
+}
+
+if(quick_search==FALSE){
+  system2(vsearch.path, paste(" --usearch_global ", query.fasta, " --db ", db.fasta, " --blast6out ", b6.out, " --uc ", uc.out, " --id 0.7 --maxaccepts 0 --maxrejects 0 --top_hits_only --strand both --threads 1 ", sep=""), stdout="", stderr="")
+}
 
 }
 
@@ -191,6 +198,7 @@ message(cat(paste0("\n", "\033[97;", 40, "m","Done.", "\033[0m", "\n")))
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #------------------------------------------------- library(rentrez)
 message(cat(paste0("\n", "\033[97;", 40, "m","Collecting higher level taxonomic rank information of closest species match", "\033[0m", "\n", "\r\n")))
+message(cat(paste0("\n", "\033[97;", 40, "m","\n", "\033[0m", "\n")))
 
 #::::::::::::::::::::::::::::::::
 # Step 1b) For loop
@@ -240,7 +248,10 @@ fetch.list.df <- as.data.frame(fetch.list$acc_1, stringsasfactors=FALSE) #Use th
 
 #::::::::::::::::::::::::::::::::
 lookup.list <- setNames(fetch.list.df$INSDSeq_taxonomy, fetch.list.df$INSDSeq_accession_version)
+lookup.list2 <- setNames(fetch.list.df$INSDSeq_organism, fetch.list.df$INSDSeq_accession_version)
+
 merged.df2 <- merged.df %>% mutate(taxonomy = dplyr::recode(NCBI_acc, !!!lookup.list)) %>%
+  mutate(species = dplyr::recode(NCBI_acc, !!!lookup.list2)) %>%
   mutate(taxonomy = gsub(" ", "", .$taxonomy)) %>%
   mutate(domain = str_split_fixed(.$taxonomy, ";", 6)[,1]) %>%
   mutate(phylum = str_split_fixed(.$taxonomy, ";", 6)[,2]) %>%
@@ -260,7 +271,10 @@ message(cat(paste0("\r\n\r\n", "\033[97;", 40, "m","Done.", "\033[0m", "\n")))
 #::::::::::::::::::::::::
 
 merged.df3 <- merged.df2 %>% select(sample,species,ID,Ns,length,query_seq,NCBI_acc,phylum,class,order,family,genus) %>%
-                             mutate(species2 = species) %>% mutate(genus= str_split_fixed(genus, ";", 2)[,1]) %>%
+                             mutate(species2 = species) %>% mutate(genus= paste(str_split_fixed(genus, ";", 3)[,1], str_split_fixed(genus, ";", 3)[,2], sep="_")) %>%
+                             mutate(species2 = ifelse(species2=="No_match", "", species2)) %>% 
+                             mutate(genus = str_split_fixed(genus, ";", 2)[,1]) %>%
+                             mutate(species2 = gsub("_|No_match", "", .$species2, fixed=TRUE)) %>% 
                              mutate(species_colors = dplyr::case_when(genus != "" ~ "green", TRUE ~ "red")) %>% 
                              mutate(species_col = ifelse(ID > 98.9, "#31a354", NA)) %>%
                              mutate(genus_col = ifelse(ID > 95.7, "#31a354", NA)) %>%
