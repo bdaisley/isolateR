@@ -271,10 +271,12 @@ message(cat(paste0("\r\n\r\n", "\033[97;", 40, "m","Done.", "\033[0m", "\n")))
 #::::::::::::::::::::::::
 
 merged.df3 <- merged.df2 %>% select(sample,species,ID,Ns,length,query_seq,NCBI_acc,phylum,class,order,family,genus) %>%
-                             mutate(species2 = species) %>% mutate(genus= paste(str_split_fixed(genus, ";", 3)[,1], str_split_fixed(genus, ";", 3)[,2], sep="_")) %>%
+                             mutate(species2 = species) %>% 
+                             mutate(genus= paste(str_split_fixed(genus, ";", 3)[,1])) %>%
+                             mutate(species2= paste(str_split_fixed(species2, " ", 3)[,1],str_split_fixed(species2, " ", 3)[,2], sep="_")) %>%
                              mutate(species2 = ifelse(species2=="No_match", "", species2)) %>% 
-                             mutate(genus = str_split_fixed(genus, ";", 2)[,1]) %>%
-                             mutate(species2 = gsub("_|No_match", "", .$species2, fixed=TRUE)) %>% 
+                             #mutate(genus = str_split_fixed(genus, ";", 2)[,1]) %>%
+                             #mutate(species2 = gsub("_|No_match", "", .$species2, fixed=TRUE)) %>% 
                              mutate(species_colors = dplyr::case_when(genus != "" ~ "green", TRUE ~ "red")) %>% 
                              mutate(species_col = ifelse(ID > 98.9, "#31a354", NA)) %>%
                              mutate(genus_col = ifelse(ID > 95.7, "#31a354", NA)) %>%
