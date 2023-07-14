@@ -140,7 +140,7 @@ message(cat(paste0("\n", "\033[0;", 32, "m","Staging files", "\033[0m", "\n")))
 setwd(path)
 
 #file.path(path, paste0("abif_fasta2_output___", unlist(strsplit(folder, '/'))[length(unlist(strsplit(folder, '/')))], sep=""))
-query.fasta <- file.path(path, paste0("abif_fasta2_output___", unlist(strsplit(sanger.path, '/'))[length(unlist(strsplit(sanger.path, '/')))],".fasta", sep=""))
+query.fasta <- file.path(folder, paste0("abif_fasta2_output___", unlist(strsplit(folder, '/'))[length(unlist(strsplit(folder, '/')))],".fasta", sep=""))
 #query.fasta <- "V3-V6seq.FASTA"
 db.fasta <- "ncbi_database/bacteria.16SrRNA.fna"
 uc.out <- "V3-V6seq.uc"
