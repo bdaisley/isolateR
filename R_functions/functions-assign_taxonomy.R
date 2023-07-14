@@ -55,18 +55,48 @@ gz_files <- str_subset(files, 'usearch')
 #:::::::::::::::::::::::::::
 usearch_files <- str_subset(files, 'usearch')
 
+get_os <- function(){
+  sysinf <- Sys.info()
+  if (!is.null(sysinf)){
+    os <- sysinf['sysname']
+    if (os == 'Darwin')
+      os <- "osx"
+  } else { ## mystery machine
+    os <- .Platform$OS.type
+    if (grepl("^darwin", R.version$os))
+      os <- "osx"
+    if (grepl("linux-gnu", R.version$os))
+      os <- "linux"
+  }
+  tolower(os)
+}
+
+get_os()=="windows"
 if(identical(usearch_files, character(0))){
-  if (grepl('w|W', .Platform$OS.type)) {
-  ## we are on Windows
+  if (get_os()=="windows") {
   download.file("https://drive5.com/downloads/usearch11.0.667_win32.exe.gz", file.path(path, 'ncbi_database/usearch11.0.667_win32.exe.gz'), mode='wb')
-} else {
-  if (grepl('darwin', version$os)) {
-    ## Mac
-    download.file("https://drive5.com/downloads/usearch11.0.667_i86osx32.gz", file.path(path, 'ncbi_database/usearch11.0.667_i86osx32.gz'), mode='wb')
-  } else {
-    ## Linux
-    download.file("https://drive5.com/downloads/usearch11.0.667_i86linux32.gz", file.path(path, 'ncbi_database/usearch11.0.667_i86linux32.gz'), mode='wb')
-  }}}
+  }
+  if (get_os()=="osx") {
+    download.file("https://drive5.com/downloads/usearch11.0.667_win32.exe.gz", file.path(path, 'ncbi_database/usearch11.0.667_win32.exe.gz'), mode='wb')
+  }
+  if (get_os()=="linux") {
+    download.file("https://drive5.com/downloads/usearch11.0.667_win32.exe.gz", file.path(path, 'ncbi_database/usearch11.0.667_win32.exe.gz'), mode='wb')
+  }
+}
+
+  
+#if(identical(usearch_files, character(0))){
+#  if (grepl('w|W', .Platform$OS.type)) {
+#  ## we are on Windows
+#  download.file("https://drive5.com/downloads/usearch11.0.667_win32.exe.gz", file.path(path, 'ncbi_database/usearch11.0.667_win32.exe.gz'), mode='wb')
+#} else {
+#  if (grepl('darwin', version$os)) {
+#    ## Mac
+#    download.file("https://drive5.com/downloads/usearch11.0.667_i86osx32.gz", file.path(path, 'ncbi_database/usearch11.0.667_i86osx32.gz'), mode='wb')
+#  } else {
+#    ## Linux
+#    download.file("https://drive5.com/downloads/usearch11.0.667_i86linux32.gz", file.path(path, 'ncbi_database/usearch11.0.667_i86linux32.gz'), mode='wb')
+#  }}}
 
 #::::::::::::
 #Unzip files
