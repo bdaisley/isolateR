@@ -14,6 +14,8 @@ if(require(xmlconvert)==FALSE) install.packages('xmlconvert')
 if(require(reactable)==FALSE) install.packages('reactable')
 if(require(reactablefmtr)==FALSE) install.packages('reactablefmtr')
 if(require(pander)==FALSE) install.packages('pander')
+if(require(svMisc)==FALSE) install.packages('svMisc')
+  
   
 #loading required packages
 library(dplyr)
@@ -24,6 +26,7 @@ library(xmlconvert)
 library(reactable)
 library(reactablefmtr)
 library(pander)
+library(svMisc)
 
 #-------------------------------------------------
 #-------------------------------------------------
