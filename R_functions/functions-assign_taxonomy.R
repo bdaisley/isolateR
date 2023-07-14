@@ -43,8 +43,9 @@ files  <- dir(file.path(path, 'ncbi_database'), full.names = TRUE)
 #Download NCBI 16S rRNA database
 #:::::::::::::::::::::::::::::::::
 if(!file.exists(file.path(path, 'ncbi_database/bacteria.16SrRNA.fna.gz'))){
-  download.file("https://ftp.ncbi.nlm.nih.gov/refseq/TargetedLoci/Bacteria/bacteria.16SrRNA.fna.gz", 
-                file.path(path, 'ncbi_database/bacteria.16SrRNA.fna.gz'), mode='wb')
+  download.file("https://ftp.ncbi.nlm.nih.gov/refseq/TargetedLoci/Bacteria/bacteria.16SrRNA.fna.gz", file.path(path, 'ncbi_database/bacteria.16SrRNA.fna.gz'), mode='wb')
+  R.utils::gunzip(file.path(path,"ncbi_database/bacteria.16SrRNA.fna.gz"), remove = FALSE, overwrite=TRUE)
+  message(cat(paste0("\n", "\033[0;", 32, "m","Download complete.", "\033[0m", "\n")))
 }
 
 gz_files <- stringr::str_subset(files, 'usearch')
@@ -73,19 +74,61 @@ get_os <- function(){
   tolower(os)
 }
 
-download.file("https://drive5.com/downloads/usearch11.0.667_i86osx32.gz", file.path(path, 'ncbi_database/usearch11.0.667_i86osx32.gz'), mode='wb')
-message(cat(paste0("\n", "\033[0;", 32, "m","Download complete.", "\033[0m", "\n")))
+if(paste(get_os())=="windows" & identical(usearch_files, character(0))){
+  message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is = ", paste(get_os()), "\033[0m", "\n")))
+  download.file("https://github.com/torognes/vsearch/releases/download/v2.23.0/vsearch-2.23.0-win-x86_64.zip", file.path(path, 'ncbi_database/vsearch-2.23.0-win-x86_64.zip'), mode='wb')
+  unzip(file.path(path,"ncbi_database/vsearch-2.23.0-win-x86_64.zip"),  exdir=file.path(path,"ncbi_database"))
+  file.copy(file.path(path, "ncbi_database/vsearch-2.23.0-win-x86_64/bin/vsearch.exe"), file.path(path, "ncbi_database/vsearch-2.23.0.exe"), overwrite=TRUE)
+  unlink(file.path(path,"ncbi_database/vsearch-2.23.0-win-x86_64"),recursive=TRUE)
+  message(cat(paste0("\n", "\033[0;", 32, "m","Download complete.", "\033[0m", "\n")))
+  vsearch.path <- file.path(path,"ncbi_database/vsearch-2.23.0.exe")
+  #
+  #message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is = ", paste(get_os()), "\033[0m", "\n")))
+  #  download.file("https://drive5.com/downloads/usearch11.0.667_win32.exe.gz", file.path(path, 'ncbi_database/usearch11.0.667_win32.exe.gz'), mode='wb')
+  #  R.utils::gunzip(file.path(path,"ncbi_database/usearch11.0.667_win32.exe.gz"), remove = FALSE, overwrite=TRUE)
+  #  message(cat(paste0("\n", "\033[0;", 32, "m","Download complete.", "\033[0m", "\n")))
+  }
 
+if(paste(get_os())=="osx-mac" & identical(usearch_files, character(0))){
+  message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is = ", paste(get_os()), "\033[0m", "\n")))
+  download.file("https://github.com/torognes/vsearch/releases/download/v2.23.0/vsearch-2.23.0-macos-universal.tar.gz", file.path(path, 'ncbi_database/vsearch-2.23.0-macos-universal.tar.gz'), mode='wb')
+  #R.utils::gunzip(file.path(path,"ncbi_database/vsearch-2.23.0-macos-universal.tar.gz"), remove = FALSE, overwrite=TRUE)
+  untar(file.path(path,"ncbi_database/vsearch-2.23.0-macos-universal.tar.gz"),  exdir=file.path(path,"ncbi_database"))
+  file.copy(file.path(path, "ncbi_database/vsearch-2.23.0-macos-universal/bin/vsearch"), file.path(path, "ncbi_database/vsearch-2.23.0_macos"), overwrite=TRUE)
+  unlink(file.path(path,"ncbi_database/vsearch-2.23.0-macos-universal"),recursive=TRUE)
+  message(cat(paste0("\n", "\033[0;", 32, "m","Download complete.", "\033[0m", "\n")))
+  #
+  #message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is = ", paste(get_os()), "\033[0m", "\n")))
+  #download.file("https://drive5.com/downloads/usearch11.0.667_i86osx32.gz", file.path(path, 'ncbi_database/usearch11.0.667_i86osx32.gz'), mode='wb')
+  #R.utils::gunzip(file.path(path,"ncbi_database/usearch11.0.667_i86osx32.gz"), remove = FALSE, overwrite=TRUE)
+  #message(cat(paste0("\n", "\033[0;", 32, "m","Download complete.", "\033[0m", "\n")))
+}
 
+if(paste(get_os())=="linux" & identical(usearch_files, character(0))){
+  message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is = ", paste(get_os()), "\033[0m", "\n")))
+  download.file("https://github.com/torognes/vsearch/releases/download/v2.23.0/vsearch-2.23.0-linux-x86_64.tar.gz", file.path(path, 'ncbi_database/vsearch-2.23.0-linux-x86_64.tar.gz'), mode='wb')
+  untar(file.path(path,"ncbi_database/vsearch-2.23.0-linux-x86_64.tar.gz"),  exdir=file.path(path,"ncbi_database"))
+  file.copy(file.path(path, "ncbi_database/vsearch-2.23.0-linux-x86_64/bin/vsearch"), file.path(path, "ncbi_database/vsearch-2.23.0"), overwrite=TRUE)
+  unlink(file.path(path,"ncbi_database/vsearch-2.23.0-linux-x86_64"),recursive=TRUE)
+  message(cat(paste0("\n", "\033[0;", 32, "m","Download complete.", "\033[0m", "\n")))
+  #
+  #message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is = ", paste(get_os()), "\033[0m", "\n")))
+  #download.file("https://drive5.com/downloads/usearch11.0.667_i86linux32.gz", file.path(path, 'ncbi_database/usearch11.0.667_i86linux32.gz'), mode='wb')
+  #R.utils::gunzip(file.path(path,"ncbi_database/usearch11.0.667_i86linux32.gz"), remove = FALSE, overwrite=TRUE)
+  #message(cat(paste0("\n", "\033[0;", 32, "m","Download complete.", "\033[0m", "\n")))
+}
 
 #::::::::::::
 #Unzip files
 #::::::::::::
-gz_files <- str_subset(files, '.gz')
-if(! identical(gz_files, character(0))){
-unlink("ncbi_database/*.tmp", recursive = TRUE, force = FALSE)
-lapply(gz_files, R.utils::gunzip, remove = FALSE, overwrite=TRUE)
-}
+
+#gz_files <- stringr::str_subset(files, '.gz')
+#if(! identical(gz_files, character(0))){
+#unlink("ncbi_database/*.tmp", recursive = TRUE, force = FALSE)
+#message(cat(paste0("\n", "\033[0;", 32, "m","Unzipping files...", "\033[0m", "\n")))
+#lapply(gz_files, R.utils::gunzip, remove = FALSE, overwrite=TRUE)
+#message(cat(paste0("\n", "\033[0;", 32, "m","Done", "\033[0m", "\n")))
+#}
 
 #::::::::::::
 #Stage paths
@@ -99,16 +142,16 @@ uc.out <- "V3-V6seq.uc"
 b6.out <- "V3-V6seq.b6"
 #db.fasta <- file.path(path, "ncbi_database/bacteria.16SrRNA.fna")
 #uc.out <- file.path(path, "V3-V6seq_results.uc")
-usearch_files <- str_subset(files, 'usearch')
+usearch_files <- stringr::str_subset(files, 'usearch')
 usearch.path <- gsub(".gz", "", usearch_files[1], fixed=TRUE)
-
 
 #:::::::::::::::::::::
 #Search NCBI database
 #:::::::::::::::::::::
 message(cat(paste0("\n", "\033[97;", 40, "m","Searching query sequences against NCBI database via '--usearch_global' function of USEARCH", "\033[0m", "\n")))
 
-system2(usearch.path, paste(" --usearch_global ", query.fasta, " --db ", db.fasta, " --output_no_hits --blast6out ", b6.out, " --uc ", uc.out, " --id 0.7 --maxaccepts 0 --maxrejects 0 --top_hits_only --strand both --threads 1 ", sep=""), stdout="", stderr="")
+#system2(usearch.path, paste(" --usearch_global ", query.fasta, " --db ", db.fasta, " --output_no_hits --blast6out ", b6.out, " --uc ", uc.out, " --id 0.7 --maxaccepts 0 --maxrejects 0 --top_hits_only --strand both --threads 1 ", sep=""), stdout="", stderr="")
+system2(vsearch.path, paste(" --usearch_global ", query.fasta, " --db ", db.fasta, " --output_no_hits --blast6out ", b6.out, " --uc ", uc.out, " --id 0.7 --maxaccepts 0 --maxrejects 0 --top_hits_only --strand both --threads 1 ", sep=""), stdout="", stderr="")
 
 #:::::::::::::::::
 #Organize results

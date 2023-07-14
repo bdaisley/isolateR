@@ -162,23 +162,43 @@ abif_fasta2 <- function(folder=NULL,
                                maxAmbiguities = 0.5,
                                type="both")
     
+    #print(abif3.end)
+    print(end(abif3[[1]]))
+    print(width(abif3[[1]]))
     abif3.end <- end(abif3[[1]]) + nchar("CTGCTGCCTYCCGTA")
+    print(abif3.end)
     if(abif3.end > width(abif3[[1]])){abif3.end <- width(abif3[[1]])}
+    print(abif3.end)
     if(width(abif3[[1]]) <= 36){abif3.end <- nchar(paste(abif2)) }
+    print(abif3.end)
     #if(width(abif3[[1]]) > end(abif3[[1]])){abif3.end <- end(abif3[[1]]) + nchar("CTGCTGCCTYCCGTA")}
     #if(abif3.end > width(abif3[[1]])){abif3.end <- width(abif3[[1]])}
     #if(width(abif3[[1]]) == end(abif3[[1]])){abif3.end <- end(abif3[[1]])}
     #abif3.end <- end(abif3[[1]]) + nchar("CTGCTGCCTYCCGTA")
     #abif3.end
-    #if(abif3.end == nchar(paste(abif2)) + nchar("CTGCTGCCTYCCGTA")){abif3.end <- abif1@QualityReport@trimmedFinishPos}
-    abif1.start.new <- abif1.start
+    if(abif3.end > (abif1@QualityReport@trimmedFinishPos - abif1.start)){abif3.end <- (abif1@QualityReport@trimmedFinishPos - abif1.start)}
+    print(abif3.end)
+    if(abif3.end > 850){abif3.end <- 850}
+    print(abif3.end)
+    abif1.start.new = NULL
     if(abif1.start <= 50 & abif3.end >= 51){abif1.start.new <- 50}
+    print(abif3.end)
     #abif <- DNAStringSet(abif2, start=1, end = abif3.end) # equivalent to line below
-    
+    print(paste("abif1.start=   ", abif1.start))
+    print(paste("abif1.start.new=   ", abif1.start.new))
+    print(paste("abif3.end=   ", abif3.end))
     abif <- DNAStringSet(abif1@primarySeq, start=abif1.start.new, end = (abif1.start + abif3.end -1))
     abif.scores.xx <- abif1@QualityReport@qualityPhredScores[abif1.start.new:(abif1.start + abif3.end -1)]
+    print("start")
+    print(abif1.start.new)
+    print("end")
+    print((abif1.start + abif3.end -1))
+    print(711-50)
+    #print(abif1.start.new:(abif1.start + abif3.end -1))
+    #print((((abif1.start + abif3.end) -1)))
+    #print(850-(((abif1.start + abif3.end) -1)))
     
-    abif.scores <- c(rep(0, abif1.start.new), abif.scores.xx, rep(0.1, 810-(abif1.start + abif3.end -1)))
+    abif.scores <- c(rep(0.1, abif1.start.new), abif.scores.xx, rep(0.1, 850-(((abif1.start + abif3.end) -1))))
     
     trim.start <- c(trim.start,abif1.start.new)
     trim.end <- c(trim.end,(abif1.start + abif3.end -1))
@@ -191,11 +211,14 @@ abif_fasta2 <- function(folder=NULL,
       msg <- sprintf('Processing "%s"', abif_files[i])
       message(msg)
     }
-    
+    abif1@QualityReport@qualityPhredScores-length(abif.scores)
     #:::::::::::::::::::::::::::::::
     # Save seq + quality scores
     #:::::::::::::::::::::::::::::::
-    rawsparklist[[i]] <- c(abif1@QualityReport@qualityPhredScores, rep(0.1, 810-length(abif1@QualityReport@qualityPhredScores)))
+    #rawsparklist[[i]] <- c(abif1@QualityReport@qualityPhredScores, rep(0.1, 850-length(abif1@QualityReport@qualityPhredScores)))
+    rawspark.adj <- abif1@QualityReport@qualityPhredScores
+    if(length(abif1@QualityReport@qualityPhredScores) >= 850){rawspark.adj <- 850}
+    rawsparklist[[i]] <- c(rawspark.adj, rep(0.1, 850-length(rawspark.adj)))
     trimsparklist[[i]] <- abif.scores
     rawlist[[i]] <- paste(abif1@primarySeqRaw)
     trimlist[[i]] <- paste(abif)
