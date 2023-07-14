@@ -97,6 +97,7 @@ if(paste(get_os())=="osx-mac" & identical(usearch_files, character(0))){
   file.copy(file.path(path, "ncbi_database/vsearch-2.23.0-macos-universal/bin/vsearch"), file.path(path, "ncbi_database/vsearch-2.23.0_macos"), overwrite=TRUE)
   unlink(file.path(path,"ncbi_database/vsearch-2.23.0-macos-universal"),recursive=TRUE)
   message(cat(paste0("\n", "\033[0;", 32, "m","Download complete.", "\033[0m", "\n")))
+  vsearch.path <- file.path(path,"ncbi_database/vsearch-2.23.0")
   #
   #message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is = ", paste(get_os()), "\033[0m", "\n")))
   #download.file("https://drive5.com/downloads/usearch11.0.667_i86osx32.gz", file.path(path, 'ncbi_database/usearch11.0.667_i86osx32.gz'), mode='wb')
@@ -111,6 +112,7 @@ if(paste(get_os())=="linux" & identical(usearch_files, character(0))){
   file.copy(file.path(path, "ncbi_database/vsearch-2.23.0-linux-x86_64/bin/vsearch"), file.path(path, "ncbi_database/vsearch-2.23.0"), overwrite=TRUE)
   unlink(file.path(path,"ncbi_database/vsearch-2.23.0-linux-x86_64"),recursive=TRUE)
   message(cat(paste0("\n", "\033[0;", 32, "m","Download complete.", "\033[0m", "\n")))
+  vsearch.path <- file.path(path,"ncbi_database/vsearch-2.23.0")
   #
   #message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is = ", paste(get_os()), "\033[0m", "\n")))
   #download.file("https://drive5.com/downloads/usearch11.0.667_i86linux32.gz", file.path(path, 'ncbi_database/usearch11.0.667_i86linux32.gz'), mode='wb')
