@@ -73,7 +73,7 @@ get_os <- function(){
   tolower(os)
 }
 
-message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is = ", paste(get_os), "\033[0m", "\n")))
+message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is = ", paste(get_os()), "\033[0m", "\n")))
 
 if(identical(usearch_files, character(0))){
 #if(usearch_files == "yes"){
