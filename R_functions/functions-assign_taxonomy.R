@@ -2,7 +2,8 @@
 assign_taxonomy <- function(folder=NULL,
                             export_csv=TRUE,
                             verbose=TRUE,
-                            exclude=NULL){
+                            exclude=NULL,
+                            skip_classification=FALSE){
   
   # function requirements------------------------------------------------------------
 #checking for required packages; installing those not yet installed
@@ -42,6 +43,7 @@ path <- str_replace_all(folder, '\\\\', '/')
 suppressWarnings(dir.create(file.path(path, 'ncbi_database')))
 files  <- dir(file.path(path, 'ncbi_database'), full.names = TRUE)
 
+if(skip_classification==FALSE){
 #:::::::::::::::::::::::::::::::::
 #Download NCBI 16S rRNA database
 #:::::::::::::::::::::::::::::::::
@@ -145,8 +147,8 @@ setwd(path)
 query.fasta <- paste0("abif_fasta2_output___", unlist(strsplit(folder, '/'))[length(unlist(strsplit(folder, '/')))],".fasta", sep="")
 #query.fasta <- "V3-V6seq.FASTA"
 db.fasta <- "ncbi_database/bacteria.16SrRNA.fna"
-uc.out <- "V3-V6seq.uc"
-b6.out <- "V3-V6seq.b6"
+uc.out <- paste0("abif_fasta2_output___", unlist(strsplit(folder, '/'))[length(unlist(strsplit(folder, '/')))],".uc", sep="")
+b6.out <- paste0("abif_fasta2_output___", unlist(strsplit(folder, '/'))[length(unlist(strsplit(folder, '/')))],".b6o", sep="")
 #db.fasta <- file.path(path, "ncbi_database/bacteria.16SrRNA.fna")
 #uc.out <- file.path(path, "V3-V6seq_results.uc")
 usearch_files <- stringr::str_subset(files, 'usearch')
@@ -158,7 +160,10 @@ usearch.path <- gsub(".gz", "", usearch_files[1], fixed=TRUE)
 message(cat(paste0("\n", "\033[97;", 40, "m","Searching query sequences against NCBI database via '--usearch_global' function of USEARCH", "\033[0m", "\n")))
 
 #system2(usearch.path, paste(" --usearch_global ", query.fasta, " --db ", db.fasta, " --output_no_hits --blast6out ", b6.out, " --uc ", uc.out, " --id 0.7 --maxaccepts 0 --maxrejects 0 --top_hits_only --strand both --threads 1 ", sep=""), stdout="", stderr="")
-system2(vsearch.path, paste(" --usearch_global ", query.fasta, " --db ", db.fasta, " --output_no_hits --blast6out ", b6.out, " --uc ", uc.out, " --id 0.7 --maxaccepts 0 --maxrejects 0 --top_hits_only --strand both --threads 1 ", sep=""), stdout="", stderr="")
+#system2(vsearch.path, paste(" --usearch_global ", query.fasta, " --db ", db.fasta, " --output_no_hits --blast6out ", b6.out, " --uc ", uc.out, " --id 0.7 --maxaccepts 0 --maxrejects 0 --top_hits_only --strand both --threads 1 ", sep=""), stdout="", stderr="")
+system2(vsearch.path, paste(" --usearch_global ", query.fasta, " --db ", db.fasta, " --blast6out ", b6.out, " --uc ", uc.out, " --id 0.7 --top_hits_only --strand both --threads 1 ", sep=""), stdout="", stderr="")
+
+}
 
 #:::::::::::::::::
 #Organize results
@@ -178,6 +183,8 @@ merged.df <- merge(uc.results, query.seqs.df, by="V9", all=TRUE) %>% arrange(V9)
   mutate(species = paste(str_split_fixed(.$V10, " ", 8)[,2], str_split_fixed(.$V10, " ", 8)[,3], sep=" ")) %>%
   dplyr::rename("ID" = "V4", "sample" = "V9", "closest_match" = "V10") %>% 
   select(sample,ID,species,length,Ns,NCBI_acc,closest_match,query_seq)
+
+message(cat(paste0("\n", "\033[97;", 40, "m","Done.", "\033[0m", "\n")))
 
 #write.csv(merged.df, file=paste("V3-V6seq_results_", unlist(strsplit(folder, '/'))[length(unlist(strsplit(folder, '/')))],".csv", sep=""))
 
@@ -224,6 +231,9 @@ for (i in 1:length(fetch.ids)) {
   #print(difftime(t2, t1, units = "secs")[[1]])
   #if (((i/length(fetch.ids))*100) == 100) message("Done!")
 }
+message(cat(paste0("\n", "\033[97;", 40, "m","Done.", "\033[0m", "\n")))
+
+message(cat(paste0("\n", "\033[97;", 40, "m","Exporting csv file", "\033[0m", "\n")))
 
 #fetch.list.df <- bind_rows(fetch.list, .id = "column_label") #Only works if more than 2 entries in the list
 fetch.list.df <- as.data.frame(fetch.list$acc_1, stringsasfactors=FALSE) #Use this if only 1 entry in the list
