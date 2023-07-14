@@ -73,22 +73,8 @@ get_os <- function(){
   tolower(os)
 }
 
-
-if(identical(usearch_files, character(0))){
-  message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is = ", paste(get_os()), "\033[0m", "\n")))
-  if (paste(get_os())=="windows") {
-    ## we are on Windows
-    download.file("https://drive5.com/downloads/usearch11.0.667_win32.exe.gz", file.path(path, 'ncbi_database/usearch11.0.667_win32.exe.gz'), mode='wb')
-    message(cat(paste0("\n", "\033[0;", 32, "m","Download complete.", "\033[0m", "\n")))
-  } else {
-    if (paste(get_os())=="osx-mac") {
-      ## Mac
-      download.file("https://drive5.com/downloads/usearch11.0.667_i86osx32.gz", file.path(path, 'ncbi_database/usearch11.0.667_i86osx32.gz'), mode='wb')
-      message(cat(paste0("\n", "\033[0;", 32, "m","Download complete.", "\033[0m", "\n")))
-    } else {
-      ## Linux
-      download.file("https://drive5.com/downloads/usearch11.0.667_i86linux32.gz", file.path(path, 'ncbi_database/usearch11.0.667_i86linux32.gz'), mode='wb')
-      message(cat(paste0("\n", "\033[0;", 32, "m","Download complete.", "\033[0m", "\n")))    }}}
+download.file("https://drive5.com/downloads/usearch11.0.667_i86osx32.gz", file.path(path, 'ncbi_database/usearch11.0.667_i86osx32.gz'), mode='wb')
+message(cat(paste0("\n", "\033[0;", 32, "m","Download complete.", "\033[0m", "\n")))
 
 
 
