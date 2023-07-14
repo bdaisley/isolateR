@@ -24,9 +24,9 @@ abif_fasta2(folder=sanger.path,
             export_html=TRUE,
             export_csv=TRUE,
             export_fasta=TRUE,
-            export_fasta_revcomp=TRUE,
-			quality_cutoff = 25,
-			sliding_window_size = 15,
+			export_fasta_revcomp=TRUE,
+			quality_cutoff=25,
+			sliding_window_size=15,
 			verbose=TRUE)
 ```
 Step 4: Inspect data via interactive reactable output
