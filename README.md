@@ -20,7 +20,7 @@ sanger.path <- "C:/Users/Brendan/Documents/Sanger_sequencing_results/2023_07_06"
 ```
 Step 3: Run function of interest to process <code>.ab1</code> files
 ```r
-abi_fasta2(folder=sanger.path,
+abif_fasta2(folder=sanger.path,
 	   export_csv=TRUE,
 	   export_html=TRUE,
 	   export_fasta=TRUE,
@@ -32,5 +32,14 @@ abi_fasta2(folder=sanger.path,
 Step 4: Inspect data via interactive reactable output
 
 <img src="https://github.com/bdaisley/sangerseq2taxonomy/blob/main/sangerseq2taxonomy.gif?raw=true" align="center" />
+
+Step 4: Assign taxonomy
+```r
+source("https://raw.githubusercontent.com/bdaisley/sangerseq2taxonomy/main/R_functions/functions-assign_taxonomy.R")
+
+assign_taxonomy(folder=sanger.path,
+                export_csv=TRUE,
+                verbose=TRUE)
+```
 
 More to come on automated classification of taxonomy...
