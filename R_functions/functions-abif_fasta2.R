@@ -180,7 +180,7 @@ abif_fasta2 <- function(folder=NULL,
     print(abif3.end)
     if(abif3.end > 850){abif3.end <- 850}
     print(abif3.end)
-    abif1.start.new = NULL
+    abif1.start.new <- abif1.start
     if(abif1.start <= 50 & abif3.end >= 51){abif1.start.new <- 50}
     print(abif3.end)
     #abif <- DNAStringSet(abif2, start=1, end = abif3.end) # equivalent to line below
@@ -212,12 +212,13 @@ abif_fasta2 <- function(folder=NULL,
       message(msg)
     }
     abif1@QualityReport@qualityPhredScores-length(abif.scores)
+    
     #:::::::::::::::::::::::::::::::
     # Save seq + quality scores
     #:::::::::::::::::::::::::::::::
     #rawsparklist[[i]] <- c(abif1@QualityReport@qualityPhredScores, rep(0.1, 850-length(abif1@QualityReport@qualityPhredScores)))
     rawspark.adj <- abif1@QualityReport@qualityPhredScores
-    if(length(abif1@QualityReport@qualityPhredScores) >= 850){rawspark.adj <- 850}
+    if(length(abif1@QualityReport@qualityPhredScores) >= 850){rawspark.adj <- rawspark.adj[1:850]}
     rawsparklist[[i]] <- c(rawspark.adj, rep(0.1, 850-length(rawspark.adj)))
     trimsparklist[[i]] <- abif.scores
     rawlist[[i]] <- paste(abif1@primarySeqRaw)
