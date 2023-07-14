@@ -4,10 +4,11 @@
 abif_fasta2 <- function(folder=NULL,
                         export_html=TRUE,
                         export_fasta=TRUE,
-                        reversecomp=TRUE,
+                        export_fasta_revcomp=TRUE,
                         verbose=TRUE,
                         exclude=NULL,
-                        output='V3-V6seq.FASTA') {
+                        quality_cutoff = 25,
+                        sliding_window_size = 15){
   
   # function requirements------------------------------------------------------------
   #checking for required packages; installing those not yet installed
@@ -32,14 +33,16 @@ abif_fasta2 <- function(folder=NULL,
   if(require(reactable)==FALSE) install.packages('reactable')
   if(require(reactablefmtr)==FALSE) install.packages('reactablefmtr')
   if(require(pander)==FALSE) install.packages('pander')
-  if(require(dataui)==FALSE){
-    if (!require("BiocManager", quietly = TRUE))
-      install.packages("remotes", update = FALSE)
-    remotes::install_github("timelyportfolio/dataui", upgrade="never")
-  }
+  if(require(remotes)==FALSE) install.packages('remotes')
+  if(require(dataui)==FALSE){ remotes::install_github("timelyportfolio/dataui", upgrade="never")}
+  #  if (!require("BiocManager", quietly = TRUE))
+  #    install.packages("remotes", update = FALSE)
+  #  remotes::install_github("timelyportfolio/dataui", upgrade="never")
+  #}
   
   #loading required packages
   library(dplyr)
+  library(remotes)
   library(Biostrings)
   library(seqinr)
   library(stringr)
@@ -56,7 +59,7 @@ abif_fasta2 <- function(folder=NULL,
   
   # Correct any syntax issues with folder path
   path <- str_replace_all(folder, '\\\\', '/')
-  
+
   #Load abif files
   fname <- list.files(path)
   pattern <- 'ab1'
@@ -91,6 +94,7 @@ abif_fasta2 <- function(folder=NULL,
   rawlist <- list()
   trimlist <- list()
   checkseq <- c()
+  seq.warnings <- c()
   
   for(i in 1:length(abif_files)){
     
@@ -106,23 +110,39 @@ abif_fasta2 <- function(folder=NULL,
     #abif <- makeBaseCalls(readsangerseq(fpath), ratio=0.33)
     #rawseq <- primarySeq(abif, string=TRUE)
     
-    abif1 <- SangerRead(readFeature           = "Forward Read",
+    abif1 <- tryCatch( 
+      {
+             SangerRead(readFeature           = "Forward Read",
                         readFileName          = fpath,
                         geneticCode           = GENETIC_CODE,
                         TrimmingMethod        = "M2",
                         M1TrimmingCutoff      = NULL,
-                        M2CutoffQualityScore  = 45,
-                        M2SlidingWindowSize   = 5,
+                        M2CutoffQualityScore  = quality_cutoff,
+                        M2SlidingWindowSize   = sliding_window_size,
                         baseNumPerRow         = 100,
                         heightPerRow          = 200,
-                        signalRatioCutoff     = 0.5)
-    #qualityBasePlot(sangerReadF)
+                        signalRatioCutoff     = 0.33)
+      },
+    error = function(e) {
+                  SangerRead(readFeature           = "Forward Read",
+                             readFileName          = fpath,
+                             geneticCode           = GENETIC_CODE,
+                             TrimmingMethod        = "M2",
+                             M1TrimmingCutoff      = NULL,
+                             M2CutoffQualityScore  = quality_cutoff,
+                             M2SlidingWindowSize   = 1,
+                             baseNumPerRow         = 100,
+                             heightPerRow          = 200,
+                             signalRatioCutoff     = 0.33)
+    }
+    )
     
-    start=abif1@QualityReport@trimmedStartPos
+    #start=abif1@QualityReport@trimmedStartPos
     abif1.start = NULL
     abif1.start <- abif1@QualityReport@trimmedStartPos
-    if(is.null(abif1.start) == TRUE){abif.start <- 1}
     abif1.end <- nchar(paste(abif1@primarySeq))
+    #if(is.null(abif1.start) == TRUE){abif1.start <- 50}
+    #if(abif1.start >= abif3.end){abif1.start <- 1}
     
     abif2 <- DNAStringSet(abif1@primarySeq, start=abif1.start, end=abif1.end)
     #abif2 <- Biostrings::reverseComplement(DNAStringSet(paste(abif1@primarySeq),
@@ -138,22 +158,32 @@ abif_fasta2 <- function(folder=NULL,
                                allowInternal=TRUE,
                                threshold = 1,
                                maxAverageError = 1,
-                               maxAmbiguities = 0.2,
+                               maxAmbiguities = 0.5,
                                type="both")
     
     abif3.end <- end(abif3[[1]]) + nchar("CTGCTGCCTYCCGTA")
-    if(abif3.end == nchar(paste(abif2)) + nchar("CTGCTGCCTYCCGTA")){abif3.end <- abif1@QualityReport@trimmedFinishPos}
+    if(abif3.end > width(abif3[[1]])){abif3.end <- width(abif3[[1]])}
+    if(width(abif3[[1]]) <= 36){abif3.end <- nchar(paste(abif2)) }
+    #if(width(abif3[[1]]) > end(abif3[[1]])){abif3.end <- end(abif3[[1]]) + nchar("CTGCTGCCTYCCGTA")}
+    #if(abif3.end > width(abif3[[1]])){abif3.end <- width(abif3[[1]])}
+    #if(width(abif3[[1]]) == end(abif3[[1]])){abif3.end <- end(abif3[[1]])}
+    #abif3.end <- end(abif3[[1]]) + nchar("CTGCTGCCTYCCGTA")
+    #abif3.end
+    #if(abif3.end == nchar(paste(abif2)) + nchar("CTGCTGCCTYCCGTA")){abif3.end <- abif1@QualityReport@trimmedFinishPos}
+    abif1.start.new <- abif1.start
+    if(abif1.start <= 50 & abif3.end >= 51){abif1.start.new <- 50}
+    #abif <- DNAStringSet(abif2, start=1, end = abif3.end) # equivalent to line below
     
+    abif <- DNAStringSet(abif1@primarySeq, start=abif1.start.new, end = (abif1.start + abif3.end -1))
+    abif.scores.xx <- abif1@QualityReport@qualityPhredScores[abif1.start.new:(abif1.start + abif3.end -1)]
     
-    abif <- DNAStringSet(abif2, start=1, end = abif3.end) # equivalent to line below
-    #abif <- DNAStringSet(abif1@primarySeq, start=abif1.start, end = (abif1.start + abif3.end -1))
-    abif.scores.xx <- abif1@QualityReport@qualityPhredScores[abif1.start:(abif1.start + abif3.end -1)]
-    abif.scores <- c(rep(0, abif1.start), abif.scores.xx, rep(0.1, 810-(abif1.start + abif3.end -1)))
+    abif.scores <- c(rep(0, abif1.start.new), abif.scores.xx, rep(0.1, 810-(abif1.start + abif3.end -1)))
     
-    trim.start <- c(trim.start,abif1.start)
+    trim.start <- c(trim.start,abif1.start.new)
     trim.end <- c(trim.end,(abif1.start + abif3.end -1))
     
     rawseq <- as.character(paste(abif))
+    
     
     if(verbose==TRUE){
       #print a message to mark progress
@@ -183,9 +213,10 @@ abif_fasta2 <- function(folder=NULL,
                         raw_seq = rawlist[[i]],
                         trim_seq = trimlist[[i]])
     if(entry$length_trim < 200) {
-      msg <- sprintf('The file "%s" has a length of <200 bp after trimming. Manual check of sequence is recommended.', abif_files[i])
+      seq.warnings <- c(seq.warnings, paste(abif_files[i]))
+      #msg <- sprintf('The file "%s" has a length of <200 bp after trimming. Manual check of sequence is recommended.', abif_files[i])
       #message(msg)
-      warning(msg, call.=FALSE)
+      #warning(msg, call.=FALSE)
       #
       #  seq_pass <- FALSE
       #  failreason <- paste(failreason, msg)
@@ -195,6 +226,7 @@ abif_fasta2 <- function(folder=NULL,
     #ntseq <- trimlist[[i]]
   }
   # end of file loop
+  
   # Make phred scores into lists for sparkline formatting (V1=raw, V2=trim)
   sparkdf <- c()
   for(i in 1:length(rawsparklist)){
@@ -352,35 +384,55 @@ abif_fasta2 <- function(folder=NULL,
   #                  hover: visible"),
   
   
-  reactablefmtr::save_reactable_test(checkseq_react, file.path(path, 'V3-V6seq_check.html'))
+  #reactablefmtr::save_reactable_test(checkseq_react, file.path(path, 'V3-V6seq_check.html'))
   
-  openFileInOS(file.path(path, 'V3-V6seq_check.html'))
+  #openFileInOS(file.path(path, 'V3-V6seq_check.html'))
   
-  
+ 
   
   #building output file--------------------------------------------------------------
-  fname_out <- file.path(path, output)
+  seq.warnings.txt <- paste(seq.warnings, collapse="\r\n     ")
+  message(cat(paste0("\033[97;", 40, "m","\r\nThe following sequences had a length of <200 bp \r\nafter trimming and may require further attention:","\033[0m","\n     ",
+                     "\033[0;", 95, "m", seq.warnings.txt,"\033[0m","\n")))
   
+  message(cat(paste0("\033[97;", 40, "m","Export directory:", "\033[0m","\n",
+                     "\033[0;", 32, "m", " ", path,"\033[0m","\n")))
+  
+  
+  fname <- file.path(path, paste0("abif_fasta2_output___", unlist(strsplit(folder, '/'))[length(unlist(strsplit(folder, '/')))], sep=""))
+
   if(export_html == TRUE) {
-    fexport <- str_extract(output, '.*(?=\\.)')
-    fexport <- paste0(fexport, '_check.csv')
-    fexport <- file.path(path, fexport)
-    write.csv(file=fexport, checkseq.sub %>% select(-spark_raw))
+    fname_html <- paste0(fname, ".html", sep="")
+    suppressMessages(reactablefmtr::save_reactable_test(checkseq_react, fname_html))
+    openFileInOS(fname_html)
+    message(cat(paste0("\033[97;", 40, "m","HTML file successfully exported: ", "\033[0m", 
+                       "\033[0;", 32, "m", " ", unlist(strsplit(fname_html, '/'))[length(unlist(strsplit(fname_html, '/')))],"\033[0m","\n")))
   }
   
   if(export_html==TRUE) {
-    write.csv(file=file.path(path, 'V3-V6seq_check.csv'), checkseq.sub %>% select(-spark_raw))
+    fname_csv <- paste0(fname, ".csv", sep="")
+    write.csv(file=fname_csv, checkseq.sub %>% select(-spark_raw))
+    message(cat(paste0("\033[97;", 40, "m","CSV file successfully exported: ", "\033[0m",
+                       "\033[0;", 32, "m", " ", unlist(strsplit(fname_csv, '/'))[length(unlist(strsplit(fname_csv, '/')))],"\033[0m","\n")))
   }
   
   #export trimmed sequences in FASTA file
-  if(export_fasta == TRUE & reversecomp==FALSE) {
+  if(export_fasta == TRUE) {
+    fname_fasta <- paste0(fname, ".fasta", sep="")
     write.fasta(sequences=trimlist, names=abif_files, as.string=TRUE, nbchar = 1000,
-                file.out=fname_out)
+                file.out=fname_fasta)
+    message(cat(paste0("\033[97;", 40, "m","FASTA file successfully exported: ", "\033[0m",
+                       "\033[0;", 32, "m", " ", unlist(strsplit(fname_fasta, '/'))[length(unlist(strsplit(fname_fasta, '/')))],"\033[0m","\n")))
+    
   }
-  else if(export_fasta == TRUE & reversecomp==TRUE) {
-    write.fasta(sequences=as.list(paste(Biostrings::reverseComplement(DNAStringSet(unlist(trimlist.man))))), names=abif_files, as.string=TRUE, nbchar = 1000,
-                file.out=fname_out)
-  }
+  if(export_fasta_revcomp==TRUE) {
+    fname_fasta_revcomp <- paste0(fname, "_revcomp.fasta", sep="")
+    suppressWarnings({
+      write.fasta(sequences=as.list(paste(Biostrings::reverseComplement(DNAStringSet(unlist(trimlist))))), names=abif_files, as.string=TRUE, nbchar = 1000,
+                file.out=fname_fasta_revcomp)
+    message(cat(paste0("\033[97;", 40, "m","FASTA (reverse complement) file successfully exported: ", "\033[0m",
+                       "\033[0;", 32, "m", " ", unlist(strsplit(fname_fasta_revcomp, '/'))[length(unlist(strsplit(fname_fasta_revcomp, '/')))],"\033[0m","\n")))
+  })
+    }
   #write.csv(file="fails.csv",failseq)
-  
 }
