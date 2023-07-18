@@ -71,7 +71,7 @@ if(paste(get_os())=="osx-mac"){
   message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is = ", paste(get_os()), "\033[0m", "\n")))
   vsearch.path <- file.path(new_lib_path,"NCBI_databases/vsearch-2.23.0_macos")
  }
-if(paste(get_os())=="linux" & identical(usearch_files, character(0))){
+if(paste(get_os())=="linux"){
   message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is = ", paste(get_os()), "\033[0m", "\n")))
   vsearch.path <- file.path(new_lib_path,"NCBI_databases/vsearch-2.23.0")
 }
