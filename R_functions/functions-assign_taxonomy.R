@@ -586,7 +586,8 @@ message(cat(paste0("\033[97;", 40, "m","HTML file exported:", "\033[0m",
 if(export_csv==TRUE) {
   write.csv(merged.df3, file=paste("output/assign_taxonomy_output_PASS___", unlist(strsplit(folder, '/'))[length(unlist(strsplit(folder, '/')))],".csv", sep=""))
   message(cat(paste0("\033[97;", 40, "m","CSV file exported:", "\033[0m",
-                     "\033[0;", 32, "m", " ", file.path(path, paste("output/assign_taxonomy_output_PASS___", unlist(strsplit(folder, '/'))[length(unlist(strsplit(folder, '/')))], ".csv", sep="")),"\033[0m")))
+                     "\033[0;", 32, "m", " ", file.path(path, paste("output/assign_taxonomy_output_PASS___", unlist(strsplit(folder, '/'))[length(unlist(strsplit(folder, '/')))], ".csv", sep="")),"\033[0m", 
+                     "\033[0;", 31, "m", "  <--- Input for Step 3: 'make_library'","\033[0m")))
 }
 }
 
