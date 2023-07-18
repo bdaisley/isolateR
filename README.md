@@ -23,16 +23,15 @@ source("https://raw.githubusercontent.com/bdaisley/isolateR/main/R_functions/fun
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 #Process and quality filter <code>.ab1</code> files of interest
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-abif_fasta2(folder="C:/bdaisley/sanger_files/2023_07_06",  
-            export_html=TRUE,
-            export_csv=TRUE,
-            export_fasta=TRUE,
-            export_fasta_revcomp=FALSE,
-            verbose=TRUE,
-            exclude=NULL,
-            quality_cutoff = NULL,
-            sliding_window_size = 15,
-            date=NULL)
+abif_fasta2(folder="C:/bdaisley/sanger_files/2023_07_06",  # Folder containing .ab1 files
+            export_html=TRUE,                              # Interactive display of output
+            export_csv=TRUE,                               # Exports separate files for PASS/FAIL seqs, needed for next step 'assign_taxonomy'
+            export_fasta=TRUE,                             # Exports separate files for PASS/FAIL seqs
+            export_fasta_revcomp=FALSE,                    # Exports reverse complement of fasta sequences
+            verbose=TRUE,                                  # Toggle messages in R console on/off
+            quality_cutoff = NULL,                         # NULL by default implements auto cutoff (recommended)
+            sliding_window_size = 15,                      # For quality trimming steps. Default = 15 (recommended)
+            date=NULL)                                     # Set date "YY_MM_DD" format. If NULL, attempts to parse date from .ab1 file
 
 ```
 
@@ -49,11 +48,12 @@ source("https://raw.githubusercontent.com/bdaisley/isolateR/main/R_functions/fun
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 #Assign taxonomy
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-assign_taxonomy(folder="C:/bdaisley/sanger_files/2023_07_06", #path should be same as in Step 1
-                export_csv=TRUE,
-                verbose=TRUE,
-                skip_search=FALSE,
-                quick_search=TRUE)
+assign_taxonomy(folder="C:/bdaisley/sanger_files/2023_07_06",  # Path should be same as in Step 1 above
+                export_csv=TRUE,                               # Exports taxonomic assignment CSV file, needed for input of next step 'make_library'
+                verbose=TRUE,                                  # Toggle messages in R console on/off
+                skip_search=FALSE,                             # FALSE by default. If TRUE, skips database searching step (requires presence of output files from previous run)
+                quick_search=TRUE,                             # TRUE for convenience/speed in this example. FALSE by default, which performs comprehensive database searching (recommended for confident taxonomy) 
+                add_fungi_db=FALSE)                            # Set TRUE if any .ab1 files contain ITS sequences. FALSE by default, which only searches against NCBI bacterial 16S rRNA database
 
 ```
 
@@ -66,9 +66,9 @@ source("https://raw.githubusercontent.com/bdaisley/isolateR/main/R_functions/fun
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 #Make new library file
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-make_library(new_lib_csv="C:/bdaisley/sanger_files/2023_07_06/output/assign_taxonomy_output_PASS___2023_07_06.csv",
-             old_lib_csv=NULL,
-             include_warnings=FALSE)
+make_library(new_lib_csv="C:/bdaisley/sanger_files/2023_07_06/output/assign_taxonomy_output_PASS___2023_07_06.csv",  # Output .csv file from 'assign_taxonomy' in Step 2 above. Note: input is a file, not a folder.
+             old_lib_csv=NULL,                                                                                       # If adding to existing library, provide a previously generated 'make_library' .csv output file. 
+             include_warnings=FALSE)                                                                                 # Set to TRUE to keep sequences with poor alignment warnings from 'assign_taxonomy' in Step 2 above. FALSE by default.
 ```
 
 Inspect data via CSV files and HTML interactive [reactable](https://github.com/glin/reactable) output (see below)
