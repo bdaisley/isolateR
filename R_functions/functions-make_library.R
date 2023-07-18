@@ -399,14 +399,14 @@ message(cat(paste0("\033[97;", 40, "m","Export directory:", "\033[0m",
                    "\033[0;", 32, "m", " ", file.path(new_lib_path), "\033[0m","\n")))
 
 message(cat(paste0("\033[97;", 40, "m","HTML file exported:", "\033[0m",
-                   "\033[0;", 32, "m", file.path(new_lib_path, paste(" make_library_output___", new_lib_folder2, ".html", sep="")),"\033[0m")))
+                   "\033[0;", 32, "m", " ", file.path(new_lib_path, paste("make_library_output___", new_lib_folder2, ".html", sep="")),"\033[0m")))
 
 if(is.null(old_lib_csv)==FALSE){
   message(cat(paste0("\033[97;", 40, "m","Combined libary exported:", "\033[0m",
-                     "\033[0;", 32, "m", file.path(new_lib_path, paste(" make_library_output___", new_lib_folder2, ".csv", sep="")),"\033[0m")))
+                     "\033[0;", 32, "m", " ", file.path(new_lib_path, paste("make_library_output___", new_lib_folder2, ".csv", sep="")),"\033[0m")))
 } else {
   message(cat(paste0("\033[97;", 40, "m","New libary exported:", "\033[0m",
-                     "\033[0;", 32, "m", file.path(new_lib_path, paste(" make_library_output___", new_lib_folder2, ".csv", sep="")),"\033[0m")))
+                     "\033[0;", 32, "m", " ", file.path(new_lib_path, paste("make_library_output___", new_lib_folder2, ".csv", sep="")),"\033[0m")))
 }
 
 } #end of function
