@@ -1,4 +1,9 @@
 
+new_lib_csv="C:/bdaisley/sanger_files/2023_07_15/output/assign_taxonomy_output_PASS___2023_07_15.csv"
+include_warnings=FALSE
+old_lib_csv="C:/bdaisley/sanger_files/2023_07_15/output/make_library_output___2023_07_15.csv"
+
+
 make_library <- function(new_lib_csv=NULL,
                          old_lib_csv=NULL,
                          include_warnings=FALSE,
@@ -85,14 +90,14 @@ if(paste(get_os())=="linux"){
 message(cat(paste0("\n", "\033[0;", 32, "m","Staging files for de-replication", "\033[0m", "\n")))
 
 if(include_warnings == TRUE){
-  write.csv(new_lib_file, file=paste("make_library_output___", new_lib_folder2, ".csv", sep=""))
-  new_lib_file <- read.csv(paste("make_library_output___", new_lib_folder2, ".csv", sep=""), row.names = 1)
-  new_lib_file_path <- paste("make_library_output___", new_lib_folder2, ".csv", sep="")
+  write.csv(new_lib_file, file=paste("make_library_output_temp___", new_lib_folder2, ".csv", sep=""))
+  new_lib_file <- read.csv(paste("make_library_output_temp___", new_lib_folder2, ".csv", sep=""), row.names = 1)
+  new_lib_file_path <- paste("make_library_output_temp___", new_lib_folder2, ".csv", sep="")
 } else {
   new_lib_file <- new_lib_file %>% filter(warning=="")
-  write.csv(new_lib_file, file=paste("make_library_output___", new_lib_folder2, ".csv", sep=""))
-  new_lib_file <- read.csv(paste("make_library_output___", new_lib_folder2, ".csv", sep=""), row.names = 1)
-  new_lib_file_path <- paste("make_library_output___", new_lib_folder2, ".csv", sep="")
+  write.csv(new_lib_file, file=paste("make_library_output_temp___", new_lib_folder2, ".csv", sep=""))
+  new_lib_file <- read.csv(paste("make_library_output_temp___", new_lib_folder2, ".csv", sep=""), row.names = 1)
+  new_lib_file_path <- paste("make_library_output_temp___", new_lib_folder2, ".csv", sep="")
   }
 
 make_fasta(new_lib_file_path, col_names="filename", col_seqs="query_seq") # exports as "output.fasta"
@@ -134,6 +139,7 @@ merged.drep1 <- merged.drep %>% select(-warning) %>% #select(-phylum,-class,-ord
                     ifelse(phred_trim >=40 & phred_trim <50, 4,
                     ifelse(phred_trim >=30 & phred_trim <40, 3,
                     ifelse(phred_trim >= 20 & phred_trim <30, 2, 1)))))) %>%
+  mutate(species2 = species) %>%
   mutate(override_priority = 1) %>%
   arrange(desc(qual_bin)) %>% 
   arrange(desc(length)) %>% #filter(grepl("1015|HB534", filename))
@@ -155,10 +161,11 @@ merged.drep1.sub <- merged.drep1 %>% select(strain_group, date, filename,ID, spe
 
 #Combining old database if provided---------------------------------------------------------------
 
-
 if(is.null(old_lib_csv)==FALSE){
   old_lib_file <- read.csv(old_lib_csv, row.names=1)
   message(cat(paste0("\n", "\033[0;", 32, "m","Checking old/new library CSV files have same dimensions", "\033[0m")))
+  message(cat(paste0("\033[0;", 32, "m",paste("No. of columns in old library: ", ncol(old_lib_file), sep=""), "\033[0m")))
+  message(cat(paste0("\033[0;", 32, "m",paste("No. of columns in old library: ", ncol(merged.drep1.sub), sep=""), "\033[0m")))
   if(!ncol(old_lib_file)==ncol(merged.drep1.sub)) stop('Library file dimensions are not the same and require manual inspection.', call.=FALSE)
   message(cat(paste0("\033[0;", 32, "m","Same dimensions detected, proceeding...", "\033[0m", "\n")))
   #
@@ -394,7 +401,7 @@ new_library_reactable <- bscols(widths = c(1,10),
 
 htmltools::save_html(new_library_reactable, paste("make_library_output___", new_lib_folder2, ".html", sep=""))
 openFileInOS(paste("make_library_output___", new_lib_folder2, ".html", sep=""))
-write.csv(merged.drep1.sub, file=paste("make_library_output___", new_lib_folder2, ".csv", sep=""))
+
 
 message(cat(paste0("\033[97;", 40, "m","'make_library' steps completed. Exporting files...", "\033[0m")))
 
@@ -404,10 +411,13 @@ message(cat(paste0("\033[97;", 40, "m","Export directory:", "\033[0m",
 message(cat(paste0("\033[97;", 40, "m","HTML file exported:", "\033[0m",
                    "\033[0;", 32, "m", " ", file.path(new_lib_path, paste("make_library_output___", new_lib_folder2, ".html", sep="")),"\033[0m")))
 
+
 if(is.null(old_lib_csv)==FALSE){
+  write.csv(merged.drep1.sub, file=paste("make_library_output___", new_lib_folder2, ".csv", sep=""))
   message(cat(paste0("\033[97;", 40, "m","Combined libary exported:", "\033[0m",
                      "\033[0;", 32, "m", " ", file.path(new_lib_path, paste("make_library_output___", new_lib_folder2, ".csv", sep="")),"\033[0m")))
 } else {
+  write.csv(merged.drep1.sub, file=paste("make_library_output___", new_lib_folder2, ".csv", sep=""))
   message(cat(paste0("\033[97;", 40, "m","New libary exported:", "\033[0m",
                      "\033[0;", 32, "m", " ", file.path(new_lib_path, paste("make_library_output___", new_lib_folder2, ".csv", sep="")),"\033[0m")))
 }
