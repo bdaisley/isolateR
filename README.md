@@ -1,5 +1,7 @@
 # isolateR: sangerseq to taxonomy pipeline for automating microbial isolation workflows and seamless generation of novel strain libraries
 
+<p align="center"><img src="https://github.com/bdaisley/isolateR/blob/main/isolateR_overview.jpg?raw=true" width="1500"></p>
+
 ***Under condstruction - Use at your own risk***
 
 This repo contains R scripts for processing Sanger sequencing <code>.ab1</code> files, and for generating descriptive statistic tables regarding the QC steps implemented.
@@ -10,7 +12,7 @@ Expected input:
 
 
 ## Quick start
-### Step 1: 'abif_fasta2'
+### Step 1: <code>abif_fasta2</code>
 ```r
 #Source the following function from this repository
 source("https://raw.githubusercontent.com/bdaisley/isolateR/main/R_functions/functions-abif_fasta2.R")
@@ -35,11 +37,11 @@ abif_fasta2(folder="C:/bdaisley/sanger_files/2023_07_06",
 ```
 
 Inspect data via CSV files (containing pass/fail sequences) and HTML interactive [reactable](https://github.com/glin/reactable) output (see below)
+isolateR_step1_output.gif
+<img src="https://github.com/bdaisley/isolateR/blob/main/isolateR_step1_output.gif?raw=true" align="center" />
 
-<img src="https://github.com/bdaisley/isolateR/blob/main/sangerseq2taxonomy.gif?raw=true" align="center" />
 
-
-### Step 2: 'assign_taxonomy'
+### Step 2: <code>assign_taxonomy</code>
 ```r
 #Source the following function from this repository
 source("https://raw.githubusercontent.com/bdaisley/isolateR/main/R_functions/functions-assign_taxonomy.R")
@@ -55,7 +57,7 @@ assign_taxonomy(folder="C:/bdaisley/sanger_files/2023_07_06", #path should be sa
 
 ```
 
-### Step 3: 'make_library'
+### Step 3: <code>make_library</code>
 ```r
 #Source the following function from this repository
 source("https://raw.githubusercontent.com/bdaisley/isolateR/main/R_functions/functions-make_library.R")
@@ -71,8 +73,9 @@ make_library(new_lib_csv="C:/bdaisley/sanger_files/2023_07_06/output/assign_taxo
 
 Inspect data via CSV files and HTML interactive [reactable](https://github.com/glin/reactable) output (see below)
 
-<img src="https://github.com/bdaisley/sangerseq2taxonomy/blob/main/sangerseq2taxonomy_step3.gif?raw=true" align="center" />
+<img src="https://github.com/bdaisley/isolateR/blob/main/isolateR_step3_output.gif?raw=true" align="center" />
 
 
 
-More examples to come on usage of function...
+More examples on usage of functions to come...
+
