@@ -1,4 +1,4 @@
-# isolateR: sangerseq to taxonomy pipeline for automating microbial isolation workflows and seamless generation of novel strain libraries
+## isolateR: sangerseq to taxonomy pipeline for automating microbial isolation workflows and seamless generation of novel strain libraries
 
 <p align="center"><img src="https://github.com/bdaisley/isolateR/blob/main/isolateR_overview.jpg?raw=true" width="1500"></p>
 
