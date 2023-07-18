@@ -24,8 +24,7 @@ make_library <- function(new_lib_csv=NULL,
   library(reactablefmtr)
   library(pander)
   library(crosstalk)
-
-  
+ 
 #------------------------------------------------- functions
     #Source "make_fasta" command to allow for CSV -> FASTA format conversion
     #make_fasta(csv_file=NULL,col_names="ID",col_seqs="Sequence")
