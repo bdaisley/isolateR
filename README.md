@@ -2,7 +2,7 @@
 
 <p align="center"><img src="https://github.com/bdaisley/isolateR/blob/main/isolateR_overview.jpg?raw=true" width="1500"></p>
 
-***Under condstruction - Use at your own risk***
+***Under construction - Use at your own risk***
 
 This repo contains R scripts for processing Sanger sequencing <code>.ab1</code> files, and for generating descriptive statistic tables regarding the QC steps implemented.
 
