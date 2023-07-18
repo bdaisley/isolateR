@@ -10,36 +10,69 @@ Expected input:
 
 
 ## Quick start
-Step 1: Source the following function from this repository
+### Step 1: 'abif_fasta2'
 ```r
+#Source the following function from this repository
 source("https://raw.githubusercontent.com/bdaisley/sangerseq2taxonomy/main/R_functions/functions-abif_fasta2.R")
+
+#Copy  path of the folder where <code>.ab1</code> files are located.
+#Example on a Windows-based system: "C:/bdaisley/sanger_files/2023_07_15"   # Ensure only forward slashes (/) in path
+
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+#Process and quality filter <code>.ab1</code> files of interest
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+abif_fasta2(folder="C:/bdaisley/sanger_files/2023_07_15",  
+            export_html=TRUE,
+            export_csv=TRUE,
+            export_fasta=TRUE,
+            export_fasta_revcomp=FALSE,
+            verbose=TRUE,
+            exclude=NULL,
+            quality_cutoff = NULL,
+            sliding_window_size = 15,
+            date=NULL)
+
 ```
-Step 2: Set working paths to where <code>.ab1</code> files are located. Example on a Windows-based system:
-```r
-sanger.path <- "C:/Users/Brendan/Documents/Sanger_sequencing_results/2023_07_06"
-```
-Step 3: Run function of interest to process <code>.ab1</code> files
-```r
-abif_fasta2(folder=sanger.path,
-	   export_csv=TRUE,
-	   export_html=TRUE,
-	   export_fasta=TRUE,
-	   export_fasta_revcomp=TRUE,
-	   quality_cutoff=25,
-	   sliding_window_size=15,
-	   verbose=TRUE)
-```
-Step 4: Inspect data via interactive reactable output
+
+Inspect data via CSV files (containing pass/fail sequences) and HTML interactive [reactable](https://github.com/glin/reactable) output (see below)
 
 <img src="https://github.com/bdaisley/sangerseq2taxonomy/blob/main/sangerseq2taxonomy.gif?raw=true" align="center" />
 
-Step 4: Assign taxonomy
+
+### Step 2: 'assign_taxonomy'
 ```r
+#Source the following function from this repository
 source("https://raw.githubusercontent.com/bdaisley/sangerseq2taxonomy/main/R_functions/functions-assign_taxonomy.R")
 
-assign_taxonomy(folder=sanger.path,
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+#Assign taxonomy
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+assign_taxonomy(folder="C:/bdaisley/sanger_files/2023_07_15", #path should be same as in Step 1
                 export_csv=TRUE,
-                verbose=TRUE)
+                verbose=TRUE,
+                skip_search=FALSE,
+                quick_search=TRUE)
+
 ```
 
-More to come on automated classification of taxonomy...
+### Step 3: 'make_library'
+```r
+#Source the following function from this repository
+source("https://raw.githubusercontent.com/bdaisley/sangerseq2taxonomy/main/R_functions/functions-make_library.R")
+
+#Note: The input file to make a new library should be the PASS version of the 'assign_taxonomy' CSV output from Step 2
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+#Make new library file
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+make_library(new_lib_csv="C:/bdaisley/sanger_files/2023_07_15/output/assign_taxonomy_output_PASS___2023_07_15.csv",
+             old_lib_csv=NULL,
+             include_warnings=FALSE)
+```
+
+Inspect data via CSV files and HTML interactive [reactable](https://github.com/glin/reactable) output (see below)
+
+<img src="https://github.com/bdaisley/sangerseq2taxonomy/blob/main/sangerseq2taxonomy_step3.gif?raw=true" align="center" />
+
+
+
+More examples to come on usage of function...
