@@ -477,7 +477,7 @@ abif_fasta2 <- function(folder=NULL,
                      "\033[0;", 32, "m", " ", file.path(path, "output"), "\033[0m","\n")))
   
   suppressWarnings(dir.create(file.path(path, "output")))
-  fname <- file.path(path,"output", paste0("abif_fasta2_output___", unlist(strsplit(folder, '/'))[length(unlist(strsplit(folder, '/')))], sep=""))
+  fname <- file.path(path,"output", paste0("abif_fasta2_output_PASS+FAIL___", unlist(strsplit(folder, '/'))[length(unlist(strsplit(folder, '/')))], sep=""))
   fname_pass <- file.path(path,"output", paste0("abif_fasta2_output_PASS___", unlist(strsplit(folder, '/'))[length(unlist(strsplit(folder, '/')))], sep=""))
   fname_fail <- file.path(path,"output", paste0("abif_fasta2_output_FAIL___", unlist(strsplit(folder, '/'))[length(unlist(strsplit(folder, '/')))], sep=""))
   checkseq.sub.pass <- checkseq.sub %>% select(-spark_raw) %>% filter(!filename %in% seq.warnings)
