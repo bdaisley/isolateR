@@ -541,6 +541,11 @@ fname_html <- file.path(path, paste("output/assign_taxonomy_output_PASS___", unl
 suppressMessages(reactablefmtr::save_reactable_test(merged.df3_react, fname_html))
 openFileInOS(fname_html)
 
+#Clean up files
+unlink(file.path(path,uc.out)) #Remove UC file
+unlink(file.path(path,b6.out)) #Remove B6 file
+
+#Export messages
 message(cat(paste0("\033[97;", 40, "m","'assign_taxonomy' steps completed. Exporting files...", "\033[0m")))
 
 message(cat(paste0("\033[97;", 40, "m","HTML file exported:", "\033[0m",
