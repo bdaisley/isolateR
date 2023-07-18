@@ -1,4 +1,4 @@
-# sangerseq2taxonomy
+# isolateR: sangerseq to taxonomy pipeline for automating microbial isolation workflows and seamless generation of novel strain libraries
 
 ***Under condstruction - Use at your own risk***
 
@@ -13,7 +13,7 @@ Expected input:
 ### Step 1: 'abif_fasta2'
 ```r
 #Source the following function from this repository
-source("https://raw.githubusercontent.com/bdaisley/sangerseq2taxonomy/main/R_functions/functions-abif_fasta2.R")
+source("https://raw.githubusercontent.com/bdaisley/isolateR/main/R_functions/functions-abif_fasta2.R")
 
 #Copy  path of the folder where <code>.ab1</code> files are located.
 #Example on a Windows-based system: "C:/bdaisley/sanger_files/2023_07_06"   # Ensure only forward slashes (/) in path
@@ -36,13 +36,13 @@ abif_fasta2(folder="C:/bdaisley/sanger_files/2023_07_06",
 
 Inspect data via CSV files (containing pass/fail sequences) and HTML interactive [reactable](https://github.com/glin/reactable) output (see below)
 
-<img src="https://github.com/bdaisley/sangerseq2taxonomy/blob/main/sangerseq2taxonomy.gif?raw=true" align="center" />
+<img src="https://github.com/bdaisley/isolateR/blob/main/sangerseq2taxonomy.gif?raw=true" align="center" />
 
 
 ### Step 2: 'assign_taxonomy'
 ```r
 #Source the following function from this repository
-source("https://raw.githubusercontent.com/bdaisley/sangerseq2taxonomy/main/R_functions/functions-assign_taxonomy.R")
+source("https://raw.githubusercontent.com/bdaisley/isolateR/main/R_functions/functions-assign_taxonomy.R")
 
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 #Assign taxonomy
@@ -58,7 +58,7 @@ assign_taxonomy(folder="C:/bdaisley/sanger_files/2023_07_06", #path should be sa
 ### Step 3: 'make_library'
 ```r
 #Source the following function from this repository
-source("https://raw.githubusercontent.com/bdaisley/sangerseq2taxonomy/main/R_functions/functions-make_library.R")
+source("https://raw.githubusercontent.com/bdaisley/isolateR/main/R_functions/functions-make_library.R")
 
 #Note: The input file to make a new library should be the PASS version of the 'assign_taxonomy' CSV output from Step 2
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
