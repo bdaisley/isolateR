@@ -62,17 +62,19 @@ df_to_fasta <- function(df= NULL, name_col = NULL, seq_col=NULL ){
 #------------------------------------------------- 
 
 if(skip_search==FALSE){
+  
+#!file.exists(file.path(path, 'output/NCBI_databases/bacteria.16SrRNA.fna.gz'))
+  #!file.exists(file.path(path, 'output/NCBI_databases/bacteria.16SrRNA.fna.gz'))
+  
 #:::::::::::::::::::::::::::::::::
 #Download NCBI 16S rRNA database
 #:::::::::::::::::::::::::::::::::
-
-if(!file.exists(file.path(path, 'output/NCBI_databases/bacteria.16SrRNA.fna.gz'))){
-  download.file("https://ftp.ncbi.nlm.nih.gov/refseq/TargetedLoci/Bacteria/bacteria.16SrRNA.fna.gz", file.path(path, 'output/NCBI_databases/bacteria.16SrRNA.fna.gz'), mode='wb')
-  R.utils::gunzip(file.path(path,"output/NCBI_databases/bacteria.16SrRNA.fna.gz"), remove = FALSE, overwrite=TRUE)
-  message(cat(paste0("\n", "\033[0;", 32, "m","Download complete for NCBI Bacterial 16S rRNA database.", "\033[0m", "\n")))
-  db.fasta <- "output/NCBI_databases/bacteria.16SrRNA.fna"
   
   if(add_fungi_db == TRUE){
+    download.file("https://ftp.ncbi.nlm.nih.gov/refseq/TargetedLoci/Bacteria/bacteria.16SrRNA.fna.gz", file.path(path, 'output/NCBI_databases/bacteria.16SrRNA.fna.gz'), mode='wb')
+    R.utils::gunzip(file.path(path,"output/NCBI_databases/bacteria.16SrRNA.fna.gz"), remove = FALSE, overwrite=TRUE)
+    message(cat(paste0("\n", "\033[0;", 32, "m","Download complete for NCBI Bacterial 16S rRNA database.", "\033[0m", "\n")))
+    db.fasta <- "output/NCBI_databases/bacteria.16SrRNA.fna"
     message(cat(paste0("\n", "\033[0;", 32, "m","Adding ITS sequences.", "\033[0m", "\n")))
     download.file("https://ftp.ncbi.nlm.nih.gov/refseq/TargetedLoci/Fungi/fungi.ITS.fna.gz", file.path(path, 'output/NCBI_databases/fungi.ITS.fna.gz'), mode='wb')
     R.utils::gunzip(file.path(path,"output/NCBI_databases/fungi.ITS.fna.gz"), remove = FALSE, overwrite=TRUE)
@@ -85,10 +87,14 @@ if(!file.exists(file.path(path, 'output/NCBI_databases/bacteria.16SrRNA.fna.gz')
                         names=names(db.concat),
                         as.string=TRUE, nbchar = 1000, file.out=file.path(path,"output/NCBI_databases/16S_ITS_concat.fna"))
     #Set path
-    db.fasta <- "output/NCBI_databases/16S_ITS_concat.fna"
-      }
+    db.fasta <- file.path("output/NCBI_databases/16S_ITS_concat.fna")
+  }  else {
+    download.file("https://ftp.ncbi.nlm.nih.gov/refseq/TargetedLoci/Bacteria/bacteria.16SrRNA.fna.gz", file.path(path, 'output/NCBI_databases/bacteria.16SrRNA.fna.gz'), mode='wb')
+    R.utils::gunzip(file.path(path,"output/NCBI_databases/bacteria.16SrRNA.fna.gz"), remove = FALSE, overwrite=TRUE)
+    message(cat(paste0("\n", "\033[0;", 32, "m","Download complete for NCBI Bacterial 16S rRNA database.", "\033[0m", "\n")))
+    db.fasta <- file.path("output/NCBI_databases/bacteria.16SrRNA.fna")
   }
-
+  
 
 gz_files <- stringr::str_subset(files, 'vsearch')
 
@@ -116,17 +122,25 @@ get_os <- function(){
   tolower(os)
 }
 
-if(paste(get_os())=="windows" & identical(vsearch_files, character(0))){
-  message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is ---> Windows <---", "\033[0m", "\n")))
-  download.file("https://github.com/torognes/vsearch/releases/download/v2.23.0/vsearch-2.23.0-win-x86_64.zip", file.path(path, 'output/NCBI_databases/vsearch-2.23.0-win-x86_64.zip'), mode='wb')
-  unzip(file.path(path,"output/NCBI_databases/vsearch-2.23.0-win-x86_64.zip"),  exdir=file.path(path,"output/NCBI_databases"))
-  file.copy(file.path(path, "output/NCBI_databases/vsearch-2.23.0-win-x86_64/bin/vsearch.exe"), file.path(path, "output/NCBI_databases/vsearch-2.23.0.exe"), overwrite=TRUE)
-  unlink(file.path(path,"output/NCBI_databases/vsearch-2.23.0-win-x86_64"),recursive=TRUE)
-  message(cat(paste0("\n", "\033[0;", 32, "m","Download complete.", "\033[0m", "\n")))
-  vsearch.path <- file.path(path,"output/NCBI_databases/vsearch-2.23.0.exe")
+if(paste(get_os())=="windows"){
+  if(identical(vsearch_files, character(0))){
+    message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is ---> Windows-based <---", "\033[0m", "\n")))
+    download.file("https://github.com/torognes/vsearch/releases/download/v2.23.0/vsearch-2.23.0-win-x86_64.zip", file.path(path, 'output/NCBI_databases/vsearch-2.23.0-win-x86_64.zip'), mode='wb')
+    unzip(file.path(path,"output/NCBI_databases/vsearch-2.23.0-win-x86_64.zip"),  exdir=file.path(path,"output/NCBI_databases"))
+    file.copy(file.path(path, "output/NCBI_databases/vsearch-2.23.0-win-x86_64/bin/vsearch.exe"), file.path(path, "output/NCBI_databases/vsearch-2.23.0.exe"), overwrite=TRUE)
+    unlink(file.path(path,"output/NCBI_databases/vsearch-2.23.0-win-x86_64"),recursive=TRUE)
+    message(cat(paste0("\n", "\033[0;", 32, "m","Download complete.", "\033[0m", "\n")))
+    vsearch.path <- file.path(path,"output/NCBI_databases/vsearch-2.23.0.exe")
+  } else {
+    message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is ---> Windows-based <---", "\033[0m")))
+    message(cat(paste0("\033[0;", 32, "m","No additional download needed.", "\033[0m", "\n")))
+    vsearch.path <- file.path(path,"output/NCBI_databases/vsearch-2.23.0.exe")
+  }
+}
 
-if(paste(get_os())=="osx-mac" & identical(vsearch_files, character(0))){
-  message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is = ", paste(get_os()), "\033[0m", "\n")))
+if(paste(get_os())=="osx-mac"){
+  if(identical(vsearch_files, character(0))){
+  message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is ---> MacOS-based <---", "\033[0m", "\n")))
   download.file("https://github.com/torognes/vsearch/releases/download/v2.23.0/vsearch-2.23.0-macos-universal.tar.gz", file.path(path, 'output/NCBI_databases/vsearch-2.23.0-macos-universal.tar.gz'), mode='wb')
   #R.utils::gunzip(file.path(path,"output/NCBI_databases/vsearch-2.23.0-macos-universal.tar.gz"), remove = FALSE, overwrite=TRUE)
   untar(file.path(path,"output/NCBI_databases/vsearch-2.23.0-macos-universal.tar.gz"),  exdir=file.path(path,"output"))
@@ -134,16 +148,28 @@ if(paste(get_os())=="osx-mac" & identical(vsearch_files, character(0))){
   unlink(file.path(path,"output/NCBI_databases/vsearch-2.23.0-macos-universal"),recursive=TRUE)
   message(cat(paste0("\n", "\033[0;", 32, "m","Download complete.", "\033[0m", "\n")))
   vsearch.path <- file.path(path,"output/NCBI_databases/vsearch-2.23.0_macos")
+  } else {
+    message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is ---> MacOS-based <---", "\033[0m")))
+    message(cat(paste0("\033[0;", 32, "m","No additional download needed.", "\033[0m", "\n")))
+    vsearch.path <- file.path(path,"output/NCBI_databases/vsearch-2.23.0_macos")
+  }
 }
 
-if(paste(get_os())=="linux" & identical(vsearch_files, character(0))){
-  message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is = ", paste(get_os()), "\033[0m", "\n")))
-  download.file("https://github.com/torognes/vsearch/releases/download/v2.23.0/vsearch-2.23.0-linux-x86_64.tar.gz", file.path(path, 'output/NCBI_databases/vsearch-2.23.0-linux-x86_64.tar.gz'), mode='wb')
-  untar(file.path(path,"output/NCBI_databases/vsearch-2.23.0-linux-x86_64.tar.gz"),  exdir=file.path(path,"output"))
-  file.copy(file.path(path, "output/NCBI_databases/vsearch-2.23.0-linux-x86_64/bin/vsearch"), file.path(path, "output/NCBI_databases/vsearch-2.23.0"), overwrite=TRUE)
-  unlink(file.path(path,"output/NCBI_databases/vsearch-2.23.0-linux-x86_64"),recursive=TRUE)
-  message(cat(paste0("\n", "\033[0;", 32, "m","Download complete.", "\033[0m", "\n")))
-  vsearch.path <- file.path(path,"output/NCBI_databases/vsearch-2.23.0")
+if(paste(get_os())=="linux"){
+  if(identical(vsearch_files, character(0))){
+    message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is ---> Linux-based <---", "\033[0m", "\n")))
+    download.file("https://github.com/torognes/vsearch/releases/download/v2.23.0/vsearch-2.23.0-linux-x86_64.tar.gz", file.path(path, 'output/NCBI_databases/vsearch-2.23.0-linux-x86_64.tar.gz'), mode='wb')
+    untar(file.path(path,"output/NCBI_databases/vsearch-2.23.0-linux-x86_64.tar.gz"),  exdir=file.path(path,"output"))
+    file.copy(file.path(path, "output/NCBI_databases/vsearch-2.23.0-linux-x86_64/bin/vsearch"), file.path(path, "output/NCBI_databases/vsearch-2.23.0"), overwrite=TRUE)
+    unlink(file.path(path,"output/NCBI_databases/vsearch-2.23.0-linux-x86_64"),recursive=TRUE)
+    message(cat(paste0("\n", "\033[0;", 32, "m","Download complete.", "\033[0m", "\n")))
+    vsearch.path <- file.path(path,"output/NCBI_databases/vsearch-2.23.0")
+  } else {
+    message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is ---> Linux-based <---", "\033[0m")))
+    message(cat(paste0("\033[0;", 32, "m","No additional download needed.", "\033[0m", "\n")))
+    vsearch.path <- file.path(path,"output/NCBI_databases/vsearch-2.23.0")
+  }
+  
 }
 
 #::::::::::::
@@ -172,7 +198,7 @@ setwd(path)
 query.fasta <- paste0("output/abif_fasta2_output_PASS___", unlist(strsplit(folder, '/'))[length(unlist(strsplit(folder, '/')))],".fasta", sep="")
 #query.fasta <- "V3-V6seq.FASTA"
 #db.fasta <- "output/NCBI_databases/bacteria.16SrRNA.fna"
-db.fasta <- db.fasta
+#db.fasta <- db.fasta
 uc.out <- paste0("output/assign_taxonomy_output_PASS___", unlist(strsplit(folder, '/'))[length(unlist(strsplit(folder, '/')))],".uc", sep="")
 b6.out <- paste0("output/assign_taxonomy_output_PASS___", unlist(strsplit(folder, '/'))[length(unlist(strsplit(folder, '/')))],".b6o", sep="")
 #db.fasta <- file.path(path, "output/bacteria.16SrRNA.fna")
