@@ -8,7 +8,8 @@ assign_taxonomy <- function(folder=NULL,
   
   # function requirements------------------------------------------------------------
 #checking for required packages; installing those not yet installed
-if(require(dplyr)==FALSE) install.packages('dplyr')
+  suppressWarnings({
+    if(require(dplyr)==FALSE) install.packages('dplyr')
 if(require(stringr)==FALSE) install.packages('stringr')
 if(require(R.utils)==FALSE) install.packages('R.utils')
 if(require(rentrez)==FALSE) install.packages('rentrez')
@@ -36,7 +37,7 @@ library(pander)
 library(svMisc)
 library(Biostrings)
 library(seqinr)
-  
+  })
   
   
 #-------------------------------------------------

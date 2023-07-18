@@ -6,6 +6,8 @@ make_library <- function(new_lib_csv=NULL,
   
   # function requirements------------------------------------------------------------
   #checking for required packages; installing those not yet installed
+  
+  suppressWarnings({
   if(require(dplyr)==FALSE) install.packages('dplyr')
   if(require(stringr)==FALSE) install.packages('stringr')
   if(require(Biostrings)==FALSE) install.packages('Biostrings')
@@ -24,7 +26,8 @@ make_library <- function(new_lib_csv=NULL,
   library(reactablefmtr)
   library(pander)
   library(crosstalk)
- 
+    
+  })
 #------------------------------------------------- functions
     #Source "make_fasta" command to allow for CSV -> FASTA format conversion
     #make_fasta(csv_file=NULL,col_names="ID",col_seqs="Sequence")

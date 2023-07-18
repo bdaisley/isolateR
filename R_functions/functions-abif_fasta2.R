@@ -14,6 +14,7 @@ abif_fasta2 <- function(folder=NULL,
   
   # function requirements------------------------------------------------------------
   #checking for required packages; installing those not yet installed
+  suppressWarnings({
   if(require(dplyr)==FALSE) install.packages('dplyr')
   if(require(Biostrings)==FALSE){
     if (!require("BiocManager", quietly = TRUE))
@@ -54,7 +55,7 @@ abif_fasta2 <- function(folder=NULL,
   library(reactablefmtr)
   library(pander)
   library(dataui)
-  
+})
   # Reading files--------------------------------------------------------------------
   # Check folder path
   if(is.null(folder)) stop('Name of folder not supplied. Please check the execution script preamble to make sure it is entered correctly', call.=FALSE)
