@@ -28,7 +28,7 @@ make_library <- function(new_lib_csv=NULL,
 #------------------------------------------------- functions
     #Source "make_fasta" command to allow for CSV -> FASTA format conversion
     #make_fasta(csv_file=NULL,col_names="ID",col_seqs="Sequence")
-    source("https://raw.githubusercontent.com/bdaisley/sangerseq2taxonomy/main/R_functions/make_fasta.R")
+    source("https://raw.githubusercontent.com/bdaisley/isolateR/main/R_functions/make_fasta.R")
   
   #-------------------------------------------------
   #-------------------------------------------------
