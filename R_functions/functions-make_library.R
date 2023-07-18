@@ -1,9 +1,4 @@
 
-new_lib_csv="C:/bdaisley/sanger_files/2023_07_15/output/assign_taxonomy_output_PASS___2023_07_15.csv"
-include_warnings=FALSE
-old_lib_csv="C:/bdaisley/sanger_files/2023_07_15/output/make_library_output___2023_07_15.csv"
-
-
 make_library <- function(new_lib_csv=NULL,
                          old_lib_csv=NULL,
                          include_warnings=FALSE,
@@ -98,7 +93,7 @@ if(include_warnings == TRUE){
   write.csv(new_lib_file, file=paste("make_library_output_temp___", new_lib_folder2, ".csv", sep=""))
   new_lib_file <- read.csv(paste("make_library_output_temp___", new_lib_folder2, ".csv", sep=""), row.names = 1)
   new_lib_file_path <- paste("make_library_output_temp___", new_lib_folder2, ".csv", sep="")
-  }
+}
 
 make_fasta(new_lib_file_path, col_names="filename", col_seqs="query_seq") # exports as "output.fasta"
 output.fasta <- "output.fasta"
@@ -402,7 +397,13 @@ new_library_reactable <- bscols(widths = c(1,10),
 htmltools::save_html(new_library_reactable, paste("make_library_output___", new_lib_folder2, ".html", sep=""))
 openFileInOS(paste("make_library_output___", new_lib_folder2, ".html", sep=""))
 
+#Remove temp files
+unlink(file.path(new_lib_path,paste("make_library_output_temp___", new_lib_folder2, ".csv", sep=""))) #Remove temp CSV
+unlink(file.path(new_lib_path,paste("make_library_output_temp___", new_lib_folder2, ".drep", sep=""))) #Remove temp DREP
+unlink(file.path(new_lib_path,paste("make_library_output___", new_lib_folder2, ".drep", sep=""))) #Remove temp DREP
+unlink(file.path(new_lib_path,paste("make_library_output_temp___", new_lib_folder2, ".fasta", sep=""))) #Remove temp FASTA
 
+#Export messages
 message(cat(paste0("\033[97;", 40, "m","'make_library' steps completed. Exporting files...", "\033[0m")))
 
 message(cat(paste0("\033[97;", 40, "m","Export directory:", "\033[0m",
