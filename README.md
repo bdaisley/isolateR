@@ -16,12 +16,12 @@ Expected input:
 source("https://raw.githubusercontent.com/bdaisley/sangerseq2taxonomy/main/R_functions/functions-abif_fasta2.R")
 
 #Copy  path of the folder where <code>.ab1</code> files are located.
-#Example on a Windows-based system: "C:/bdaisley/sanger_files/2023_07_15"   # Ensure only forward slashes (/) in path
+#Example on a Windows-based system: "C:/bdaisley/sanger_files/2023_07_06"   # Ensure only forward slashes (/) in path
 
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 #Process and quality filter <code>.ab1</code> files of interest
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-abif_fasta2(folder="C:/bdaisley/sanger_files/2023_07_15",  
+abif_fasta2(folder="C:/bdaisley/sanger_files/2023_07_06",  
             export_html=TRUE,
             export_csv=TRUE,
             export_fasta=TRUE,
@@ -47,7 +47,7 @@ source("https://raw.githubusercontent.com/bdaisley/sangerseq2taxonomy/main/R_fun
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 #Assign taxonomy
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-assign_taxonomy(folder="C:/bdaisley/sanger_files/2023_07_15", #path should be same as in Step 1
+assign_taxonomy(folder="C:/bdaisley/sanger_files/2023_07_06", #path should be same as in Step 1
                 export_csv=TRUE,
                 verbose=TRUE,
                 skip_search=FALSE,
@@ -64,7 +64,7 @@ source("https://raw.githubusercontent.com/bdaisley/sangerseq2taxonomy/main/R_fun
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 #Make new library file
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-make_library(new_lib_csv="C:/bdaisley/sanger_files/2023_07_15/output/assign_taxonomy_output_PASS___2023_07_15.csv",
+make_library(new_lib_csv="C:/bdaisley/sanger_files/2023_07_06/output/assign_taxonomy_output_PASS___2023_07_06.csv",
              old_lib_csv=NULL,
              include_warnings=FALSE)
 ```
