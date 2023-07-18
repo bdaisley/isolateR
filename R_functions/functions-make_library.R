@@ -89,7 +89,8 @@ if(include_warnings == TRUE){
   new_lib_file <- read.csv(paste("make_library_output_temp___", new_lib_folder2, ".csv", sep=""), row.names = 1)
   new_lib_file_path <- paste("make_library_output_temp___", new_lib_folder2, ".csv", sep="")
 } else {
-  new_lib_file <- new_lib_file %>% filter(warning=="")
+  new_lib_file <- new_lib_file %>% filter(is.na(warning)==TRUE)
+  if(nrow(new_lib_file)==0)stop("There are no sequences after removing warning sequences. Set 'include_warnings=TRUE' to proceed", call.=FALSE)
   write.csv(new_lib_file, file=paste("make_library_output_temp___", new_lib_folder2, ".csv", sep=""))
   new_lib_file <- read.csv(paste("make_library_output_temp___", new_lib_folder2, ".csv", sep=""), row.names = 1)
   new_lib_file_path <- paste("make_library_output_temp___", new_lib_folder2, ".csv", sep="")
@@ -101,12 +102,13 @@ out.fasta <- paste0("make_library_output___", new_lib_folder2, ".fasta", sep="")
 out.drep <- paste0("make_library_output___", new_lib_folder2, ".drep", sep="")
 vsearch.path <- vsearch.path
 
-#-------------------------------------------------
+#-------------------------------------------------This works but misses some of the identical sequences with opposite side 5' and 3' overlaps...
+#system2(vsearch.path, paste(" --derep_prefix ", "output.fasta", " --output ", out.fasta, " --uc ", out.drep, " --sizein --sizeout", sep=""), stdout="", stderr="")
+#file.remove("output.fasta")
+#------------------------------------------------- Trying with global searching instead...
+system2(vsearch.path, paste(" --usearch_global ", output.fasta, " --db ", output.fasta, " --uc ", out.drep, " --id 0.7 --maxaccepts 0 --maxrejects 0 --top_hits_only --strand plus ", sep=""), stdout="", stderr="")
 
-#system2(vsearch.path, paste(" --derep_fulllength ", "output.fasta", " --output ", out.fasta, " --uc ", out.drep1, " --strand both --sizein --sizeout", sep=""), stdout="", stderr="")
-system2(vsearch.path, paste(" --derep_prefix ", "output.fasta", " --output ", out.fasta, " --uc ", out.drep, " --sizein --sizeout", sep=""), stdout="", stderr="")
-file.remove("output.fasta")
-#system2(vsearch.path, paste(" --derep_fulllength ", "output.fasta", " --output ", out.fasta, " --uc ", out.uc1, sep=""), stdout="", stderr="")
+
 
 #-------------------------------------------------
 #:::::::::::::::::
@@ -221,7 +223,7 @@ if(is.null(old_lib_csv)==FALSE){
                                               phred_trim, Ns, length, query_seq,
                                               phylum, class, order, family, genus, species, ref_strain,
                                               phylum_col, class_col, order_col, family_col, genus_col, species_col)
-  } #end of old library add-in
+  } #-----------end of old library add-in
 
 
 #merged.drep1 %>% group_by(grouping) %>% mutate(strain_group = last(filename))
