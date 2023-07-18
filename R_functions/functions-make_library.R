@@ -46,6 +46,37 @@ new_lib_file <- read.csv(new_lib, row.names = 1)
 setwd(new_lib_path)
 
 #-------------------------------------------------
+
+get_os <- function(){
+  sysinf <- Sys.info()
+  if (!is.null(sysinf)){
+    os <- sysinf['sysname']
+    if (os == 'Darwin')
+      os <- "osx-mac"
+  } else { ## mystery machine
+    os <- .Platform$OS.type
+    if (grepl("^darwin", R.version$os))
+      os <- "osx-mac"
+    if (grepl("linux-gnu", R.version$os))
+      os <- "linux"
+  }
+  tolower(os)
+}
+
+if(paste(get_os())=="windows"){
+  message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is ---> Windows <---", "\033[0m", "\n")))
+  vsearch.path <- file.path(new_lib_path,"NCBI_databases/vsearch-2.23.0.exe")
+}
+if(paste(get_os())=="osx-mac"){
+  message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is = ", paste(get_os()), "\033[0m", "\n")))
+  vsearch.path <- file.path(new_lib_path,"NCBI_databases/vsearch-2.23.0_macos")
+ }
+if(paste(get_os())=="linux" & identical(usearch_files, character(0))){
+  message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is = ", paste(get_os()), "\033[0m", "\n")))
+  vsearch.path <- file.path(new_lib_path,"NCBI_databases/vsearch-2.23.0")
+}
+
+
 #::::::::::::
 #Stage paths
 #::::::::::::
@@ -66,7 +97,7 @@ make_fasta(new_lib_file_path, col_names="filename", col_seqs="query_seq") # expo
 output.fasta <- "output.fasta"
 out.fasta <- paste0("make_library_output___", new_lib_folder2, ".fasta", sep="")
 out.drep <- paste0("make_library_output___", new_lib_folder2, ".drep", sep="")
-vsearch.path <- file.path(new_lib_path,"NCBI_databases/vsearch-2.23.0.exe")
+vsearch.path <- vsearch.path
 
 #-------------------------------------------------
 
@@ -140,7 +171,7 @@ if(is.null(old_lib_csv)==FALSE){
   output.fasta <- "output.fasta"
   out.fasta <- paste0("make_library_output_temp___", new_lib_folder2, ".fasta", sep="")
   out.drep <- paste0("make_library_output_temp___", new_lib_folder2, ".drep", sep="")
-  vsearch.path <- file.path(new_lib_path,"NCBI_databases/vsearch-2.23.0.exe")
+  vsearch.path <- vsearch.path
   
   #-------------------------------------------------
   
