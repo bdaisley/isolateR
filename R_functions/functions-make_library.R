@@ -2,12 +2,16 @@
 make_library <- function(new_lib_csv=NULL,
                          old_lib_csv=NULL,
                          include_warnings=FALSE,
+                         strain_group_cutoff = 0.999,
                          verbose=TRUE){
-  
+
   # function requirements------------------------------------------------------------
   #checking for required packages; installing those not yet installed
+
+  if(!is.numeric(strain_group_cutoff)) stop("'strain_group_cutoff' is not numeric. Set between 0-1 (1=no difference i.e., identical sequences)", call.=FALSE)
+  if(strain_group_cutoff <0 | strain_group_cutoff >1) stop("Wrong 'strain_group_cutoff' format. Set between 0-1 (1=no difference i.e., identical sequences)", call.=FALSE)
   
-  suppressWarnings({
+  suppressPackageStartupMessages({suppressWarnings({
   if(require(dplyr)==FALSE) install.packages('dplyr')
   if(require(stringr)==FALSE) install.packages('stringr')
   if(require(Biostrings)==FALSE) install.packages('Biostrings')
@@ -26,8 +30,8 @@ make_library <- function(new_lib_csv=NULL,
   library(reactablefmtr)
   library(pander)
   library(crosstalk)
-    
-  })
+    }) #end of suppressWarnings
+  }) #end of suppressPackageStartupMessages
 #------------------------------------------------- functions
     #Source "make_fasta" command to allow for CSV -> FASTA format conversion
     #make_fasta(csv_file=NULL,col_names="ID",col_seqs="Sequence")
@@ -106,18 +110,21 @@ vsearch.path <- vsearch.path
 #system2(vsearch.path, paste(" --derep_prefix ", "output.fasta", " --output ", out.fasta, " --uc ", out.drep, " --sizein --sizeout", sep=""), stdout="", stderr="")
 #file.remove("output.fasta")
 #------------------------------------------------- Trying with global searching instead...
-system2(vsearch.path, paste(" --usearch_global ", output.fasta, " --db ", output.fasta, " --uc ", out.drep, " --id 0.7 --maxaccepts 0 --maxrejects 0 --top_hits_only --strand plus ", sep=""), stdout="", stderr="")
-
-
+system2(vsearch.path, paste(" --usearch_global ", output.fasta, " --db ", output.fasta, " --uc_allhits --uc ", out.drep, " --id ", strain_group_cutoff, " --maxaccepts 0 --maxrejects 0 --strand plus ", sep=""), stdout="", stderr="")
+#readline
 
 #-------------------------------------------------
 #:::::::::::::::::
 #Organize results
 #:::::::::::::::::
-drep.results <- read.csv(out.drep, sep="\t", header = FALSE) %>% 
-  filter(V1 != "C") %>% 
-  mutate(V10 = ifelse(V10=="*", V9, V10)) %>% select(V9,V10) %>% #V10 is grouping column
-  dplyr::rename("filename" = "V9", "grouping" = "V10")
+drep.results <- read.csv(out.drep, sep="\t", header = FALSE) %>%
+  arrange(V2) %>% 
+  group_by(V9) %>% 
+  mutate(grouping = dplyr::first(V2)) %>%
+  select(V9, grouping) %>%
+  ungroup() %>% 
+  dplyr::rename("filename" = "V9") %>%
+  distinct(filename, .keep_all=TRUE)
 
 #:::::::::::::::::::::::::::::::::::::::::::::
 #Merge de-rep results with *new* lib file
@@ -147,7 +154,7 @@ merged.drep1 <- merged.drep %>% select(-warning) %>% #select(-phylum,-class,-ord
   mutate(species2 = dplyr::first(species2)) %>% 
   #mutate(species2 = first(species2)) %>% 
     ungroup() %>%
-  mutate(ref_strain = ifelse(grouping == filename, "yes", "no"))
+  mutate(ref_strain = ifelse(strain_group == filename, "yes", "no"))
 
 #Subset only columns of interest------------------------------------------------------------------
 
@@ -156,7 +163,12 @@ merged.drep1.sub <- merged.drep1 %>% select(strain_group, date, filename,ID, spe
                                             phylum, class, order, family, genus, species, ref_strain,
                                             phylum_col, class_col, order_col, family_col, genus_col, species_col)
 
-#Combining old database if provided---------------------------------------------------------------
+
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+#Combining OLD database if provided---------------------------------------------------------
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 if(is.null(old_lib_csv)==FALSE){
   old_lib_file <- read.csv(old_lib_csv, row.names=1)
@@ -181,18 +193,22 @@ if(is.null(old_lib_csv)==FALSE){
   
   #-------------------------------------------------
   
-  #system2(vsearch.path, paste(" --derep_fulllength ", "output.fasta", " --output ", out.fasta, " --uc ", out.drep1, " --strand both --sizein --sizeout", sep=""), stdout="", stderr="")
-  system2(vsearch.path, paste(" --derep_prefix ", "output.fasta", " --output ", out.fasta, " --uc ", out.drep, " --sizein --sizeout", sep=""), stdout="", stderr="")
-  file.remove("output.fasta")
-  #system2(vsearch.path, paste(" --derep_fulllength ", "output.fasta", " --output ", out.fasta, " --uc ", out.uc1, sep=""), stdout="", stderr="")
+  #system2(vsearch.path, paste(" --derep_prefix ", "output.fasta", " --output ", out.fasta, " --uc ", out.drep, " --sizein --sizeout", sep=""), stdout="", stderr="")
+  system2(vsearch.path, paste(" --usearch_global ", output.fasta, " --db ", output.fasta, " --uc ", out.drep, " --id ", strain_group_cutoff, " --maxaccepts 0 --maxrejects 0 --top_hits_only --strand plus ", sep=""), stdout="", stderr="")
+    file.remove("output.fasta")
+
   #-------------------------------------------------
   #:::::::::::::::::
   #Organize results
   #:::::::::::::::::
-  drep.results <- read.csv(out.drep, sep="\t", header = FALSE) %>% 
-    filter(V1 != "C") %>% 
-    mutate(V10 = ifelse(V10=="*", V9, V10)) %>% select(V9,V10) %>% #V10 is strain_group column
-    dplyr::rename("unique_filename" = "V9", "grouping" = "V10")
+    drep.results <- read.csv(out.drep, sep="\t", header = FALSE) %>%
+      arrange(V2) %>% 
+      group_by(V9) %>% 
+      mutate(grouping = dplyr::first(V2)) %>%
+      select(V9, grouping) %>%
+      ungroup() %>% 
+      dplyr::rename("unique_filename" = "V9") %>%
+      distinct(unique_filename, .keep_all=TRUE)
 
   #:::::::::::::::::::::::::::::::::::::::::::::
   #Merge de-rep results with *combined* lib file

@@ -14,8 +14,9 @@ abif_fasta2 <- function(folder=NULL,
   
   # function requirements------------------------------------------------------------
   #checking for required packages; installing those not yet installed
-  suppressWarnings({
+  suppressPackageStartupMessages({suppressWarnings({
   if(require(dplyr)==FALSE) install.packages('dplyr')
+  if(require(svMisc)==FALSE) install.packages('svMisc')
   if(require(Biostrings)==FALSE){
     if (!require("BiocManager", quietly = TRUE))
       install.packages("BiocManager")
@@ -38,6 +39,8 @@ abif_fasta2 <- function(folder=NULL,
   if(require(pander)==FALSE) install.packages('pander')
   if(require(remotes)==FALSE) install.packages('remotes')
   if(require(dataui)==FALSE){ remotes::install_github("timelyportfolio/dataui", upgrade="never")}
+
+    
   #  if (!require("BiocManager", quietly = TRUE))
   #    install.packages("remotes", update = FALSE)
   #  remotes::install_github("timelyportfolio/dataui", upgrade="never")
@@ -45,6 +48,7 @@ abif_fasta2 <- function(folder=NULL,
   
   #loading required packages
   library(dplyr)
+  library(svMisc)
   library(remotes)
   library(Biostrings)
   library(seqinr)
@@ -55,7 +59,9 @@ abif_fasta2 <- function(folder=NULL,
   library(reactablefmtr)
   library(pander)
   library(dataui)
-})
+  }) #end of suppressWarnings
+    }) #end suppressPackageStartupMessages
+  
   # Reading files--------------------------------------------------------------------
   # Check folder path
   if(is.null(folder)) stop('Name of folder not supplied. Please check the execution script preamble to make sure it is entered correctly', call.=FALSE)
@@ -112,8 +118,16 @@ abif_fasta2 <- function(folder=NULL,
   seq.warnings <- c()
   date.list <- c()
   
+  message(cat(paste0("\n", "\033[97;", 95, "m","Trimming ", paste(length(abif_files)) ," input files", "\033[0m", "\n")))
+  
+  prog.bar.x <- txtProgressBar(min = 0,      # Minimum value of the progress bar
+                       max = length(abif_files), # Maximum value of the progress bar
+                       style = 3,    # Progress bar style (also available style = 1 and style = 2)
+                       #width = 50,   # Progress bar width. Defaults to getOption("width")
+                       char = "=") 
+  
   for(i in 1:length(abif_files)){
-
+    
     fpath <- file.path(path, abif_files[i])
     
     # Basecalling
@@ -137,9 +151,10 @@ abif_fasta2 <- function(folder=NULL,
                                 str_pad(abif.pre@data['RUND.1'][[1]][[3]], 2, pad = "0"), sep="_"))
         }
     
-    message(cat(paste0("\033[97;", 40, "m","Trimming file: ", fpath, "\033[0m")))
-                       
-    abif1 <- tryCatch( 
+    if(verbose==TRUE){message(cat(paste0("\033[97;", 40, "m","Trimming file: ", fpath, "\033[0m")))}
+               
+    if(verbose==FALSE){      
+    invisible(capture.output(capture.output(abif1 <- tryCatch( 
       {
              SangerRead(readFeature           = "Forward Read",
                         readFileName          = fpath,
@@ -165,7 +180,34 @@ abif_fasta2 <- function(folder=NULL,
                              heightPerRow          = 200,
                              signalRatioCutoff     = 0.33)
     }
-    )
+    ), type="message"), type="output"))
+    } else {abif1 <- tryCatch( 
+      {
+        SangerRead(readFeature           = "Forward Read",
+                   readFileName          = fpath,
+                   geneticCode           = GENETIC_CODE,
+                   TrimmingMethod        = "M2",
+                   M1TrimmingCutoff      = NULL,
+                   M2CutoffQualityScore  = round(quality_cutoff_max*0.66),
+                   M2SlidingWindowSize   = sliding_window_size,
+                   baseNumPerRow         = 100,
+                   heightPerRow          = 200,
+                   signalRatioCutoff     = 0.33)
+      },
+      error = function(e) {
+        message(cat(paste0("\033[97;", 41, "m","First trimming attempt failed, retrying with 'sliding window = 1'", "\033[0m")))
+        SangerRead(readFeature           = "Forward Read",
+                   readFileName          = fpath,
+                   geneticCode           = GENETIC_CODE,
+                   TrimmingMethod        = "M2",
+                   M1TrimmingCutoff      = NULL,
+                   M2CutoffQualityScore  = round(quality_cutoff_max*0.66),
+                   M2SlidingWindowSize   = 1,
+                   baseNumPerRow         = 100,
+                   heightPerRow          = 200,
+                   signalRatioCutoff     = 0.33)
+      }
+    )}
     
     #start=abif1@QualityReport@trimmedStartPos
     abif1.start = NULL
@@ -183,61 +225,63 @@ abif_fasta2 <- function(folder=NULL,
     #                                                    start=abif1.start,
     #                                                    end=abif1.end))
     
-    message(cat(paste0("\033[97;", 40, "m","Searching for reverse primer endpoint: ", fpath, "\033[0m")))
+    if(verbose==TRUE){message(cat(paste0("\033[97;", 40, "m","Searching for reverse primer endpoint: ", fpath, "\033[0m")))}
     
-    abif3 <- DECIPHER::TrimDNA(DNAStringSet(paste(abif2)),
-                               leftPatterns="",
-                               rightPatterns="CTGCTGCCTYCCGTA",
-                               minWidth=1,
-                               maxDistance = 0.2,
-                               minOverlap = 15,
-                               allowInternal=TRUE,
-                               threshold = 1,
-                               maxAverageError = 1,
-                               maxAmbiguities = 0.5,
-                               type="both")
+    if(verbose==FALSE){      
+      invisible(capture.output(capture.output(abif3 <- DECIPHER::TrimDNA(DNAStringSet(paste(abif2)),
+                                                       leftPatterns="",
+                                                       rightPatterns="CTGCTGCCTYCCGTA",
+                                                       minWidth=1,
+                                                       maxDistance = 0.2,
+                                                       minOverlap = 15,
+                                                       allowInternal=TRUE,
+                                                       threshold = 1,
+                                                       maxAverageError = 1,
+                                                       maxAmbiguities = 0.5,
+                                                       type="both"), type="message"), type="output"))
+    } else {
+      abif3 <- DECIPHER::TrimDNA(DNAStringSet(paste(abif2)),
+                                 leftPatterns="",
+                                 rightPatterns="CTGCTGCCTYCCGTA",
+                                 minWidth=1,
+                                 maxDistance = 0.2,
+                                 minOverlap = 15,
+                                 allowInternal=TRUE,
+                                 threshold = 1,
+                                 maxAverageError = 1,
+                                 maxAmbiguities = 0.5,
+                                 type="both")
+    }
     
-    message(cat(paste0("\033[97;", 40, "m","Removing anything beyond reverse primer: ", fpath, "\033[0m")))
-    
-    
-    #print(abif3.end)
+    #This code chunk checks if trimmed sequence region looks okay before proceeding to next step
+    #----------------------------------------------------------------------------------------------
+    if(verbose==TRUE){message(cat(paste0("\033[97;", 40, "m","Removing anything beyond reverse primer: ", fpath, "\033[0m")))}
     abif3.end <- end(abif3[[1]]) + nchar("CTGCTGCCTYCCGTA")
     if(abif3.end > width(abif3[[1]])){abif3.end <- width(abif3[[1]])}
     if(width(abif3[[1]]) <= 300){abif3.end <- nchar(paste(abif2)) }
-    #if(width(abif3[[1]]) > end(abif3[[1]])){abif3.end <- end(abif3[[1]]) + nchar("CTGCTGCCTYCCGTA")}
-    #if(abif3.end > width(abif3[[1]])){abif3.end <- width(abif3[[1]])}
-    #if(width(abif3[[1]]) == end(abif3[[1]])){abif3.end <- end(abif3[[1]])}
-    #abif3.end <- end(abif3[[1]]) + nchar("CTGCTGCCTYCCGTA")
-    #abif3.end
     if(abif3.end > (abif1@QualityReport@trimmedFinishPos - abif1.start)){abif3.end <- (abif1@QualityReport@trimmedFinishPos - abif1.start)}
     if(abif3.end > 850){abif3.end <- 850}
-    message(cat(paste0("\033[97;", 40, "m","Trimming error check: 1 (Passed)", "\033[0m")))
+    if(verbose==TRUE){message(cat(paste0("\033[97;", 40, "m","Trimming error check: 1 (Passed)", "\033[0m")))}
     abif1.start.new <- abif1.start
     if(abif1.start <= 50 & abif3.end >= 51){abif1.start.new <- 50}
     #abif <- DNAStringSet(abif2, start=1, end = abif3.end) # equivalent to line below
     abif <- DNAStringSet(abif1@primarySeq, start=abif1.start.new, end = (abif1.start + abif3.end -1))
-    message(cat(paste0("\033[97;", 40, "m","Trimming error check: 2 (Passed)", "\033[0m")))
+    if(verbose==TRUE){message(cat(paste0("\033[97;", 40, "m","Trimming error check: 2 (Passed)", "\033[0m")))}
     abif.scores.xx <- abif1@QualityReport@qualityPhredScores[abif1.start.new:(abif1.start + abif3.end -1)]
-    message(cat(paste0("\033[97;", 40, "m","Trimming error check: 3 (Passed)", "\033[0m")))
-    
-    #print(abif1.start.new:(abif1.start + abif3.end -1))
-    #print((((abif1.start + abif3.end) -1)))
-    #print(850-(((abif1.start + abif3.end) -1)))
-    
+    if(verbose==TRUE){message(cat(paste0("\033[97;", 40, "m","Trimming error check: 3 (Passed)", "\033[0m")))}
     abif.scores <- c(rep(0.1, abif1.start.new), abif.scores.xx, rep(0.1, 850-(((abif1.start + abif3.end) -1))))
-    
     trim.start <- c(trim.start,abif1.start.new)
     trim.end <- c(trim.end,(abif1.start + abif3.end -1))
-
     rawseq <- as.character(paste(abif))
     
-    message(cat(paste0("\033[97;", 40, "m","Saving seq info: ", fpath, "\033[0m")))
+    if(verbose==TRUE){message(cat(paste0("\033[97;", 40, "m","Saving seq info: ", fpath, "\033[0m")))}
     
     if(verbose==TRUE){
       #print a message to mark progress
       msg <- sprintf('Processing "%s"', abif_files[i])
       message(msg)
     }
+  
 
     #:::::::::::::::::::::::::::::::
     # Save seq + quality scores
@@ -277,8 +321,12 @@ abif_fasta2 <- function(folder=NULL,
     # building trim check for export-------------------------------------------------
     checkseq <- rbind(checkseq, entry)
     #ntseq <- trimlist[[i]]
+    #svMisc::progress(((i/length(abif_files))*100),  max.value = 100, progress.bar = TRUE, init=10)
+    if(verbose==FALSE){setTxtProgressBar(prog.bar.x, i)}
+    Sys.sleep(0.01)
   }
   # end of file loop
+  Sys.sleep(0.02)
   
   #:::::::::::::::::::::::::::::::
   #List function for table below
@@ -469,11 +517,13 @@ abif_fasta2 <- function(folder=NULL,
  
   
   #building output file--------------------------------------------------------------
+  if(is.null(seq.warnings)==FALSE){
   seq.warnings.txt <- paste(seq.warnings, collapse="\r\n     ")
-  message(cat(paste0("\033[97;", 40, "m","\r\nThe following sequences failed with a length of <200 bp \r\nafter trimming:","\033[0m","\n     ",
+  message(cat(paste0("\033[97;", 40, "m","\r\nThe following sequences failed with a length of <200 bp after trimming:","\033[0m","\n     ",
                      "\033[0;", 95, "m", seq.warnings.txt,"\033[0m","\n")))
+  }
   
-  message(cat(paste0("\033[97;", 40, "m","Export directory:", "\033[0m",
+  message(cat(paste0("\n", "\033[97;", 40, "m","Export directory:", "\033[0m",
                      "\033[0;", 32, "m", " ", file.path(path, "output"), "\033[0m","\n")))
   
   suppressWarnings(dir.create(file.path(path, "output")))
@@ -489,7 +539,7 @@ abif_fasta2 <- function(folder=NULL,
     suppressMessages(reactablefmtr::save_reactable_test(checkseq_react, fname_html))
     openFileInOS(fname_html)
     message(cat(paste0("\033[97;", 40, "m","HTML file with [PASS + FAIL] sequences exported: ", "\033[0m", 
-                       "\033[0;", 32, "m", " ", unlist(strsplit(fname_html, '/'))[length(unlist(strsplit(fname_html, '/')))],"\033[0m", "\n")))
+                       "\033[0;", 32, "m", " ", file.path(path, unlist(strsplit(fname_html, '/'))[length(unlist(strsplit(fname_html, '/')))]),"\033[0m", "\n")))
   }
 
   #export CSV files----------------------------------------------------------------------
@@ -498,21 +548,22 @@ abif_fasta2 <- function(folder=NULL,
     fname_csv_pass <- paste0(fname_pass, ".csv", sep="")
     if(isEmpty(checkseq.sub.pass[1])){
       message(cat(paste0("\033[97;", 40, "m","CSV file with [PASS] sequences exported: ", "\033[0m",
-                         "\033[0;", 31, "m", " ", "No sequences passed, file not exported.","\033[0m")))
+                         "\033[0;", 32, "m", " ", "No sequences passed, file not exported.","\033[0m")))
       } else {
       write.csv(file=fname_csv_pass,checkseq.sub.pass)
       message(cat(paste0("\033[97;", 40, "m","CSV file with [PASS] sequences exported: ", "\033[0m",
-                         "\033[0;", 32, "m", " ", unlist(strsplit(fname_csv_pass, '/'))[length(unlist(strsplit(fname_csv_pass, '/')))],"\033[0m")))
+                         "\033[0;", 32, "m", " ", file.path(path, unlist(strsplit(fname_csv_pass, '/'))[length(unlist(strsplit(fname_csv_pass, '/')))]),"\033[0m",
+                         "\033[0;", 31, "m", "  <--- Required in Step 2: 'assign_taxonomy'","\033[0m")))
     }
     #FAIL sequences
     fname_csv_fail <- paste0(fname_fail, ".csv", sep="")
     if(isEmpty(checkseq.sub.fail[1])){
       message(cat(paste0("\033[97;", 40, "m","CSV file with [FAIL] sequences exported: ", "\033[0m",
-                         "\033[0;", 31, "m", " ", "No sequences failed, file not exported.","\033[0m", "\n")))
+                         "\033[0;", 32, "m", " ", "No sequences failed, file not exported.","\033[0m", "\n")))
     } else {
       write.csv(file=fname_csv_fail, checkseq.sub.fail)
       message(cat(paste0("\033[97;", 40, "m","CSV file with [FAIL] sequences exported: ", "\033[0m",
-                         "\033[0;", 32, "m", " ", unlist(strsplit(fname_csv_fail, '/'))[length(unlist(strsplit(fname_csv_fail, '/')))],"\033[0m", "\n")))
+                         "\033[0;", 32, "m", " ", file.path(path, unlist(strsplit(fname_csv_fail, '/'))[length(unlist(strsplit(fname_csv_fail, '/')))]),"\033[0m", "\n")))
     }
   }
 
@@ -523,28 +574,28 @@ abif_fasta2 <- function(folder=NULL,
     fname_fasta_pass <- paste0(fname_pass, ".fasta", sep="")
     if(isEmpty(checkseq.sub.pass[1])){
       message(cat(paste0("\033[97;", 40, "m","FASTA file with [PASS] sequences exported: ", "\033[0m",
-                         "\033[0;", 31, "m", " ", "No sequences failed, file not exported.","\033[0m")))
+                         "\033[0;", 32, "m", " ", "No sequences failed, file not exported.","\033[0m")))
     } else {
       trimlist_pass <- as.list((unlist(trimlist))[which(!checkseq.sub$filename %in% seq.warnings)])
       abif_files_pass <- abif_files[!abif_files %in% seq.warnings]
     write.fasta(sequences=trimlist_pass, names=abif_files_pass, as.string=TRUE, nbchar = 1000,
                 file.out=fname_fasta_pass)
     message(cat(paste0("\033[97;", 40, "m","FASTA file with [PASS] sequences exported: ", "\033[0m",
-                       "\033[0;", 32, "m", " ", unlist(strsplit(fname_fasta_pass, '/'))[length(unlist(strsplit(fname_fasta_pass, '/')))],"\033[0m")))
+                       "\033[0;", 32, "m", " ", file.path(path, unlist(strsplit(fname_fasta_pass, '/'))[length(unlist(strsplit(fname_fasta_pass, '/')))]),"\033[0m")))
     }
     #FAIL sequences
     #---------------
     fname_fasta_fail <- paste0(fname_fail, ".fasta", sep="")
     if(isEmpty(checkseq.sub.fail[1])){
       message(cat(paste0("\033[97;", 40, "m","FASTA file with [FAIL] sequences exported: ", "\033[0m",
-                         "\033[0;", 31, "m", " ", "No sequences failed, file not exported.","\033[0m")))
+                         "\033[0;", 32, "m", " ", "No sequences failed, file not exported.","\033[0m")))
     } else {
       trimlist_fail <- as.list((unlist(trimlist))[which(checkseq.sub$filename %in% seq.warnings)])
       abif_files_fail <- abif_files[abif_files %in% seq.warnings]
       write.fasta(sequences=trimlist_fail, names=abif_files_fail, as.string=TRUE, nbchar = 1000,
                   file.out=fname_fasta_fail)
       message(cat(paste0("\033[97;", 40, "m","FASTA file with [FAIL] sequences exported: ", "\033[0m",
-                         "\033[0;", 32, "m", " ", unlist(strsplit(fname_fasta_fail, '/'))[length(unlist(strsplit(fname_fasta_fail, '/')))],"\033[0m", "\n")))
+                         "\033[0;", 32, "m", " ", file.path(path, unlist(strsplit(fname_fasta_fail, '/'))[length(unlist(strsplit(fname_fasta_fail, '/')))]),"\033[0m", "\n")))
     }
   }
   if(export_fasta_revcomp==TRUE) {
@@ -553,7 +604,7 @@ abif_fasta2 <- function(folder=NULL,
     fname_fasta_revcomp_pass <- paste0(fname_pass, "_revcomp.fasta", sep="")
     if(isEmpty(checkseq.sub.pass[1])){
       message(cat(paste0("\033[97;", 40, "m","FASTA (reverse complement) file with [PASS] sequences exported: ", "\033[0m",
-                         "\033[0;", 31, "m", " ", "No sequences failed, file not exported.","\033[0m")))
+                         "\033[0;", 32, "m", " ", "No sequences failed, file not exported.","\033[0m")))
     } else {
       trimlist_pass <- as.list(paste(Biostrings::reverseComplement(DNAStringSet((unlist(trimlist))[which(!checkseq.sub$filename %in% seq.warnings)]))))
       abif_files_pass <- abif_files[!abif_files %in% seq.warnings]
@@ -562,14 +613,14 @@ abif_fasta2 <- function(folder=NULL,
                     file.out=fname_fasta_revcomp_pass)
       })
       message(cat(paste0("\033[97;", 40, "m","FASTA (reverse complement) file with [PASS] sequences exported: ", "\033[0m",
-                         "\033[0;", 32, "m", " ", unlist(strsplit(fname_fasta_revcomp_pass, '/'))[length(unlist(strsplit(fname_fasta_revcomp_pass, '/')))],"\033[0m")))
+                         "\033[0;", 32, "m", " ", file.path(path, unlist(strsplit(fname_fasta_revcomp_pass, '/'))[length(unlist(strsplit(fname_fasta_revcomp_pass, '/')))]),"\033[0m")))
     }
     #FAIL sequences
     #---------------
       fname_fasta_revcomp_fail <- paste0(fname_fail, "_revcomp.fasta", sep="")
       if(isEmpty(checkseq.sub.pass[1])){
         message(cat(paste0("\033[97;", 40, "m","FASTA (reverse complement) file with [FAIL] sequences exported: ", "\033[0m",
-                           "\033[0;", 31, "m", " ", "No sequences failed, file not exported.","\033[0m")))
+                           "\033[0;", 32, "m", " ", "No sequences failed, file not exported.","\033[0m")))
       } else {
         trimlist_fail <- as.list(paste(Biostrings::reverseComplement(DNAStringSet((unlist(trimlist))[which(checkseq.sub$filename %in% seq.warnings)]))))
         abif_files_fail <- abif_files[abif_files %in% seq.warnings]
@@ -578,7 +629,7 @@ abif_fasta2 <- function(folder=NULL,
                       file.out=fname_fasta_revcomp_fail)
         })
         message(cat(paste0("\033[97;", 40, "m","FASTA (reverse complement) file with [FAIL] sequences exported: ", "\033[0m",
-                           "\033[0;", 32, "m", " ", unlist(strsplit(fname_fasta_revcomp_fail, '/'))[length(unlist(strsplit(fname_fasta_revcomp_fail, '/')))],"\033[0m")))
+                           "\033[0;", 32, "m", " ", file.path(path, unlist(strsplit(fname_fasta_revcomp_fail, '/'))[length(unlist(strsplit(fname_fasta_revcomp_fail, '/')))]),"\033[0m")))
     }
   }
 }
