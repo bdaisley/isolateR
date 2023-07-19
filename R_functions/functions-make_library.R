@@ -150,8 +150,8 @@ merged.drep1 <- merged.drep %>% select(-warning) %>% #select(-phylum,-class,-ord
   arrange(desc(override_priority)) %>%
   group_by(grouping) %>% 
   mutate(strain_group = dplyr::first(filename)) %>%
-  mutate(species = dplyr::first(species)) %>% 
-  mutate(species2 = dplyr::first(species2)) %>% 
+  #mutate(species = dplyr::first(species)) %>% 
+  #mutate(species2 = dplyr::first(species2)) %>% 
   #mutate(species2 = first(species2)) %>% 
     ungroup() %>%
   mutate(ref_strain = ifelse(strain_group == filename, "yes", "no"))
@@ -226,8 +226,8 @@ if(is.null(old_lib_csv)==FALSE){
     arrange(unique_filename) %>%
     group_by(grouping) %>% 
     mutate(strain_group = dplyr::first(unique_filename)) %>%
-    mutate(species = dplyr::first(species)) %>% 
-    mutate(species2 = dplyr::first(species2)) %>% 
+    #mutate(species = dplyr::first(species)) %>% 
+    #mutate(species2 = dplyr::first(species2)) %>% 
     #mutate(species2 = first(species2)) %>% 
     ungroup() %>%
     mutate(ref_strain = ifelse(strain_group == unique_filename, "yes", "no")) %>%
