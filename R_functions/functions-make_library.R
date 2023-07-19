@@ -93,7 +93,7 @@ if(include_warnings == TRUE){
   new_lib_file <- read.csv(paste("make_library_output_temp___", new_lib_folder2, ".csv", sep=""), row.names = 1)
   new_lib_file_path <- paste("make_library_output_temp___", new_lib_folder2, ".csv", sep="")
 } else {
-  new_lib_file <- new_lib_file %>% filter(!is.na(warning)==TRUE)
+  new_lib_file <- new_lib_file %>% filter(!is.na(warning))
   if(nrow(new_lib_file)==0)stop("There are no sequences after removing warning sequences. Set 'include_warnings=TRUE' to proceed", call.=FALSE)
   write.csv(new_lib_file, file=paste("make_library_output_temp___", new_lib_folder2, ".csv", sep=""))
   new_lib_file <- read.csv(paste("make_library_output_temp___", new_lib_folder2, ".csv", sep=""), row.names = 1)
