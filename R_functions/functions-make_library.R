@@ -1,5 +1,5 @@
 
-make_library <- function(new_lib_csv=NULL,
+make_library <- function(input=NULL,
                          old_lib_csv=NULL,
                          include_warnings=FALSE,
                          strain_group_cutoff = 0.999,
@@ -43,7 +43,7 @@ make_library <- function(new_lib_csv=NULL,
   #-------------------------------------------------
   #-------------------------------------------------
 
-new_lib <- str_replace_all(new_lib_csv, '\\\\', '/')
+new_lib <- str_replace_all(input, '\\\\', '/')
 new_lib_path <- paste(unlist(strsplit(new_lib, '/'))[1:(length(unlist(strsplit(new_lib, '/')))-1)],collapse="/")
 new_lib_folder <- unlist(strsplit(new_lib_path, '/'))[length(unlist(strsplit(new_lib_path, '/')))]
 new_lib_folder2 <- unlist(strsplit(new_lib_path, '/'))[(length(unlist(strsplit(new_lib_path, '/')))-1)]
