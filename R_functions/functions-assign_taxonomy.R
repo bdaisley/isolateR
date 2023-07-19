@@ -143,7 +143,7 @@ if(paste(get_os())=="osx-mac"){
   message(cat(paste0("\033[0;", 32, "m","Operating system is ---> MacOS-based <---", "\033[0m")))
   download.file("https://github.com/torognes/vsearch/releases/download/v2.23.0/vsearch-2.23.0-macos-universal.tar.gz", file.path(path, 'output/NCBI_databases/vsearch-2.23.0-macos-universal.tar.gz'), mode='wb')
   #R.utils::gunzip(file.path(path,"output/NCBI_databases/vsearch-2.23.0-macos-universal.tar.gz"), remove = FALSE, overwrite=TRUE)
-  untar(file.path(path,"output/NCBI_databases/vsearch-2.23.0-macos-universal.tar.gz"),  exdir=file.path(path,"output"))
+  untar(file.path(path,"output/NCBI_databases/vsearch-2.23.0-macos-universal.tar.gz"),  exdir=file.path(path,"output/NCBI_databases"))
   file.copy(file.path(path, "output/NCBI_databases/vsearch-2.23.0-macos-universal/bin/vsearch"), file.path(path, "output/NCBI_databases/vsearch-2.23.0_macos"), overwrite=TRUE)
   unlink(file.path(path,"output/NCBI_databases/vsearch-2.23.0-macos-universal"),recursive=TRUE)
   message(cat(paste0("\033[0;", 32, "m","Download complete.", "\033[0m", "\n")))
@@ -159,7 +159,7 @@ if(paste(get_os())=="linux"){
   if(identical(vsearch_files, character(0))){
     message(cat(paste0("\033[0;", 32, "m","Operating system is ---> Linux-based <---", "\033[0m")))
     download.file("https://github.com/torognes/vsearch/releases/download/v2.23.0/vsearch-2.23.0-linux-x86_64.tar.gz", file.path(path, 'output/NCBI_databases/vsearch-2.23.0-linux-x86_64.tar.gz'), mode='wb')
-    untar(file.path(path,"output/NCBI_databases/vsearch-2.23.0-linux-x86_64.tar.gz"),  exdir=file.path(path,"output"))
+    untar(file.path(path,"output/NCBI_databases/vsearch-2.23.0-linux-x86_64.tar.gz"),  exdir=file.path(path,"output/NCBI_databases"))
     file.copy(file.path(path, "output/NCBI_databases/vsearch-2.23.0-linux-x86_64/bin/vsearch"), file.path(path, "output/NCBI_databases/vsearch-2.23.0"), overwrite=TRUE)
     unlink(file.path(path,"output/NCBI_databases/vsearch-2.23.0-linux-x86_64"),recursive=TRUE)
     message(cat(paste0("\033[0;", 32, "m","Download complete.", "\033[0m", "\n")))
