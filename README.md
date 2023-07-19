@@ -67,9 +67,9 @@ source("https://raw.githubusercontent.com/bdaisley/isolateR/main/R_functions/fun
 #Make new library file
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 make_library(input="C:/bdaisley/sanger_files/2023_07_06/output/assign_taxonomy_output_PASS___2023_07_06.csv",  # Output CSV file from 'assign_taxonomy' in Step 2 above. Note: input is a file, not a folder.
-             old_lib_csv=NULL,                                                         # If adding to existing library, provide a previously generated 'make_library' .csv output file. 
-             strain_group_cutoff=0.999                                                 # Similarity cutoff (0-1) for delineating between strain groups. 1 = 100% identical/0.995=0.5% difference/0.95=5.0% difference/etc.
-             include_warnings=FALSE)                                                   # Set to TRUE to keep sequences with poor alignment warnings from 'assign_taxonomy' in Step 2 above. FALSE by default.
+             old_lib_csv=NULL,                                      # If adding to existing library, provide a previously generated 'make_library' .csv output file. 
+             strain_group_cutoff=0.999                              # Similarity cutoff (0-1) for delineating between strain groups. 1 = 100% identical/0.995=0.5% difference/0.95=5.0% difference/etc.
+             include_warnings=FALSE)                                # Set to TRUE to keep sequences with poor alignment warnings from 'assign_taxonomy' in Step 2 above. FALSE by default.
 ```
 
 Inspect data via CSV files and HTML interactive [reactable](https://github.com/glin/reactable) output (see below)
