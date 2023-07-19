@@ -28,7 +28,7 @@ abif_fasta2(folder="C:/bdaisley/sanger_files/2023_07_06",  # Folder containing .
             export_csv=TRUE,                               # Exports separate files for PASS/FAIL seqs, needed for next step 'assign_taxonomy'
             export_fasta=TRUE,                             # Exports separate files for PASS/FAIL seqs
             export_fasta_revcomp=FALSE,                    # Exports reverse complement of fasta sequences
-            verbose=TRUE,                                  # Toggle messages in R console on/off
+            verbose=FALSE,                                 # Toggle messages in R console on/off
             quality_cutoff = NULL,                         # NULL by default implements auto cutoff (recommended)
             sliding_window_size = 15,                      # For quality trimming steps. Default = 15 (recommended)
             date=NULL)                                     # Set date "YY_MM_DD" format. If NULL, attempts to parse date from .ab1 file
