@@ -1,6 +1,6 @@
 
 
-assign_taxonomy <- function(folder=NULL,
+assign_taxonomy <- function(input=NULL,
                             export_csv=TRUE,
                             verbose=TRUE,
                             exclude=NULL,
@@ -10,7 +10,7 @@ assign_taxonomy <- function(folder=NULL,
   
   # function requirements------------------------------------------------------------
 #checking for required packages; installing those not yet installed
-  suppressWarnings({
+  suppressPackageStartupMessages({suppressWarnings({
     if(require(dplyr)==FALSE) install.packages('dplyr')
 if(require(stringr)==FALSE) install.packages('stringr')
 if(require(R.utils)==FALSE) install.packages('R.utils')
@@ -39,8 +39,8 @@ library(pander)
 library(svMisc)
 library(Biostrings)
 library(seqinr)
-  })
-  
+    }) #end of suppressWarnings
+  }) #end of suppressPackageStartupMessages
   
 #-------------------------------------------------
 #-------------------------------------------------
@@ -49,7 +49,7 @@ library(seqinr)
 #-------------------------------------------------
 
 #Setting file paths-------------------------------------------------
-
+folder <- paste(unlist(strsplit(input, '/'))[1:(length(unlist(strsplit(input, '/')))-2)], collapse="/")
 path <- str_replace_all(folder, '\\\\', '/')
 suppressWarnings(dir.create(file.path(path, 'output/NCBI_databases')))
 files  <- dir(file.path(path, 'output/NCBI_databases'), full.names = TRUE)
@@ -73,12 +73,12 @@ if(skip_search==FALSE){
   if(add_fungi_db == TRUE){
     download.file("https://ftp.ncbi.nlm.nih.gov/refseq/TargetedLoci/Bacteria/bacteria.16SrRNA.fna.gz", file.path(path, 'output/NCBI_databases/bacteria.16SrRNA.fna.gz'), mode='wb')
     R.utils::gunzip(file.path(path,"output/NCBI_databases/bacteria.16SrRNA.fna.gz"), remove = FALSE, overwrite=TRUE)
-    message(cat(paste0("\n", "\033[0;", 32, "m","Download complete for NCBI Bacterial 16S rRNA database.", "\033[0m", "\n")))
+    message(cat(paste0("\033[0;", 32, "m","Download complete for NCBI Bacterial 16S rRNA database.", "\033[0m")))
     db.fasta <- "output/NCBI_databases/bacteria.16SrRNA.fna"
-    message(cat(paste0("\n", "\033[0;", 32, "m","Adding ITS sequences.", "\033[0m", "\n")))
+    message(cat(paste0("\033[0;", 32, "m","Adding ITS sequences.", "\033[0m")))
     download.file("https://ftp.ncbi.nlm.nih.gov/refseq/TargetedLoci/Fungi/fungi.ITS.fna.gz", file.path(path, 'output/NCBI_databases/fungi.ITS.fna.gz'), mode='wb')
     R.utils::gunzip(file.path(path,"output/NCBI_databases/fungi.ITS.fna.gz"), remove = FALSE, overwrite=TRUE)
-    message(cat(paste0("\n", "\033[0;", 32, "m","Download complete for NCBI Fungal ITS database.", "\033[0m", "\n")))
+    message(cat(paste0("\033[0;", 32, "m","Download complete for NCBI Fungal ITS database.", "\033[0m")))
     #Concatenate 16S and ITS dbs
     db.concat <- c(seqinr::read.fasta(file=file.path(path,"output/NCBI_databases/bacteria.16SrRNA.fna"), as.string=TRUE, forceDNAtolower=FALSE),
                    seqinr::read.fasta(file=file.path(path,"output/NCBI_databases/fungi.ITS.fna"), as.string=TRUE, forceDNAtolower=FALSE))
@@ -91,7 +91,7 @@ if(skip_search==FALSE){
   }  else {
     download.file("https://ftp.ncbi.nlm.nih.gov/refseq/TargetedLoci/Bacteria/bacteria.16SrRNA.fna.gz", file.path(path, 'output/NCBI_databases/bacteria.16SrRNA.fna.gz'), mode='wb')
     R.utils::gunzip(file.path(path,"output/NCBI_databases/bacteria.16SrRNA.fna.gz"), remove = FALSE, overwrite=TRUE)
-    message(cat(paste0("\n", "\033[0;", 32, "m","Download complete for NCBI Bacterial 16S rRNA database.", "\033[0m", "\n")))
+    message(cat(paste0("\033[0;", 32, "m","Download complete for NCBI Bacterial 16S rRNA database.", "\033[0m")))
     db.fasta <- file.path("output/NCBI_databases/bacteria.16SrRNA.fna")
   }
   
@@ -102,7 +102,7 @@ gz_files <- stringr::str_subset(files, 'vsearch')
 #:::::::::::::::::::::::::::
 #Download USEARCH software
 #:::::::::::::::::::::::::::
-message(cat(paste0("\n", "\033[97;", 40, "m","Detecting operating system...", "\033[0m", "\n")))
+message(cat(paste0("\n", "\033[97;", 40, "m","Detecting operating system...", "\033[0m")))
 
 vsearch_files <- stringr::str_subset(files, 'vsearch')
 
@@ -124,7 +124,7 @@ get_os <- function(){
 
 if(paste(get_os())=="windows"){
   if(identical(vsearch_files, character(0))){
-    message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is ---> Windows-based <---", "\033[0m", "\n")))
+    message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is ---> Windows-based <---", "\033[0m")))
     download.file("https://github.com/torognes/vsearch/releases/download/v2.23.0/vsearch-2.23.0-win-x86_64.zip", file.path(path, 'output/NCBI_databases/vsearch-2.23.0-win-x86_64.zip'), mode='wb')
     unzip(file.path(path,"output/NCBI_databases/vsearch-2.23.0-win-x86_64.zip"),  exdir=file.path(path,"output/NCBI_databases"))
     file.copy(file.path(path, "output/NCBI_databases/vsearch-2.23.0-win-x86_64/bin/vsearch.exe"), file.path(path, "output/NCBI_databases/vsearch-2.23.0.exe"), overwrite=TRUE)
@@ -140,16 +140,16 @@ if(paste(get_os())=="windows"){
 
 if(paste(get_os())=="osx-mac"){
   if(identical(vsearch_files, character(0))){
-  message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is ---> MacOS-based <---", "\033[0m", "\n")))
+  message(cat(paste0("\033[0;", 32, "m","Operating system is ---> MacOS-based <---", "\033[0m")))
   download.file("https://github.com/torognes/vsearch/releases/download/v2.23.0/vsearch-2.23.0-macos-universal.tar.gz", file.path(path, 'output/NCBI_databases/vsearch-2.23.0-macos-universal.tar.gz'), mode='wb')
   #R.utils::gunzip(file.path(path,"output/NCBI_databases/vsearch-2.23.0-macos-universal.tar.gz"), remove = FALSE, overwrite=TRUE)
   untar(file.path(path,"output/NCBI_databases/vsearch-2.23.0-macos-universal.tar.gz"),  exdir=file.path(path,"output"))
   file.copy(file.path(path, "output/NCBI_databases/vsearch-2.23.0-macos-universal/bin/vsearch"), file.path(path, "output/NCBI_databases/vsearch-2.23.0_macos"), overwrite=TRUE)
   unlink(file.path(path,"output/NCBI_databases/vsearch-2.23.0-macos-universal"),recursive=TRUE)
-  message(cat(paste0("\n", "\033[0;", 32, "m","Download complete.", "\033[0m", "\n")))
+  message(cat(paste0("\033[0;", 32, "m","Download complete.", "\033[0m", "\n")))
   vsearch.path <- file.path(path,"output/NCBI_databases/vsearch-2.23.0_macos")
   } else {
-    message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is ---> MacOS-based <---", "\033[0m")))
+    message(cat(paste0("\033[0;", 32, "m","Operating system is ---> MacOS-based <---", "\033[0m")))
     message(cat(paste0("\033[0;", 32, "m","No additional download needed.", "\033[0m", "\n")))
     vsearch.path <- file.path(path,"output/NCBI_databases/vsearch-2.23.0_macos")
   }
@@ -157,15 +157,15 @@ if(paste(get_os())=="osx-mac"){
 
 if(paste(get_os())=="linux"){
   if(identical(vsearch_files, character(0))){
-    message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is ---> Linux-based <---", "\033[0m", "\n")))
+    message(cat(paste0("\033[0;", 32, "m","Operating system is ---> Linux-based <---", "\033[0m")))
     download.file("https://github.com/torognes/vsearch/releases/download/v2.23.0/vsearch-2.23.0-linux-x86_64.tar.gz", file.path(path, 'output/NCBI_databases/vsearch-2.23.0-linux-x86_64.tar.gz'), mode='wb')
     untar(file.path(path,"output/NCBI_databases/vsearch-2.23.0-linux-x86_64.tar.gz"),  exdir=file.path(path,"output"))
     file.copy(file.path(path, "output/NCBI_databases/vsearch-2.23.0-linux-x86_64/bin/vsearch"), file.path(path, "output/NCBI_databases/vsearch-2.23.0"), overwrite=TRUE)
     unlink(file.path(path,"output/NCBI_databases/vsearch-2.23.0-linux-x86_64"),recursive=TRUE)
-    message(cat(paste0("\n", "\033[0;", 32, "m","Download complete.", "\033[0m", "\n")))
+    message(cat(paste0("\033[0;", 32, "m","Download complete.", "\033[0m", "\n")))
     vsearch.path <- file.path(path,"output/NCBI_databases/vsearch-2.23.0")
   } else {
-    message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is ---> Linux-based <---", "\033[0m")))
+    message(cat(paste0("\033[0;", 32, "m","Operating system is ---> Linux-based <---", "\033[0m")))
     message(cat(paste0("\033[0;", 32, "m","No additional download needed.", "\033[0m", "\n")))
     vsearch.path <- file.path(path,"output/NCBI_databases/vsearch-2.23.0")
   }
@@ -187,7 +187,7 @@ if(paste(get_os())=="linux"){
 #::::::::::::
 #Stage paths
 #::::::::::::
-message(cat(paste0("\n", "\033[0;", 32, "m","Staging files", "\033[0m", "\n")))
+message(cat(paste0("\033[0;", 32, "m","Staging files", "\033[0m")))
 
 setwd(path)
 #query.in <- readDNAStringSet(paste0("abif_fasta2_output___", unlist(strsplit(folder, '/'))[length(unlist(strsplit(folder, '/')))],".fasta", sep=""), format="fasta")
@@ -209,8 +209,8 @@ usearch.path <- gsub(".gz", "", usearch_files[1], fixed=TRUE)
 #:::::::::::::::::::::
 #Search NCBI database
 #:::::::::::::::::::::
-message(cat(paste0("\n", "\033[97;", 40, "m","Searching query sequences against NCBI database", "\033[0m")))
-message(cat(paste0("\033[0;", 32, "m","This step will take 2-3 minutes...", "\033[0m", "\n")))
+message(cat(paste0("\033[97;", 40, "m","Searching query sequences against NCBI database", "\033[0m")))
+message(cat(paste0("\033[0;", 32, "m","This step will take 2-3 minutes...", "\033[0m")))
 
 #system2(usearch.path, paste(" --usearch_global ", query.fasta, " --db ", db.fasta, " --output_no_hits --blast6out ", b6.out, " --uc ", uc.out, " --id 0.7 --maxaccepts 0 --maxrejects 0 --top_hits_only --strand both --threads 1 ", sep=""), stdout="", stderr="")
 #system2(vsearch.path, paste(" --usearch_global ", query.fasta, " --db ", db.fasta, " --output_no_hits --blast6out ", b6.out, " --uc ", uc.out, " --id 0.7 --maxaccepts 0 --maxrejects 0 --top_hits_only --strand both --threads 1 ", sep=""), stdout="", stderr="")
@@ -227,7 +227,7 @@ if(quick_search==FALSE){
 #:::::::::::::::::
 #Organize results
 #:::::::::::::::::
-message(cat(paste0("\n", "\033[97;", 40, "m","Determining closest species match", "\033[0m", "\n")))
+message(cat(paste0("\033[97;", 40, "m","Determining closest species match", "\033[0m")))
 
 uc.results <- read.csv(uc.out, sep="\t", header = FALSE) %>% 
   mutate(V4 = gsub("*", "51", .$V4, fixed=TRUE)) %>% mutate_at(vars(V4), as.numeric) %>%   # Fix percent ID column to make numeric
@@ -244,7 +244,7 @@ query.info.list1 <- setNames(query.info$phred_trim, query.info$filename)
 query.info.list2 <- setNames(query.info$date, query.info$filename)
 
 
-message(cat(paste0("\n", "\033[97;", 40, "m","Merging results...", "\033[0m", "\n")))
+message(cat(paste0("\033[97;", 40, "m","Merging results...", "\033[0m")))
 
 merged.df <- merge(uc.results, query.seqs.df, by="V9", all=TRUE) %>% arrange(V9) %>%
   mutate(NCBI_acc = str_split_fixed(.$V10, " ", 8)[,1]) %>%
@@ -258,14 +258,14 @@ merged.df <- merge(uc.results, query.seqs.df, by="V9", all=TRUE) %>% arrange(V9)
   select(date,filename,species,ID,phred_trim,length,Ns,NCBI_acc,closest_match,query_seq)
 
 
-message(cat(paste0("\n", "\033[97;", 40, "m","Done.", "\033[0m", "\n")))
+message(cat(paste0("\033[97;", 40, "m","Done.", "\033[0m")))
 
 #write.csv(merged.df, file=paste("V3-V6seq_results_", unlist(strsplit(folder, '/'))[length(unlist(strsplit(folder, '/')))],".csv", sep=""))
 
 #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #------------------------------------------------- library(rentrez)
-message(cat(paste0("\n", "\033[97;", 40, "m","Collecting higher level taxonomic rank information of closest species match", "\033[0m", "\n", "\r\n")))
-message(cat(paste0("\n", "\033[97;", 40, "m","\n", "\033[0m", "\n")))
+message(cat(paste0("\n", "\033[97;", 40, "m","Collecting higher level taxonomic rank information of closest species match", "\033[0m", "\n")))
+message(cat(paste0("\033[97;", 40, "m","\n", "\033[0m")))
 
 #::::::::::::::::::::::::::::::::
 # Step 1b) For loop
@@ -306,9 +306,9 @@ for (i in 1:length(fetch.ids)) {
   #print(difftime(t2, t1, units = "secs")[[1]])
   #if (((i/length(fetch.ids))*100) == 100) message("Done!")
 }
-message(cat(paste0("\n", "\033[97;", 40, "m","Done.", "\033[0m", "\n")))
+message(cat(paste0("\n", "\033[97;", 40, "m","Done.", "\033[0m")))
 
-message(cat(paste0("\n", "\033[97;", 40, "m","Exporting csv file", "\033[0m", "\n")))
+message(cat(paste0("\033[97;", 40, "m","Exporting csv file", "\033[0m")))
 
 #fetch.list.df <- bind_rows(fetch.list, .id = "column_label") #Only works if more than 2 entries in the list
 fetch.list.df <- as.data.frame(fetch.list$acc_1, stringsasfactors=FALSE) #Use this if only 1 entry in the list
@@ -329,7 +329,7 @@ merged.df2 <- merged.df %>% mutate(taxonomy = dplyr::recode(NCBI_acc, !!!lookup.
   mutate(warning = ifelse(ID <90 & phred_trim <45, "Poor alignment", ""))
 
 
-message(cat(paste0("\r\n\r\n", "\033[97;", 40, "m","Done.", "\033[0m", "\n")))
+message(cat(paste0("\n", "\033[97;", 40, "m","Done.", "\033[0m")))
 
 #::::::::::::::::::::::::
 #Make reactable output
@@ -363,8 +363,10 @@ seq.warnings2 <- c()
 seq.warnings2 <- (merged.df3 %>% filter(ID < 90 & phred_trim <45))$filename
 seq.warnings.txt2 <- paste(seq.warnings2, collapse="\r\n     ")
 
+if(!length(seq.warnings2)==0){
 message(cat(paste0("\033[97;", 40, "m","\r\nThe following sequences had poor quality alignments and should be manually inspected before next steps:","\033[0m","\n     ",
-                   "\033[0;", 95, "m", seq.warnings.txt2,"\033[0m","\n")))
+                   "\n", "\033[0;", 95, "m", seq.warnings.txt2,"\033[0m","\n")))
+}
 
 #merged.df3 <- merged.df3 %>% filter(!filename %in% seq.warnings2)
 
@@ -591,30 +593,3 @@ if(export_csv==TRUE) {
 }
 }
 
-
-
-#10^1.77
-#}
-
-#list(list(color_scales(merged.df3, color_ref = 'species_col', opacity = 0.5)), "white-space: nowrap", "font-size: 16px", "font-family: Calibri")
-#lapply(merged.df3, function(x){
-#       cell_style(merged.df3, font_size =10,  font_color = "white", rows = which(!is.na(merged.df3$species_col)), background_color = "#1673ba")
-#       cell_style(merged.df3, font_size =10,  font_color = "white", rows = which(is.na(merged.df3$species_col)), background_color = "#1673ba")
-#       })
-
-
-#as.list(cell_style(merged.df3, font_size =10,  font_color = "white", rows = which(is.na(merged.df3$species_col)), background_color = "#1673ba"))
-
-#style = cell_style(merged.df3, font_size =10,  font_color = "white", rows = which(is.na(merged.df3$species_col)), background_color = "#1673ba")),
-#cell_style(merged.df3, font_size =10,  font_color = "white",
-#            rows = which(is.na(merged.df3$species_col)), 
-#          background_color = "grey"))),
-#color_scales(merged.df3, color_ref = 'species_col', opacity = 0.5)),
-#cell_style(merged.df3, font_size=20))), # "white-space: nowrap", "font-size: 16px", "font-family: Calibri")),
-#style = as.list(color_scales(merged.df3, color_ref = 'species_col', opacity = 0.5), "white-space: nowrap", "font-size: 16px", "font-family: Calibri")),
-
-
-#style = list(whiteSpace = "nowrap", fontFamily = "sans-serif")),
-#style = list_with_names(color_scales(merged.df3, color_ref = 'species_colors', opacity = 0.5),
-#                       whiteSpace = "nowrap", fontSize=10, fontFamily = "sans-serif")),
-#style = list_with_names(color_scales(merged.df3, color_ref = 'species_colors', opacity = 0.5))),

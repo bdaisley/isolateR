@@ -488,32 +488,7 @@ abif_fasta2 <- function(folder=NULL,
                                                                                                       background = 'transparent',
                                                                                                       number_fmt = scales::comma_format(accuracy = 0.1),
                                                                                                       round_edges = FALSE, align_bars="left")) )) %>% add_title(paste("Output for project: ", unlist(strsplit(folder, '/'))[length(unlist(strsplit(folder, '/')))], sep=""))  #unlist(strsplit(folder, '/'))[length(unlist(strsplit(folder, '/')))]
-  #phred_trim = colDef(data_bars(checkseq.sub$phred_trim, text_position = "none", fill_color="#6f86ab"))
-  #phred_raw = colDef(minWidth= 50, headerStyle = list(wrap=FALSE)),
-  #phred_trim = colDef(minWidth= 50, headerStyle = list(wrap=FALSE)),
-  #phred_raw = colDef(style = "white-space: nowrap;", minWidth= 50),
-  #phred_trim = colDef(style = "white-space: nowrap;", minWidth= 50),
-  #length_raw = colDef(style = "white-space: nowrap;", minWidth= 50),
-  #length_trim = colDef(style = "white-space: nowrap;", minWidth= 50),
-  #Ns_raw = colDef(style = "white-space: nowrap;", minWidth= 50),
-  #Ns_trim = colDef(style = "white-space: nowrap;", minWidth= 50),
-  #raw_seq = colDef(style = "white-space: nowrap;", minWidth= 50),
-  #trim_seq = colDef(style = "white-space: nowrap;", minWidth= 50)
-  #phred_raw = colDef(style = "white-space: nowrap;", maxWidth= 500)
-  #phred_raw = colDef(style = "white-space: nowrap;", maxWidth= 500)
-  #phred_raw = colDef(style = "white-space: nowrap;", maxWidth= 500)
-  #filename = colDef(maxWidth= 500)))
-  #raw_seq = colDef(style = "
-  ##                  white-space: nowrap;
-  #                  overflow: hidden;
-  #                  text-overflow: ellipsis;
-  #                  hover: visible"),
-  
-  
-  #reactablefmtr::save_reactable_test(checkseq_react, file.path(path, 'V3-V6seq_check.html'))
-  
-  #openFileInOS(file.path(path, 'V3-V6seq_check.html'))
-  
+
  
   
   #building output file--------------------------------------------------------------
@@ -539,7 +514,7 @@ abif_fasta2 <- function(folder=NULL,
     suppressMessages(reactablefmtr::save_reactable_test(checkseq_react, fname_html))
     openFileInOS(fname_html)
     message(cat(paste0("\033[97;", 40, "m","HTML file with [PASS + FAIL] sequences exported: ", "\033[0m", 
-                       "\033[0;", 32, "m", " ", file.path(path, unlist(strsplit(fname_html, '/'))[length(unlist(strsplit(fname_html, '/')))]),"\033[0m", "\n")))
+                       "\033[0;", 32, "m", " ", file.path(path, "output", unlist(strsplit(fname_html, '/'))[length(unlist(strsplit(fname_html, '/')))]),"\033[0m", "\n")))
   }
 
   #export CSV files----------------------------------------------------------------------
@@ -552,7 +527,7 @@ abif_fasta2 <- function(folder=NULL,
       } else {
       write.csv(file=fname_csv_pass,checkseq.sub.pass)
       message(cat(paste0("\033[97;", 40, "m","CSV file with [PASS] sequences exported: ", "\033[0m",
-                         "\033[0;", 32, "m", " ", file.path(path, unlist(strsplit(fname_csv_pass, '/'))[length(unlist(strsplit(fname_csv_pass, '/')))]),"\033[0m",
+                         "\033[0;", 32, "m", " ", file.path(path, "output", unlist(strsplit(fname_csv_pass, '/'))[length(unlist(strsplit(fname_csv_pass, '/')))]),"\033[0m",
                          "\033[0;", 31, "m", "  <--- Required in Step 2: 'assign_taxonomy'","\033[0m")))
     }
     #FAIL sequences
@@ -563,7 +538,7 @@ abif_fasta2 <- function(folder=NULL,
     } else {
       write.csv(file=fname_csv_fail, checkseq.sub.fail)
       message(cat(paste0("\033[97;", 40, "m","CSV file with [FAIL] sequences exported: ", "\033[0m",
-                         "\033[0;", 32, "m", " ", file.path(path, unlist(strsplit(fname_csv_fail, '/'))[length(unlist(strsplit(fname_csv_fail, '/')))]),"\033[0m", "\n")))
+                         "\033[0;", 32, "m", " ", file.path(path, "output", unlist(strsplit(fname_csv_fail, '/'))[length(unlist(strsplit(fname_csv_fail, '/')))]),"\033[0m", "\n")))
     }
   }
 
@@ -581,7 +556,7 @@ abif_fasta2 <- function(folder=NULL,
     write.fasta(sequences=trimlist_pass, names=abif_files_pass, as.string=TRUE, nbchar = 1000,
                 file.out=fname_fasta_pass)
     message(cat(paste0("\033[97;", 40, "m","FASTA file with [PASS] sequences exported: ", "\033[0m",
-                       "\033[0;", 32, "m", " ", file.path(path, unlist(strsplit(fname_fasta_pass, '/'))[length(unlist(strsplit(fname_fasta_pass, '/')))]),"\033[0m")))
+                       "\033[0;", 32, "m", " ", file.path(path, "output", unlist(strsplit(fname_fasta_pass, '/'))[length(unlist(strsplit(fname_fasta_pass, '/')))]),"\033[0m")))
     }
     #FAIL sequences
     #---------------
@@ -595,7 +570,7 @@ abif_fasta2 <- function(folder=NULL,
       write.fasta(sequences=trimlist_fail, names=abif_files_fail, as.string=TRUE, nbchar = 1000,
                   file.out=fname_fasta_fail)
       message(cat(paste0("\033[97;", 40, "m","FASTA file with [FAIL] sequences exported: ", "\033[0m",
-                         "\033[0;", 32, "m", " ", file.path(path, unlist(strsplit(fname_fasta_fail, '/'))[length(unlist(strsplit(fname_fasta_fail, '/')))]),"\033[0m", "\n")))
+                         "\033[0;", 32, "m", " ", file.path(path, "output", unlist(strsplit(fname_fasta_fail, '/'))[length(unlist(strsplit(fname_fasta_fail, '/')))]),"\033[0m", "\n")))
     }
   }
   if(export_fasta_revcomp==TRUE) {
@@ -613,7 +588,7 @@ abif_fasta2 <- function(folder=NULL,
                     file.out=fname_fasta_revcomp_pass)
       })
       message(cat(paste0("\033[97;", 40, "m","FASTA (reverse complement) file with [PASS] sequences exported: ", "\033[0m",
-                         "\033[0;", 32, "m", " ", file.path(path, unlist(strsplit(fname_fasta_revcomp_pass, '/'))[length(unlist(strsplit(fname_fasta_revcomp_pass, '/')))]),"\033[0m")))
+                         "\033[0;", 32, "m", " ", file.path(path, "output", unlist(strsplit(fname_fasta_revcomp_pass, '/'))[length(unlist(strsplit(fname_fasta_revcomp_pass, '/')))]),"\033[0m")))
     }
     #FAIL sequences
     #---------------
@@ -629,7 +604,7 @@ abif_fasta2 <- function(folder=NULL,
                       file.out=fname_fasta_revcomp_fail)
         })
         message(cat(paste0("\033[97;", 40, "m","FASTA (reverse complement) file with [FAIL] sequences exported: ", "\033[0m",
-                           "\033[0;", 32, "m", " ", file.path(path, unlist(strsplit(fname_fasta_revcomp_fail, '/'))[length(unlist(strsplit(fname_fasta_revcomp_fail, '/')))]),"\033[0m")))
+                           "\033[0;", 32, "m", " ", file.path(path, "output", unlist(strsplit(fname_fasta_revcomp_fail, '/'))[length(unlist(strsplit(fname_fasta_revcomp_fail, '/')))]),"\033[0m")))
     }
   }
 }
