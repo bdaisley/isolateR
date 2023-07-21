@@ -117,6 +117,8 @@ abif_fasta2 <- function(folder=NULL,
   checkseq <- c()
   seq.warnings <- c()
   date.list <- c()
+  length.list <- c()
+  
   
   message(cat(paste0("\n", "\033[97;", 95, "m","Trimming ", paste(length(abif_files)) ," input files", "\033[0m", "\n")))
   
@@ -125,6 +127,14 @@ abif_fasta2 <- function(folder=NULL,
                        style = 3,    # Progress bar style (also available style = 1 and style = 2)
                        #width = 50,   # Progress bar width. Defaults to getOption("width")
                        char = "=") 
+  
+  #Grap max length 
+  for(i in 1:length(abif_files)){
+    fpath <- file.path(path, abif_files[i])
+    length.list <- c(length.list, as.numeric(nchar(unlist((read.abif(fpath))@data['PBAS.2'])))+5)
+  }
+  length.list.max <- max(length.list)
+  
   
   for(i in 1:length(abif_files)){
     
@@ -260,7 +270,7 @@ abif_fasta2 <- function(folder=NULL,
     if(abif3.end > width(abif3[[1]])){abif3.end <- width(abif3[[1]])}
     if(width(abif3[[1]]) <= 300){abif3.end <- nchar(paste(abif2)) }
     if(abif3.end > (abif1@QualityReport@trimmedFinishPos - abif1.start)){abif3.end <- (abif1@QualityReport@trimmedFinishPos - abif1.start)}
-    if(abif3.end > 850){abif3.end <- 850}
+    if(abif3.end > length.list.max){abif3.end <- length.list.max}
     if(verbose==TRUE){message(cat(paste0("\033[97;", 40, "m","Trimming error check: 1 (Passed)", "\033[0m")))}
     abif1.start.new <- abif1.start
     if(abif1.start <= 50 & abif3.end >= 51){abif1.start.new <- 50}
@@ -269,7 +279,7 @@ abif_fasta2 <- function(folder=NULL,
     if(verbose==TRUE){message(cat(paste0("\033[97;", 40, "m","Trimming error check: 2 (Passed)", "\033[0m")))}
     abif.scores.xx <- abif1@QualityReport@qualityPhredScores[abif1.start.new:(abif1.start + abif3.end -1)]
     if(verbose==TRUE){message(cat(paste0("\033[97;", 40, "m","Trimming error check: 3 (Passed)", "\033[0m")))}
-    abif.scores <- c(rep(0.1, abif1.start.new), abif.scores.xx, rep(0.1, 850-(((abif1.start + abif3.end) -1))))
+    abif.scores <- c(rep(0.1, abif1.start.new), abif.scores.xx, rep(0.1, length.list.max-(((abif1.start + abif3.end) -1))))
     trim.start <- c(trim.start,abif1.start.new)
     trim.end <- c(trim.end,(abif1.start + abif3.end -1))
     rawseq <- as.character(paste(abif))
@@ -286,10 +296,10 @@ abif_fasta2 <- function(folder=NULL,
     #:::::::::::::::::::::::::::::::
     # Save seq + quality scores
     #:::::::::::::::::::::::::::::::
-    #rawsparklist[[i]] <- c(abif1@QualityReport@qualityPhredScores, rep(0.1, 850-length(abif1@QualityReport@qualityPhredScores)))
+    #rawsparklist[[i]] <- c(abif1@QualityReport@qualityPhredScores, rep(0.1, length.list.max-length(abif1@QualityReport@qualityPhredScores)))
     rawspark.adj <- abif1@QualityReport@qualityPhredScores
-    if(length(abif1@QualityReport@qualityPhredScores) >= 850){rawspark.adj <- rawspark.adj[1:850]}
-    rawsparklist[[i]] <- c(rawspark.adj, rep(0.1, 850-length(rawspark.adj)))
+    if(length(abif1@QualityReport@qualityPhredScores) >= length.list.max){rawspark.adj <- rawspark.adj[1:length.list.max]}
+    rawsparklist[[i]] <- c(rawspark.adj, rep(0.1, length.list.max-length(rawspark.adj)))
     trimsparklist[[i]] <- abif.scores
     rawlist[[i]] <- paste(abif1@primarySeqRaw)
     trimlist[[i]] <- paste(abif)
