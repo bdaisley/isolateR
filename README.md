@@ -29,7 +29,7 @@ abif_fasta2(folder="C:/bdaisley/sanger_files/2023_07_06",  # Folder containing .
             export_fasta=TRUE,                             # Exports separate files for PASS/FAIL seqs
             export_fasta_revcomp=FALSE,                    # Exports reverse complement of fasta sequences
             verbose=FALSE,                                 # Toggle messages in R console on/off
-            min_phred_score = 20                           # Do not accept trimmed seqs with phred score cutoff below this number
+            min_phred_score = 20,                          # Do not accept trimmed seqs with phred score cutoff below this number
             quality_cutoff = NULL,                         # NULL by default implements auto cutoff (recommended)
             sliding_window_size = 15,                      # For quality trimming steps. Default = 15 (recommended)
             date=NULL)                                     # Set date "YY_MM_DD" format. If NULL, attempts to parse date from .ab1 file
