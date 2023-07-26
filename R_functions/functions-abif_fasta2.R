@@ -7,6 +7,7 @@ abif_fasta2 <- function(folder=NULL,
                         export_fasta_revcomp=FALSE,
                         verbose=TRUE,
                         exclude=NULL,
+                        min_phred_score=1,
                         quality_cutoff = 25,
                         sliding_window_size = 15,
                         date=NULL,
@@ -358,6 +359,7 @@ abif_fasta2 <- function(folder=NULL,
     mutate(phred_trim = round(checkseq$phred_trim, 2)) %>%
     mutate(arrcol = rep("->")) %>%
     mutate(decision = ifelse(filename %in% seq.warnings, "Fail", "Pass")) %>%
+    mutate(decision = ifelse(phred_trim < min_phred_score, "Fail", decision)) %>%
     mutate(decision_col = ifelse(decision == "Fail", grDevices::adjustcolor("#B20A2C", alpha.f=0.7), grDevices::adjustcolor("#CCE6CC", alpha.f=1))) %>%
     select(date, filename, raw_seq, phred_raw, Ns_raw, length_raw, spark_raw, arrcol,
            trim_seq, phred_trim, Ns_trim, length_trim, decision, decision_col) #%>%
