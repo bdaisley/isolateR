@@ -1,4 +1,21 @@
 #abif_fasta2 function
+
+#Parameters:
+# folder= path to directory with Sanger results in the form of .ab1 
+# export_html= (TRUE) output the HTML result file to graphically view results
+# export_csv (TRUE) output the results as a .csv
+# export_fasta (TRUE) output the sequences in a fasta file
+# export_fasta_revcomp (FALSE) output the sequences in reverse complement form in a fasta file
+# verbose= (TRUE) output progress while script is running
+# exclude= (NULL) for testing, use with caution not tested
+# min_phred_score= (1) Do not accept trimmed seqs with phred score cutoff below this number
+# sliding_window_size = (15) For quality trimming steps. Default = 15 (recommended)
+# date= (NULL) Set date "YY_MM_DD" format. If NULL, attempts to parse date from .ab1 file
+# files_manual= (NULL) specify a list of files to run, rather than the whole directory 
+#               format as filenames without extensions. Primarily used for testing, use at your own risk
+
+
+
 #------------------------------------------------------------------------------------
 abif_fasta2 <- function(folder=NULL,
                         export_html=TRUE,
@@ -8,7 +25,6 @@ abif_fasta2 <- function(folder=NULL,
                         verbose=TRUE,
                         exclude=NULL,
                         min_phred_score=1,
-                        quality_cutoff = 25,
                         sliding_window_size = 15,
                         date=NULL,
                         files_manual=NULL){
@@ -533,22 +549,30 @@ abif_fasta2 <- function(folder=NULL,
   if(export_csv==TRUE) {
     #PASS sequences
     fname_csv_pass <- paste0(fname_pass, ".csv", sep="")
+    
+    
+    #remove extra columns
+    checkseq.sub.pass <-  subset(checkseq.sub.pass, select = -c(arrcol, decision_col))
+    
+    
     if(isEmpty(checkseq.sub.pass[1])){
       message(cat(paste0("\033[97;", 40, "m","CSV file with [PASS] sequences exported: ", "\033[0m",
                          "\033[0;", 32, "m", " ", "No sequences passed, file not exported.","\033[0m")))
       } else {
-      write.csv(file=fname_csv_pass,checkseq.sub.pass)
+      write.csv(file=fname_csv_pass,checkseq.sub.pass, row.names = FALSE)
       message(cat(paste0("\033[97;", 40, "m","CSV file with [PASS] sequences exported: ", "\033[0m",
                          "\033[0;", 32, "m", " ", file.path(path, "output", unlist(strsplit(fname_csv_pass, '/'))[length(unlist(strsplit(fname_csv_pass, '/')))]),"\033[0m",
                          "\033[0;", 31, "m", "  <--- Required in Step 2: 'assign_taxonomy'","\033[0m")))
     }
     #FAIL sequences
     fname_csv_fail <- paste0(fname_fail, ".csv", sep="")
+    #remove extra columns
+    checkseq.sub.fail <-  subset(checkseq.sub.fail, select = -c(arrcol, decision_col))
     if(isEmpty(checkseq.sub.fail[1])){
       message(cat(paste0("\033[97;", 40, "m","CSV file with [FAIL] sequences exported: ", "\033[0m",
                          "\033[0;", 32, "m", " ", "No sequences failed, file not exported.","\033[0m", "\n")))
     } else {
-      write.csv(file=fname_csv_fail, checkseq.sub.fail)
+      write.csv(file=fname_csv_fail, checkseq.sub.fail, row.names = FALSE)
       message(cat(paste0("\033[97;", 40, "m","CSV file with [FAIL] sequences exported: ", "\033[0m",
                          "\033[0;", 32, "m", " ", file.path(path, "output", unlist(strsplit(fname_csv_fail, '/'))[length(unlist(strsplit(fname_csv_fail, '/')))]),"\033[0m", "\n")))
     }
@@ -619,4 +643,9 @@ abif_fasta2 <- function(folder=NULL,
                            "\033[0;", 32, "m", " ", file.path(path, "output", unlist(strsplit(fname_fasta_revcomp_fail, '/'))[length(unlist(strsplit(fname_fasta_revcomp_fail, '/')))]),"\033[0m")))
     }
   }
+  
+  
+  #remove the folder of misc files for the script
+  unlink(paste0(fname,"_files/"),recursive = TRUE)
+  
 }

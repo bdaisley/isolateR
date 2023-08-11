@@ -1,8 +1,16 @@
+#assign_taxonomy function
+
+#Parameters:
+# input= assign_taxonomy csv file
+# old_lib_csv=(NULL) leave NULL for creating a new library, rename to your working library
+# include_warnings=(FALSE) Set to TRUE to keep sequences with poor alignment warnings from 'assign_taxonomy' in Step 2 above. FALSE to remove them
+# strain_group_cutoff = (0.995) Similarity cutoff (0-1) for delineating between strain groups. 1 = 100% identical/0.995=0.5% difference/0.95=5.0% difference/etc.
+# verbose=(TRUE) output progress in console
 
 make_library <- function(input=NULL,
                          old_lib_csv=NULL,
                          include_warnings=FALSE,
-                         strain_group_cutoff = 0.999,
+                         strain_group_cutoff = 0.995,
                          verbose=TRUE){
 
   # function requirements------------------------------------------------------------
@@ -47,11 +55,14 @@ new_lib <- str_replace_all(input, '\\\\', '/')
 new_lib_path <- paste(unlist(strsplit(new_lib, '/'))[1:(length(unlist(strsplit(new_lib, '/')))-1)],collapse="/")
 new_lib_folder <- unlist(strsplit(new_lib_path, '/'))[length(unlist(strsplit(new_lib_path, '/')))]
 new_lib_folder2 <- unlist(strsplit(new_lib_path, '/'))[(length(unlist(strsplit(new_lib_path, '/')))-1)]
-new_lib_file <- read.csv(new_lib, row.names = 1)
+new_lib_file <- read.csv(new_lib) #, row.names = 1) removing row.names setting
 
 setwd(new_lib_path)
 
 #-------------------------------------------------
+#:::::::::::::::::::::::::::
+#Download USEARCH software
+#:::::::::::::::::::::::::::
 
 get_os <- function(){
   sysinf <- Sys.info()
@@ -69,17 +80,61 @@ get_os <- function(){
   tolower(os)
 }
 
+path = new_lib_path
+suppressWarnings(dir.create(file.path(path, 'vsearch')))
+files  <- dir(file.path(path, '/vsearch'), full.names = TRUE)
+vsearch_files <- stringr::str_subset(files, 'vsearch')
+
+#Need to download vsearch here again for redundancy, since temp prog files are removed in assign tax now
+#Also makes this script more flexible to be run standalone from assign tax if that step was previously done with other tools
 if(paste(get_os())=="windows"){
-  message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is ---> Windows <---", "\033[0m", "\n")))
-  vsearch.path <- file.path(new_lib_path,"NCBI_databases/vsearch-2.23.0.exe")
+  if(identical(vsearch_files, character(0))){
+    message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is ---> Windows-based <---", "\033[0m")))
+    download.file("https://github.com/torognes/vsearch/releases/download/v2.23.0/vsearch-2.23.0-win-x86_64.zip", file.path(path, 'vsearch/vsearch-2.23.0-win-x86_64.zip'), mode='wb')
+    unzip(file.path(path,"vsearch/vsearch-2.23.0-win-x86_64.zip"),  exdir=file.path(path,"vsearch"))
+    file.copy(file.path(path, "vsearch/vsearch-2.23.0-win-x86_64/bin/vsearch.exe"), file.path(path, "vsearch/vsearch-2.23.0.exe"), overwrite=TRUE)
+    unlink(file.path(path,"vsearch/vsearch-2.23.0-win-x86_64"),recursive=TRUE)
+    message(cat(paste0("\n", "\033[0;", 32, "m","Download complete.", "\033[0m", "\n")))
+    vsearch.path <- file.path(path,"vsearch/vsearch-2.23.0.exe")
+  } else {
+    message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is ---> Windows-based <---", "\033[0m")))
+    message(cat(paste0("\033[0;", 32, "m","No additional download needed.", "\033[0m", "\n")))
+    vsearch.path <- file.path(path,"vsearch/vsearch-2.23.0.exe")
+  }
 }
+
 if(paste(get_os())=="osx-mac"){
-  message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is = ", paste(get_os()), "\033[0m", "\n")))
-  vsearch.path <- file.path(new_lib_path,"NCBI_databases/vsearch-2.23.0_macos")
- }
+  if(identical(vsearch_files, character(0))){
+    message(cat(paste0("\033[0;", 32, "m","Operating system is ---> MacOS-based <---", "\033[0m")))
+    download.file("https://github.com/torognes/vsearch/releases/download/v2.23.0/vsearch-2.23.0-macos-universal.tar.gz", file.path(path, '/vsearch/vsearch-2.23.0-macos-universal.tar.gz'), mode='wb')
+    #R.utils::gunzip(file.path(path,"vsearch/vsearch-2.23.0-macos-universal.tar.gz"), remove = FALSE, overwrite=TRUE)
+    untar(file.path(path,"vsearch/vsearch-2.23.0-macos-universal.tar.gz"),  exdir=file.path(path,"vsearch"))
+    file.copy(file.path(path, "vsearch/vsearch-2.23.0-macos-universal/bin/vsearch"), file.path(path, "vsearch/vsearch-2.23.0_macos"), overwrite=TRUE)
+    unlink(file.path(path,"vsearch/vsearch-2.23.0-macos-universal"),recursive=TRUE)
+    message(cat(paste0("\033[0;", 32, "m","Download complete.", "\033[0m", "\n")))
+    vsearch.path <- file.path(path,"vsearch/vsearch-2.23.0_macos")
+  } else {
+    message(cat(paste0("\033[0;", 32, "m","Operating system is ---> MacOS-based <---", "\033[0m")))
+    message(cat(paste0("\033[0;", 32, "m","No additional download needed.", "\033[0m", "\n")))
+    vsearch.path <- file.path(path,"vsearch/vsearch-2.23.0_macos")
+  }
+}
+
 if(paste(get_os())=="linux"){
-  message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is = ", paste(get_os()), "\033[0m", "\n")))
-  vsearch.path <- file.path(new_lib_path,"NCBI_databases/vsearch-2.23.0")
+  if(identical(vsearch_files, character(0))){
+    message(cat(paste0("\033[0;", 32, "m","Operating system is ---> Linux-based <---", "\033[0m")))
+    download.file("https://github.com/torognes/vsearch/releases/download/v2.23.0/vsearch-2.23.0-linux-x86_64.tar.gz", file.path(path, '/vsearch/vsearch-2.23.0-linux-x86_64.tar.gz'), mode='wb')
+    untar(file.path(path,"vsearch/vsearch-2.23.0-linux-x86_64.tar.gz"),  exdir=file.path(path,"vsearch"))
+    file.copy(file.path(path, "vsearch/vsearch-2.23.0-linux-x86_64/bin/vsearch"), file.path(path, "vsearch/vsearch-2.23.0"), overwrite=TRUE)
+    unlink(file.path(path,"vsearch/vsearch-2.23.0-linux-x86_64"),recursive=TRUE)
+    message(cat(paste0("\033[0;", 32, "m","Download complete.", "\033[0m", "\n")))
+    vsearch.path <- file.path(path,"vsearch/vsearch-2.23.0")
+  } else {
+    message(cat(paste0("\033[0;", 32, "m","Operating system is ---> Linux-based <---", "\033[0m")))
+    message(cat(paste0("\033[0;", 32, "m","No additional download needed.", "\033[0m", "\n")))
+    vsearch.path <- file.path(path,"vsearch/vsearch-2.23.0")
+  }
+  
 }
 
 
@@ -158,9 +213,9 @@ merged.drep1 <- merged.drep %>% select(-warning) %>% #select(-phylum,-class,-ord
 
 #Subset only columns of interest------------------------------------------------------------------
 
-merged.drep1.sub <- merged.drep1 %>% select(strain_group, date, filename,ID, species2, NCBI_acc, 
-                                            phred_trim, Ns, length, query_seq,
-                                            phylum, class, order, family, genus, species, ref_strain,
+merged.drep1.sub <- merged.drep1 %>% select(strain_group, filename, species,length, ID, Ns,
+                                             query_seq,date_sequenced, date_taxassign, NCBI_acc, phred_trim,  
+                                            phylum, class, order, family, genus, species2, ref_strain,
                                             phylum_col, class_col, order_col, family_col, genus_col, species_col)
 
 
@@ -171,7 +226,7 @@ merged.drep1.sub <- merged.drep1 %>% select(strain_group, date, filename,ID, spe
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 if(is.null(old_lib_csv)==FALSE){
-  old_lib_file <- read.csv(old_lib_csv, row.names=1)
+  old_lib_file <- read.csv(old_lib_csv)#, row.names=1)
   message(cat(paste0("\n", "\033[0;", 32, "m","Checking old/new library CSV files have same dimensions", "\033[0m")))
   message(cat(paste0("\033[0;", 32, "m",paste("No. of columns in old library: ", ncol(old_lib_file), sep=""), "\033[0m")))
   message(cat(paste0("\033[0;", 32, "m",paste("No. of columns in old library: ", ncol(merged.drep1.sub), sep=""), "\033[0m")))
@@ -235,9 +290,9 @@ if(is.null(old_lib_csv)==FALSE){
     mutate(strain_group = sapply(1:length(.$strain_group),function(x) str_sub(.$strain_group[x], 6, nchar(.$strain_group[x]))))
 
 
-  merged.drep1.sub <- merged.drep2 %>% select(strain_group, date, filename,ID, species2, NCBI_acc, 
-                                              phred_trim, Ns, length, query_seq,
-                                              phylum, class, order, family, genus, species, ref_strain,
+  merged.drep1.sub <- merged.drep2 %>% select(strain_group, filename, species,length, ID, Ns,
+                                              query_seq,date_sequenced, date_taxassign, NCBI_acc, phred_trim,  
+                                              phylum, class, order, family, genus, species2, ref_strain,
                                               phylum_col, class_col, order_col, family_col, genus_col, species_col)
   } #-----------end of old library add-in
 
@@ -272,7 +327,7 @@ new_library_reactable <- bscols(widths = c(1,10),
                                   filter_slider("length", "Seq length", round=-1, ticks=FALSE, data, ~length),
                                   filter_slider("ID", "% identity", data, round=2, ticks=FALSE, ~ID),
                                   filter_checkbox("ref_strain", "Ref strain", data, ~ref_strain, inline = FALSE),
-                                  filter_checkbox("date", "Date", data, ~date, inline = FALSE)
+                                  filter_checkbox("date_sequenced", "Date Sequenced", data, ~date_sequenced, inline = FALSE)
                                 ),
                                 htmltools::browsable(
                                   tagList(tags$button(
@@ -419,7 +474,7 @@ openFileInOS(paste("make_library_output___", new_lib_folder2, ".html", sep=""))
 unlink(file.path(new_lib_path,paste("make_library_output_temp___", new_lib_folder2, ".csv", sep=""))) #Remove temp CSV
 unlink(file.path(new_lib_path,paste("make_library_output_temp___", new_lib_folder2, ".drep", sep=""))) #Remove temp DREP
 unlink(file.path(new_lib_path,paste("make_library_output___", new_lib_folder2, ".drep", sep=""))) #Remove temp DREP
-unlink(file.path(new_lib_path,paste("make_library_output_temp___", new_lib_folder2, ".fasta", sep=""))) #Remove temp FASTA
+unlink(file.path(new_lib_path,paste("make_library_output___", new_lib_folder2, ".fasta", sep=""))) #Remove temp FASTA
 
 #Export messages
 message(cat(paste0("\033[97;", 40, "m","'make_library' steps completed. Exporting files...", "\033[0m")))
@@ -430,16 +485,28 @@ message(cat(paste0("\033[97;", 40, "m","Export directory:", "\033[0m",
 message(cat(paste0("\033[97;", 40, "m","HTML file exported:", "\033[0m",
                    "\033[0;", 32, "m", " ", file.path(new_lib_path, paste("make_library_output___", new_lib_folder2, ".html", sep="")),"\033[0m")))
 
+#also output a condensed version where ref_strain = TRUE so users do not necessarily have to do it
+refstr_lib <- merged.drep1.sub[merged.drep1.sub$ref_strain == "yes",]
 
 if(is.null(old_lib_csv)==FALSE){
-  write.csv(merged.drep1.sub, file=paste("make_library_output___", new_lib_folder2, ".csv", sep=""))
+  write.csv(merged.drep1.sub, file=paste("make_library_output___", new_lib_folder2, ".csv", sep=""),row.names=FALSE)
   message(cat(paste0("\033[97;", 40, "m","Combined libary exported:", "\033[0m",
                      "\033[0;", 32, "m", " ", file.path(new_lib_path, paste("make_library_output___", new_lib_folder2, ".csv", sep="")),"\033[0m")))
+  
+  write.csv(refstr_lib, file=paste("make_library_output_condensed___", new_lib_folder2, ".csv", sep=""),row.names=FALSE)
+  message(cat(paste0("\033[97;", 40, "m","Combined libary exported with reference strains only:", "\033[0m",
+                     "\033[0;", 32, "m", " ", file.path(new_lib_path, paste("make_library_output_condensed___", new_lib_folder2, ".csv", sep="")),"\033[0m")))
 } else {
-  write.csv(merged.drep1.sub, file=paste("make_library_output___", new_lib_folder2, ".csv", sep=""))
+  write.csv(merged.drep1.sub, file=paste("make_library_output___", new_lib_folder2, ".csv", sep=""),row.names = FALSE)
   message(cat(paste0("\033[97;", 40, "m","New libary exported:", "\033[0m",
                      "\033[0;", 32, "m", " ", file.path(new_lib_path, paste("make_library_output___", new_lib_folder2, ".csv", sep="")),"\033[0m")))
+  
+  write.csv(refstr_lib, file=paste("make_library_output_condensed___", new_lib_folder2, ".csv", sep=""),row.names=FALSE)
+  message(cat(paste0("\033[97;", 40, "m","New libary exported with reference strains only:", "\033[0m",
+                     "\033[0;", 32, "m", " ", file.path(new_lib_path, paste("make_library_output_condensed___", new_lib_folder2, ".csv", sep="")),"\033[0m")))
 }
+
+unlink(paste0(path,"/vsearch/"), recursive = TRUE)
 
 } #end of function
 

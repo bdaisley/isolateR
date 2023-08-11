@@ -1,9 +1,16 @@
+#assign_taxonomy function
 
+#Parameters:
+# input= file path to the passing .csv from abif_fasta2
+# export_csv= (TRUE) export the blast results in csv format
+# verbose= (TRUE) output progress
+# skip_search= (FALSE) FALSE by default. If TRUE, skips database searching step (requires presence of output files from previous run)
+# quick_search= (FALSE) F = performs comprehensive database searching (recommended for confident taxonomy), T for faster but less confident searching
+# add_fungi_db= (FALSE) Set TRUE if any .ab1 files contain ITS sequences. FALSE by default, which only searches against NCBI bacterial 16S rRNA database
 
 assign_taxonomy <- function(input=NULL,
                             export_csv=TRUE,
                             verbose=TRUE,
-                            exclude=NULL,
                             skip_search=FALSE,
                             quick_search=FALSE,
                             add_fungi_db=FALSE){
@@ -239,7 +246,8 @@ message(cat(paste0("\n", "\033[97;", 40, "m","Organizing results", "\033[0m", "\
 #-------------------------------------------------
 query.seqs <- Biostrings::readBStringSet(query.fasta)
 query.seqs.df <- as.data.frame(names(query.seqs)) %>% mutate(V9 = names(query.seqs), query_seq = paste(query.seqs)) %>% mutate(length= nchar(query_seq)) %>% mutate(Ns = str_count(.$query_seq, "[Nn]")) %>% select(-1)
-query.info <- read.csv(paste("output/abif_fasta2_output_PASS___", unlist(strsplit(folder, '/'))[length(unlist(strsplit(folder, '/')))],".csv", sep=""), row.names= 1)
+
+query.info <- read.csv(paste("output/abif_fasta2_output_PASS___", unlist(strsplit(folder, '/'))[length(unlist(strsplit(folder, '/')))],".csv", sep=""))#, row.names= 1) remove this bit since no longer saving csvs with default row.names
 query.info.list1 <- setNames(query.info$phred_trim, query.info$filename)
 query.info.list2 <- setNames(query.info$date, query.info$filename)
 
@@ -585,11 +593,28 @@ message(cat(paste0("\033[97;", 40, "m","'assign_taxonomy' steps completed. Expor
 message(cat(paste0("\033[97;", 40, "m","HTML file exported:", "\033[0m",
                    "\033[0;", 32, "m", " ", file.path(path, paste("output/assign_taxonomy_output_PASS___", unlist(strsplit(folder, '/'))[length(unlist(strsplit(folder, '/')))], ".html", sep="")),"\033[0m")))
 
+#remove extra columns from the html and get output order to match internal main strain library for easier data trasnfer
+#also grab system time to set the assign taxonomy date, for the true taxonomy nerds out there this is handy way to check which version of the RefSeq database your sequences were aligned to
+merged.df3$date_taxassign <- str_replace_all(Sys.Date(), "-","_")
+out_df <- subset(merged.df3, select = c(warning, filename, species, length,
+                                        ID, Ns, query_seq,date,date_taxassign, NCBI_acc,phred_trim,  
+                                        phylum,class,	order,	family,	genus,	species2,
+                                        phylum_col, class_col, order_col, family_col, genus_col, species_col))
+names(out_df)[names(out_df) == 'date'] <- 'date_sequenced'
+
+#fix the filename to remove sanger seq artifacts if there are any
+out_df <- out_df %>% mutate(filename = str_remove(filename,'_[:alpha:][:digit:][:digit:]\\.ab1$'))
+
 if(export_csv==TRUE) {
-  write.csv(merged.df3, file=paste("output/assign_taxonomy_output_PASS___", unlist(strsplit(folder, '/'))[length(unlist(strsplit(folder, '/')))],".csv", sep=""))
+  write.csv(out_df, file=paste("output/assign_taxonomy_output_PASS___", unlist(strsplit(folder, '/'))[length(unlist(strsplit(folder, '/')))],".csv", sep=""), row.names = FALSE)
   message(cat(paste0("\033[97;", 40, "m","CSV file exported:", "\033[0m",
                      "\033[0;", 32, "m", " ", file.path(path, paste("output/assign_taxonomy_output_PASS___", unlist(strsplit(folder, '/'))[length(unlist(strsplit(folder, '/')))], ".csv", sep="")),"\033[0m", 
                      "\033[0;", 31, "m", "  <--- Input for Step 3: 'make_library'","\033[0m")))
 }
+
+#remove subdirectories created with the script
+unlink(paste0(path,"/output/NCBI_databases/"), recursive = TRUE)
+unlink(paste0(path,"/output/assign_taxonomy_output_PASS___", unlist(strsplit(folder, '/'))[length(unlist(strsplit(folder, '/')))],"_files/"), recursive = TRUE)
+
 }
 
