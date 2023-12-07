@@ -9,7 +9,7 @@ isolateR aims to enhance microbial isolation workflows and support the identific
 
 - The expected input is Sanger sequence <code>.ab1</code> files containing taxonomic marker sequences.
 - The pipeline is currently optimized for the following taxonomic markers:
-  - <b>16S rRNA</b> (bacteria/archaea)
+  - <b>16S rRNA</b> (bacteria/archaea) 
   - <b>18S rRNA</b> (fungi)
   - <b>ITS region</b> (fungi)
   - <b>cpn60</b> (bacteria/archaea)

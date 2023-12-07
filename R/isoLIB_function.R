@@ -60,14 +60,7 @@ isoLIB <- function(input=NULL,
     if(strain_group_cutoff <0 | strain_group_cutoff >1) stop("Wrong 'strain_group_cutoff' format. Set between 0-1 (1=no difference i.e., identical sequences)", call.=FALSE)
   }
 
-  #------------------------------------------------- functions
-  #-------------------------------------------------
-  #-------------------------------------------------
-  #-------------------------------------------------
-  #-------------------------------------------------
-  #-------------------------------------------------
-
-  input <- str_replace_all(input, '\\\\', '/')
+  #Set paths------------------------------------------------------------
 
 	new_lib <- str_replace_all(input, '\\\\', '/')
 	new_lib_path <- paste(unlist(strsplit(new_lib, '/'))[1:(length(unlist(strsplit(new_lib, '/')))-1)],collapse="/")

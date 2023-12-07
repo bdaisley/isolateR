@@ -16,6 +16,7 @@
 #' #Retrieve date
 #' get_sanger_date(ab1.S4)
 
+
 get_sanger_date <- function(file=NULL){
 sanger.date <- c(paste(file@data['RUND.1'][[1]][[1]],
                        stringr::str_pad(file@data['RUND.1'][[1]][[2]], 2, pad = "0"),

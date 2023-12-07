@@ -9,7 +9,7 @@
   export_html = TRUE,
   export_csv = TRUE,
   quick_search = TRUE,
-  database = "16S",
+  db = "16S",
   iddef = 2,
   phylum_cutoff = 75,
   class_cutoff = 78.5,

@@ -238,7 +238,7 @@ setGeneric("isoTAX",  function(input=NULL,
                                export_html=TRUE,
                                export_csv=TRUE,
                                quick_search=TRUE,
-                               database="16S",
+                               db="16S",
                                iddef=2,
                                phylum_cutoff = 75,
                                class_cutoff = 78.5,
@@ -364,7 +364,7 @@ setMethod("isoTAX", signature(input="missing"), function(input= NULL,
                                                          export_html=TRUE,
                                                          export_csv=TRUE,
                                                          quick_search=TRUE,
-                                                         database="16S",
+                                                         db="16S",
                                                          iddef=2,
                                                          phylum_cutoff = 75,
                                                          class_cutoff = 78.5,
@@ -375,7 +375,7 @@ setMethod("isoTAX", signature(input="missing"), function(input= NULL,
                                                                                        export_html,
                                                                                        export_csv,
                                                                                        quick_search,
-                                                                                       database,
+                                                                                       db,
                                                                                        iddef,
                                                                                        phylum_cutoff,
                                                                                        class_cutoff ,
@@ -795,7 +795,7 @@ setMethod("export_html", "isoQC",
 
             path <- obj@input
             output <- "isolateR_output/01_isoQC_results.html"
-            fname_html <- file.path(path, output, sep="")
+            fname_html <- file.path(path, output)
             suppressMessages(htmltools::save_html(html_output, fname_html))
             writeLines(gsub('<meta charset="utf-8"/>', '<meta charset="utf-8"/>\n<title>isoQC</title>', readLines(fname_html)), fname_html)
             pander::openFileInOS(fname_html)
@@ -1131,13 +1131,12 @@ setMethod("export_html", "isoTAX",
             )
 
 
-              fname_html <- file.path(path, output, sep="")
+              fname_html <- file.path(path, output)
               htmltools::save_html(html_output, fname_html)
               writeLines(gsub('<meta charset="utf-8"/>', '<meta charset="utf-8"/>\n<title>isoTAX</title>', readLines(fname_html)), fname_html)
               pander::openFileInOS(fname_html)
               return(html_output)
             })
-
 
 #:::::::::::::::::::::::::::::::
 # MAKE HTML #3: LIB TABLE
@@ -1431,7 +1430,7 @@ setMethod("export_html", "isoLIB",
                                                  ,
                                                )))
 
-            fname_html <- file.path(output, sep="")
+            fname_html <- file.path(path, output)
             htmltools::save_html(html_output, fname_html)
             writeLines(gsub('<meta charset="utf-8"/>', '<meta charset="utf-8"/>\n<title>isoLIB</title>', readLines(fname_html)), fname_html)
             writeLines(gsub('amp;', '', readLines(fname_html)), fname_html)

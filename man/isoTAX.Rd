@@ -9,7 +9,7 @@ isoTAX(
   export_html = TRUE,
   export_csv = TRUE,
   quick_search = TRUE,
-  database = "16S",
+  db = "16S",
   iddef = 2,
   phylum_cutoff = 75,
   class_cutoff = 78.5,
@@ -30,7 +30,7 @@ isoTAX(
 If TRUE, performs quick search equivalent to setting VSEARCH parameters "--maxaccepts 100 --maxrejects 100".
 If FALSE, performs comprehensive search equivalent to setting VSEARCH parameters "--maxaccepts 0 --maxrejects 0"}
 
-\item{database}{(Default="16S") Select database option(s) including "16S" (for searching against the NCBI Refseq targeted loci 16S rRNA database),
+\item{db}{(Default="16S") Select database option(s) including "16S" (for searching against the NCBI Refseq targeted loci 16S rRNA database),
 "ITS" (for searching against the NCBI Refseq targeted loci ITS  database. For combined databases in cases where input sequences are dervied from
 bacteria and fungi, select "16S|ITS".}
 

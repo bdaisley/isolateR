@@ -13,7 +13,17 @@
 #' @importFrom ape as.DNAbin
 #' @importFrom ape dist.dna
 #' @importFrom ape njs
-#' @import msa
+#' @importFrom treeio as_tibble
+#' @importFrom treeio tibble
+#' @importFrom full_join
+#' @importFrom as.treedata
+#' @importFrom scales hue_pal
+#' @importFrom utils select.list
+#' @importFrom ggtree ggtree
+#' @importFrom ggtree geom_tippoint
+#' @importFrom ggtree scale_colour_manual
+#' @importFrom ggtree geom_tiplab
+#' @importFrom msa msaMuscle
 #' @examples
 #' #Set path to directory containing example .ab1 files
 #' fpath1 <- system.file("extdata/abif_examples/rocket_salad", package = "isolateR")
@@ -63,29 +73,28 @@ make_tree <- function(input = NULL){
   #MSA alginment with muscle using N-J method, default params otherwise
   #params: -in noFile -cluster neighborjoining -gapOpen -400 -gapExtend -0 -maxiters 16 -seqtype dna -spn  -clwstrict
   #MUSCLE 3.8.31
-  alignedSet <- msaMuscle(seqset, cluster = "neighborjoining", verbose = TRUE)
+  alignedSet <- msa::msaMuscle(seqset, cluster = "neighborjoining", verbose = TRUE)
 
   alignedBin <- ape::as.DNAbin(alignedSet)
   ddist <- ape::dist.dna(x=alignedBin)
   phy_tree <- ape::njs(ddist)
 
-
   #--------------------------
   #--------------------------Add taxonomic data to the tree
 
-  tree.tab <- as_tibble(phy_tree)
+  tree.tab <- treeio::as_tibble(phy_tree)
 
-  tax <- tibble(label = lib_file$filename,
-                P = lib_file$phylum,
-                C = lib_file$class,
-                O = lib_file$order,
-                Fa = lib_file$family,
-                G = lib_file$genus,
-                S = lib_file$species)
-  tree.tab.tax <- full_join(tree.tab,tax, by = 'label')
+  tax <- treeio::tibble(label = lib_file$filename,
+                        P = lib_file$phylum,
+                        C = lib_file$class,
+                        O = lib_file$order,
+                        Fa = lib_file$family,
+                        G = lib_file$genus,
+                        S = lib_file$species)
+  tree.tab.tax <- treeio::full_join(tree.tab,tax, by = 'label')
 
   #convert back to tree object with taxonomy
-  tree.tax <- as.treedata(tree.tab.tax)
+  tree.tax <- treeio::as.treedata(tree.tab.tax)
 
   phyla_tips <- split(tax$label,tax$P)
   class_tips <- split(tax$label,tax$C)
@@ -94,15 +103,15 @@ make_tree <- function(input = NULL){
   gen_tips <- split(tax$label,tax$G)
   sp_tips <- split(tax$label,tax$S)
 
-  tree.tax.gr <- groupOTU(tree.tax, phyla_tips, "Phylum")
-  tree.tax.gr <- groupOTU(tree.tax.gr, class_tips, "Class")
-  tree.tax.gr <- groupOTU(tree.tax.gr, ord_tips, "Order")
-  tree.tax.gr <- groupOTU(tree.tax.gr, fam_tips, "Family")
-  tree.tax.gr <- groupOTU(tree.tax.gr, gen_tips, "Genus")
-  tree.tax.gr <- groupOTU(tree.tax.gr, sp_tips, "Species")
+  tree.tax.gr <- ggtree::groupOTU(tree.tax, phyla_tips, "Phylum")
+  tree.tax.gr <- ggtree::groupOTU(tree.tax.gr, class_tips, "Class")
+  tree.tax.gr <- ggtree::groupOTU(tree.tax.gr, ord_tips, "Order")
+  tree.tax.gr <- ggtree::groupOTU(tree.tax.gr, fam_tips, "Family")
+  tree.tax.gr <- ggtree::groupOTU(tree.tax.gr, gen_tips, "Genus")
+  tree.tax.gr <- ggtree::groupOTU(tree.tax.gr, sp_tips, "Species")
 
   tax.rank <- "Order" #set default tax rank
-  colours <- hue_pal()(length(names(ord_tips))) #set default colour palette
+  colours <- scales::hue_pal()(length(names(ord_tips))) #set default colour palette
 
 
   #quick function to determine new length of tax.rank if the user decides to change it
@@ -123,14 +132,22 @@ make_tree <- function(input = NULL){
   #--------------------------
   #--------------------------View the default tree and specify an outgroup if desired
 
-  viewtree <- ggtree(tree.tax.gr, layout = "rectangular", branch.length='none', aes(color= eval(parse(text = tax.rank)) ))+ geom_tippoint(size=1)+ geom_tiplab(size=3)+scale_colour_manual(name=tax.rank, values = colours, na.translate=FALSE)
+  viewtree <- ggtree::ggtree(tree.tax.gr,
+                             layout = "rectangular",
+                             branch.length='none',
+                             ggtree::aes(color= eval(parse(text = tax.rank)) ))+
+    ggtree::geom_tippoint(size=1) +
+    ggtree::geom_tiplab(size=3) +
+    ggtree::scale_colour_manual(name=tax.rank,
+                                values = colours,
+                                na.translate=FALSE)
 
   #See if the user would like to set a root for their tree
   message("----Determining outgroup:")
   while(TRUE){
     message("Check the plot for a current view of the tree.You may need to expand the plot to view labels.")
     plot(viewtree)
-    choice <- select.list(title = "Would you like to select a different root?", choices = c("No","Yes"), graphics = FALSE, multiple =FALSE)
+    choice <- utils::select.list(title = "Would you like to select a different root?", choices = c("No","Yes"), graphics = FALSE, multiple =FALSE)
 
     if(choice == "No"){
       break
@@ -138,17 +155,25 @@ make_tree <- function(input = NULL){
 
       message("Type the strain ID as it appears in the tree that you would like to make the outgroup.")
       newroot <- readline(prompt="Enter strain ID: ")
-      tree.tax <- root(tree.tax, outgroup = newroot)
+      tree.tax <- ape::root(tree.tax, outgroup = newroot)
 
       #need to regroup after changing outgroup
-      tree.tax.gr <- groupOTU(tree.tax, phyla_tips, "Phylum")
-      tree.tax.gr <- groupOTU(tree.tax.gr, class_tips, "Class")
-      tree.tax.gr <- groupOTU(tree.tax.gr, ord_tips, "Order")
-      tree.tax.gr <- groupOTU(tree.tax.gr, fam_tips, "Family")
-      tree.tax.gr <- groupOTU(tree.tax.gr, gen_tips, "Genus")
-      tree.tax.gr <- groupOTU(tree.tax.gr, sp_tips, "Species")
+      tree.tax.gr <- ggtree::groupOTU(tree.tax, phyla_tips, "Phylum")
+      tree.tax.gr <- ggtree::groupOTU(tree.tax.gr, class_tips, "Class")
+      tree.tax.gr <- ggtree::groupOTU(tree.tax.gr, ord_tips, "Order")
+      tree.tax.gr <- ggtree::groupOTU(tree.tax.gr, fam_tips, "Family")
+      tree.tax.gr <- ggtree::groupOTU(tree.tax.gr, gen_tips, "Genus")
+      tree.tax.gr <- ggtree::groupOTU(tree.tax.gr, sp_tips, "Species")
 
-      viewtree <- ggtree(tree.tax.gr, layout = "rectangular", branch.length='none', aes(color= eval(parse(text = tax.rank)) ))+ geom_tippoint(size=1)+ geom_tiplab(size=3)+scale_colour_manual(name=tax.rank, values = colours, na.translate=FALSE)
+      viewtree <- ggtree::ggtree(tree.tax.gr,
+                                 layout = "rectangular",
+                                 branch.length='none',
+                                 ggtree::aes(color= eval(parse(text = tax.rank)) ))+
+        ggtree::geom_tippoint(size=1)+
+        ggtree::geom_tiplab(size=3)+
+        ggtree::scale_colour_manual(name=tax.rank,
+                                    values = colours,
+                                    na.translate=FALSE)
     }
   }
 
@@ -180,9 +205,17 @@ make_tree <- function(input = NULL){
       tax.choice <- select.list(title = "Which taxonomic rank should be used?", choices = c("Phylum","Class","Order","Family","Genus","Species"), graphics = FALSE, multiple =FALSE)
       tax.rank <- tax.choice
 
-      colours <- hue_pal()(taxlen(tax.rank)+1)
+      colours <- scales::hue_pal()(taxlen(tax.rank)+1)
 
-      viewtree <- ggtree(tree.tax.gr, layout = "rectangular", branch.length='none', aes(color= eval(parse(text = tax.rank)) ))+ geom_tippoint(size=1)+ geom_tiplab(size=3)+scale_colour_manual(name=tax.rank, values = colours, na.translate=TRUE)
+      viewtree <- ggtree::ggtree(tree.tax.gr,
+                                 layout = "rectangular",
+                                 branch.length='none',
+                                 ggtree::aes(color= eval(parse(text = tax.rank)) ))+
+        ggtree::geom_tippoint(size=1)+
+        ggtree::geom_tiplab(size=3)+
+        ggtree::scale_colour_manual(name=tax.rank,
+                                    values = colours,
+                                    na.translate=TRUE)
 
     } else {
       break

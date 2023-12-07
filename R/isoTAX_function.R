@@ -9,7 +9,7 @@
 #' @param quick_search (Default=FALSE) Whether or not to perform a comprehensive database search (i.e. optimal global alignment).
 #' If TRUE, performs quick search equivalent to setting VSEARCH parameters "--maxaccepts 100 --maxrejects 100".
 #' If FALSE, performs comprehensive search equivalent to setting VSEARCH parameters "--maxaccepts 0 --maxrejects 0"
-#' @param database (Default="16S") Select database option(s) including "16S" (for searching against the NCBI Refseq targeted loci 16S rRNA database),
+#' @param db (Default="16S") Select database option(s) including "16S" (for searching against the NCBI Refseq targeted loci 16S rRNA database),
 #' "ITS" (for searching against the NCBI Refseq targeted loci ITS  database. For combined databases in cases where input sequences are dervied from
 #' bacteria and fungi, select "16S|ITS".
 #' @param iddef Set pairwise identity definition as per VSEARCH definitions (Default=2, and is recommended for highest taxonomic accuracy)
@@ -54,7 +54,7 @@ isoTAX <- function(input=NULL,
                    export_html=TRUE,
                    export_csv=TRUE,
                    quick_search=TRUE,
-                   database="16S",
+                   db="16S",
                    iddef=2,
                    phylum_cutoff=75.0,
                    class_cutoff=78.5,
@@ -72,70 +72,8 @@ isoTAX <- function(input=NULL,
   path <- paste(unlist(strsplit(input, '/'))[1:(length(unlist(strsplit(input, '/')))-1)], collapse="/")
 
   setwd(path)
-  db.path <- file.path(system.file("", package="isolateR"), "databases")
-  suppressWarnings(dir.create(db.path))
-  db.files  <- dir(db.path, full.names = FALSE)
   vsearch.path.dl <- file.path(system.file("", package="isolateR"), "vsearch")
   suppressWarnings(dir.create(vsearch.path.dl))
-
-
-    #:::::::::::::::::::::::::::::::::
-    #Download reference databases
-    #:::::::::::::::::::::::::::::::::
-
-    if(database == "16S" | database == "16s" | database == "bacteria" | database == "bac"){
-      if(("bacteria.16SrRNA.fna" %in% db.files)==FALSE){
-        download.file("https://ftp.ncbi.nlm.nih.gov/refseq/TargetedLoci/Bacteria/bacteria.16SrRNA.fna.gz", file.path(db.path, 'bacteria.16SrRNA.fna.gz'), mode='wb')
-        R.utils::gunzip(file.path(db.path,"bacteria.16SrRNA.fna.gz"), remove = FALSE, overwrite=TRUE)
-        message(cat(paste0("\033[0;", 32, "m","Download complete for NCBI Bacterial 16S rRNA database.", "\033[0m")))
-        db.fasta.path <- file.path(db.path, "bacteria.16SrRNA.fna")
-        unlink(file.path(db.path,"bacteria.16SrRNA.fna.gz"),recursive=TRUE)
-        } else if(("bacteria.16SrRNA.fna" %in% db.files)==TRUE) {
-          db.fasta.path <- file.path(db.path, "bacteria.16SrRNA.fna")
-          message(cat(paste0("\033[0;", 32, "m","NCBI Bacterial 16S rRNA database already installed.", "\033[0m")))
-        }
-    }
-
-    if(database == "ITS" | database == "its" | database == "fungi" | database == "fun"){
-      if(("fungi.ITS.fna" %in% db.files)==FALSE){
-        download.file("https://ftp.ncbi.nlm.nih.gov/refseq/TargetedLoci/Fungi/fungi.ITS.fna.gz", file.path(db.path, 'fungi.ITS.fna.gz'), mode='wb')
-        R.utils::gunzip(file.path(db.path,"fungi.ITS.fna.gz"), remove = FALSE, overwrite=TRUE)
-        message(cat(paste0("\033[0;", 32, "m","Download complete for NCBI Fungal ITS database.", "\033[0m")))
-        db.fasta.path <- file.path(db.path, "fungi.ITS.fna")
-        unlink(file.path(db.path,"fungi.ITS.fna.gz"),recursive=TRUE)
-      } else if(("fungi.ITS.fna" %in% db.files)==TRUE) {
-        db.fasta.path <- file.path(db.path, "fungi.ITS.fna")
-        message(cat(paste0("\033[0;", 32, "m","NCBI Fungal ITS database already installed.", "\033[0m")))
-      }
-    }
-    if(database == "16S|ITS" | database == "ITS|16S" | database == "16s|its" | database == "its|16s" | database == "ITS|16s" | database == "16s|ITS"){
-      if(("16S_ITS_concat.fna" %in% db.files)==FALSE){
-        download.file("https://ftp.ncbi.nlm.nih.gov/refseq/TargetedLoci/Bacteria/bacteria.16SrRNA.fna.gz", file.path(db.path, 'bacteria.16SrRNA.fna.gz'), mode='wb')
-        R.utils::gunzip(file.path(db.path, "bacteria.16SrRNA.fna.gz"), remove = FALSE, overwrite=TRUE)
-        message(cat(paste0("\033[0;", 32, "m","Download complete for NCBI Bacterial 16S rRNA database.", "\033[0m")))
-        message(cat(paste0("\033[0;", 32, "m","Adding combined 16S|ITS sequences.", "\033[0m")))
-        download.file("https://ftp.ncbi.nlm.nih.gov/refseq/TargetedLoci/Fungi/fungi.ITS.fna.gz", file.path(db.path, 'fungi.ITS.fna.gz'), mode='wb')
-        R.utils::gunzip(file.path(db.path, "fungi.ITS.fna.gz"), remove = FALSE, overwrite=TRUE)
-        message(cat(paste0("\033[0;", 32, "m","Download complete for NCBI Fungal ITS database.", "\033[0m")))
-        #Concatenate 16S and ITS dbs
-        db.concat <- c(seqinr::read.fasta(file=file.path(db.path,"bacteria.16SrRNA.fna"), as.string=TRUE, forceDNAtolower=FALSE),
-                       seqinr::read.fasta(file=file.path(db.path,"fungi.ITS.fna"), as.string=TRUE, forceDNAtolower=FALSE))
-        #Write concatenated db to fasta
-        seqinr::write.fasta(sequences=db.concat,
-                            names=names(db.concat),
-                            as.string=TRUE, nbchar = 1000, file.out=file.path(db.path,"16S_ITS_concat.fna"))
-        #Set path
-        db.fasta.path <- file.path(db.path, "16S_ITS_concat.fna")
-      } else if(("16S_ITS_concat.fna" %in% db.files)==TRUE){
-        db.fasta.path <- file.path(db.path, "16S_ITS_concat.fna")
-        message(cat(paste0("\033[0;", 32, "m","Combined 16S|ITS database already installed.", "\033[0m")))
-      }
-    }
-    if(!database == "16S" | database == "16s" | database == "bacteria" | database == "bac"| database == "ITS" | database == "its" | database == "fungi" | database == "fun" |
-       database == "16S|ITS" | database == "ITS|16S" | database == "16s|its" | database == "its|16s" | database == "ITS|16s" | database == "16s|ITS"){
-      stop('Please correct database selection to either database="16S" or database="ITS" or database="16S|ITS"', call.=FALSE)
-      #stop(cat(paste0("\033[0;", 32, "m",'Please correct database selection to either database="16S" or database="ITS" or database="16S|ITS', "\033[0m")))
-    }
 
     #:::::::::::::::::::::::::::
     #Download VSEARCH software
@@ -225,7 +163,7 @@ isoTAX <- function(input=NULL,
                             b6.out = b6.out,
                             path = path,
                             quick_search = quick_search,
-                            db.path = db.fasta.path,
+                            db = db,
                             iddef=iddef)
 
 

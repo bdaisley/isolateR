@@ -14,10 +14,10 @@
 valid_tax_check<- function(input = NULL, col_species = "species", export_csv=TRUE){
   if(is.null(input)) stop('Input file not supplied. Please check the execution script preamble to make sure it is entered correctly', call.=FALSE)
 
-  #read file in
+  #read file in---------------------------------------------------------------------------------------------
   inputdf <- read.csv(input, header = TRUE, stringsAsFactors = FALSE)
 
-  #connect to the API
+  #connect to the API---------------------------------------------------------------------------------------
   message("To connect to the LPSN API an account a LPSN API account is required.")
   message("If you do not already possess one, please reigster here: https://api.lpsn.dsmz.de/")
   message("Please enter your LPSN API credentials")
@@ -31,7 +31,7 @@ valid_tax_check<- function(input = NULL, col_species = "species", export_csv=TRU
     ) #from fetch documentation, make sure session not expired
 
 
-  #intialize dataframe for results
+  #intialize dataframe for results--------------------------------------------------------------------------
   checkdf <- as.data.frame(cbind(species = inputdf[,col_species], lpsnresult = NA, correctname = NA))
 
   #remove any tailing whitespace and pesky "Genus" or [Genus] naming conventions
@@ -43,7 +43,7 @@ valid_tax_check<- function(input = NULL, col_species = "species", export_csv=TRU
   checkdf$species <- gsub("[[:punct:]]", "", checkdf$species)
 
 
-  #for each species call to LPSN to retrieve info, if null not valid name
+  #for each species call to LPSN to retrieve info, if null not valid name----------------------------------
   for(i in 1:nrow(inputdf)){
     #use retrieve function to get information from full name
     ret <- retrieve(lpsn, search = "flexible", full_name = checkdf[i,"species"])
@@ -75,6 +75,7 @@ valid_tax_check<- function(input = NULL, col_species = "species", export_csv=TRU
 
   }
 
+  #output------------------------------------------------------------------------------------------------
   outdf <- cbind(inputdf, LPSN_Result = checkdf$lpsnresult, Correct_Name = checkdf$correctname)
 
   outfile = paste0(gsub(".csv","",input),"_valid_species_check.csv")

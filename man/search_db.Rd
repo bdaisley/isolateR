@@ -11,7 +11,7 @@ search_db(
   path = getwd(),
   quick_search = FALSE,
   db.path = NULL,
-  database = NULL,
+  db = NULL,
   keep_temp_files = FALSE,
   iddef = 2
 )
@@ -32,7 +32,7 @@ Note: This option is provided for convenience and rough approximation of taxonom
 
 \item{db.path}{Path of FASTA-formatted database sequence file. Ignored if 'database' parameter is set to anything other than NULL}
 
-\item{database}{Optional: Select any of the standard database option(s) including "16S" (for searching against the NCBI Refseq targeted loci 16S rRNA database),
+\item{db}{Optional: Select any of the standard database option(s) including "16S" (for searching against the NCBI Refseq targeted loci 16S rRNA database),
 "ITS" (for searching against the NCBI Refseq targeted loci ITS  database. For combined databases in cases where input sequences are dervied from
 bacteria and fungi, select "16S|ITS". Setting to anything other than NULL causes 'db.path' parameter to be ignored.}
 
@@ -79,7 +79,7 @@ fasta.path <- "01_isoQC_trimmed_sequences_PASS.fasta"
 output.path <- file.path(fpath1, "isolateR_output")
 
 #Run search_db function
-uc.df <- search_db(query.path=fasta.path, path=output.path, quick_search=TRUE, database="16S")
+uc.df <- search_db(query.path=fasta.path, path=output.path, quick_search=TRUE, db="16S")
 
 #Inspect results
 uc.df[1:10,1:10]

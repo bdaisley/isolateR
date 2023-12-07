@@ -34,11 +34,8 @@ make_fasta <- function(csv_file=NULL,
   #load file----------------------
   df <- read.csv(csv_file, header = TRUE, stringsAsFactors = FALSE)
 
-
   #get data-------------------
   ss <- Biostrings::DNAStringSet(stats::setNames(df[,paste(col_seqs)], df[,paste(col_names)]))
-
-
 
   #output as fasta file-----------------
   fasta.output <- file.path(paste(unlist(strsplit(csv_file, '/'))[1:(length(unlist(strsplit(csv_file, '/')))-1)], collapse="/"), output)

@@ -31,7 +31,6 @@
 #' #Show summary statistics
 #' isoQC.S4
 
-
 isoQC <- function(input=NULL,
                   export_html=TRUE,
                   export_csv=TRUE,

@@ -31,4 +31,5 @@ get_os <- function(){
       os <- "linux"
   }
   tolower(os)
+
 }
