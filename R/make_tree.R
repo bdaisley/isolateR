@@ -13,8 +13,7 @@
 #' @importFrom ape as.DNAbin
 #' @importFrom ape dist.dna
 #' @importFrom ape njs
-#' @importFrom treeio as_tibble
-#' @importFrom treeio tibble
+#' @import treeio
 #' @importFrom full_join
 #' @importFrom as.treedata
 #' @importFrom scales hue_pal
@@ -82,19 +81,19 @@ make_tree <- function(input = NULL){
   #--------------------------
   #--------------------------Add taxonomic data to the tree
 
-  tree.tab <- treeio::as_tibble(phy_tree)
+  tree.tab <- as_tibble(phy_tree)
 
-  tax <- treeio::tibble(label = lib_file$filename,
+  tax <- tibble(label = lib_file$filename,
                         P = lib_file$phylum,
                         C = lib_file$class,
                         O = lib_file$order,
                         Fa = lib_file$family,
                         G = lib_file$genus,
                         S = lib_file$species)
-  tree.tab.tax <- treeio::full_join(tree.tab,tax, by = 'label')
+  tree.tab.tax <- full_join(tree.tab,tax, by = 'label')
 
   #convert back to tree object with taxonomy
-  tree.tax <- treeio::as.treedata(tree.tab.tax)
+  tree.tax <- as.treedata(tree.tab.tax)
 
   phyla_tips <- split(tax$label,tax$P)
   class_tips <- split(tax$label,tax$C)
