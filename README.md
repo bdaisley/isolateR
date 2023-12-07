@@ -85,7 +85,7 @@ fpath2 <- file.path(fpath1, "isolateR_output/01_isoQC_trimmed_sequences_PASS.csv
 isoTAX.S4 <- isoTAX(input=fpath2,
                     export_html=TRUE,
                     export_csv=TRUE,
-                    database="16S",
+                    db="16S",
                     quick_search=TRUE,
                     phylum_cutoff=75.0,
                     class_cutoff=78.5,
@@ -100,7 +100,7 @@ isoTAX.S4 <- isoTAX(input=fpath2,
 # input			CSV file containing PASS sequences from isoQC step
 # export_html		Toggle (TRUE/FALSE). Default=TRUE export results in CSV table.
 # export_csv		Toggle (TRUE/FALSE). Default=TRUE export results in CSV table.
-# database		Database for taxonomic classification ("16S","18S","ITS", or "cpn60")
+# db			Database for taxonomic classification ("16S","18S","ITS", or "cpn60")
 # quick_search		Toggle (TRUE/FALSE) Default=FALSE performs comprehensive database search.
 # phylum_cutoff		Similarity cutoff for Phylum rank demarcation (0-1)
 # class_cutoff		Similarity cutoff for Class rank demarcation (0-1)
@@ -127,9 +127,9 @@ For adding new sequences to an already-established strain library, specify the f
 fpath3 <- file.path(fpath1, "isolateR_output/02_isoTAX_results.csv")
 
 isoLIB.S4 <- isoLIB(input=fpath3,
-					old_lib_csv=NULL,
-					include_warnings=FALSE,
-					strain_group_cutoff=0.995)
+		    old_lib_csv=NULL,
+		    include_warnings=FALSE,
+		    strain_group_cutoff=0.995)
 ```
 ```r
 # Parameters:
