@@ -14,7 +14,6 @@
 #' @importFrom ape dist.dna
 #' @importFrom ape njs
 #' @import msa
-#' @import treedataverse
 #' @examples
 #' #Set path to directory containing example .ab1 files
 #' fpath1 <- system.file("extdata/abif_examples/rocket_salad", package = "isolateR")
