@@ -505,10 +505,14 @@ S4_to_dataframe <- function(obj) {
     lst$phred_spark_raw <- sapply(lst$phred_spark_raw, function(x) paste(unlist(x), collapse="_"))
   }
   df.out <- as.data.frame(lst)
-  
   if(length(obj@filename) < 2){
     df.out <- df.out[1,]
-    df.out$phred_spark_raw <- paste(unlist(lst$phred_spark_raw), collapse="_")
+    if(class(obj)[1]!="isoLIB"){
+      df.out$phred_spark_raw <- paste(unlist(lst$phred_spark_raw), collapse="_")
+    }
+    if(class(obj)[1]=="isoLIB"){
+      df.out <- as.data.frame(t(lst))
+    }
   }
   return(df.out)
 }
@@ -1183,11 +1187,6 @@ setMethod("export_html", "isoLIB",
               mutate(genus_col = ifelse(ID > genus_cutoff, "#31a354", NA)) %>%
               mutate(species_col = ifelse(ID > species_cutoff, "#31a354", NA))
 
-            #phylum_col <- cbind(html_input$phylum_col)
-            #phylum_col <- html_input$phylum_col[1]
-            #phylum_col <- setNames(isolib.S4.df$phylum_col, rownames(isolib.S4.df))
-
-
             html_input <- html_input2 %>% select(-input,
                                                  -phylum_cutoff,
                                                  -class_cutoff,
@@ -1209,70 +1208,73 @@ setMethod("export_html", "isoLIB",
 
             data <- SharedData$new(html_input)
 
-            html_output <- crosstalk::bscols(widths = c(1,10),
-                                             list(
-                                               #filter_checkbox("categories", "Categories", data, ~categories, inline = TRUE),
-                                               filter_slider("length_trim", "Seq length", round=-1, ticks=FALSE, data, ~length_trim),
-                                               filter_slider("ID", "% identity", data, round=2, ticks=FALSE, ~ID),
-                                               filter_checkbox("ref_strain", "Ref strain", data, ~ref_strain, inline = FALSE),
-                                               filter_checkbox("date", "Date Sequenced", data, ~date, inline = FALSE)
-                                             ),
-                                             htmltools::browsable(
-                                               shiny::tagList(tags$button(
-                                                 "Expand/collapse all",
-                                                 onclick = "Reactable.toggleAllRowsExpanded('html_input')"
+            
+            if(length(unique(html_input2$ID)) <2  | length(unique(html_input2$length_trim)) <2){
+              
+              html_output <- crosstalk::bscols(widths = c(1,10),
+                                               list(
+                                                 #filter_checkbox("categories", "Categories", data, ~categories, inline = TRUE),
+                                                 #crosstalk::filter_slider("length_trim", "Seq length", round=-1, ticks=FALSE, data, ~length_trim),
+                                                 #crosstalk::filter_slider("ID", "% identity", data, round=2, ticks=FALSE, ~ID),
+                                                 crosstalk::filter_checkbox("ref_strain", "Ref strain", data, ~ref_strain, inline = FALSE),
+                                                 crosstalk::filter_checkbox("date", "Date Sequenced", data, ~date, inline = FALSE)
                                                ),
-                                               tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('html_input')"),
-                                               #new_library_reactable <-
-                                               reactable(data,
-                                                         fullWidth=FALSE,
-                                                         searchable = TRUE,
-                                                         bordered = TRUE,
-                                                         resizable =TRUE,
-                                                         pageSizeOptions = c(10, 20, 50, 100, 1000),
-                                                         showPageSizeOptions = TRUE,
-                                                         defaultPageSize=20,
-                                                         highlight = TRUE,
-                                                         showSortable = TRUE,
-                                                         compact=TRUE,
-                                                         style = list(minWidth = 1400),
-                                                         theme = reactableTheme(
-                                                           headerStyle = list(
-                                                             fontFamily = "sans-serif",
-                                                             fontWeight="bold",
-                                                             fontSize=uni.font+1,
-                                                             "&:hover[aria-sort]" = list(background = "hsl(0, 0%, 96%)"),
-                                                             "&[aria-sort='ascending'], &[aria-sort='descending']" = list(background = "hsl(0, 0%, 96%)"))),
-                                                         defaultColDef = colDef(minWidth= 75,
-                                                                                vAlign = "center",
-                                                                                style = list(whiteSpace = "nowrap",
-                                                                                             fontSize=uni.font,
-                                                                                             align="center",
-                                                                                             fontFamily = "sans-serif")),
-                                                         groupBy = "strain_group",
-                                                         elementId = "html_input",
-                                                         #colDef options
-                                                         #---------------
-                                                         columns = list(
-                                                           strain_group = colDef(name="Strain Group Representative", minWidth=140,
-                                                                                 grouped = JS("function(cellInfo) {
+                                               htmltools::browsable(
+                                                 shiny::tagList(tags$button(
+                                                   "Expand/collapse all",
+                                                   onclick = "Reactable.toggleAllRowsExpanded('html_input')"
+                                                 ),
+                                                 tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('html_input')"),
+                                                 #new_library_reactable <-
+                                                 reactable(data,
+                                                           fullWidth=FALSE,
+                                                           searchable = TRUE,
+                                                           bordered = TRUE,
+                                                           resizable =TRUE,
+                                                           pageSizeOptions = c(10, 20, 50, 100, 1000),
+                                                           showPageSizeOptions = TRUE,
+                                                           defaultPageSize=20,
+                                                           highlight = TRUE,
+                                                           showSortable = TRUE,
+                                                           compact=TRUE,
+                                                           style = list(minWidth = 1400),
+                                                           theme = reactableTheme(
+                                                             headerStyle = list(
+                                                               fontFamily = "sans-serif",
+                                                               fontWeight="bold",
+                                                               fontSize=uni.font+1,
+                                                               "&:hover[aria-sort]" = list(background = "hsl(0, 0%, 96%)"),
+                                                               "&[aria-sort='ascending'], &[aria-sort='descending']" = list(background = "hsl(0, 0%, 96%)"))),
+                                                           defaultColDef = colDef(minWidth= 75,
+                                                                                  vAlign = "center",
+                                                                                  style = list(whiteSpace = "nowrap",
+                                                                                               fontSize=uni.font,
+                                                                                               align="center",
+                                                                                               fontFamily = "sans-serif")),
+                                                           groupBy = "strain_group",
+                                                           elementId = "html_input",
+                                                           #colDef options
+                                                           #---------------
+                                                           columns = list(
+                                                             strain_group = colDef(name="Strain Group Representative", minWidth=140,
+                                                                                   grouped = JS("function(cellInfo) {
                                                                       if (cellInfo.subRows.length > 100) {
                                                                         return cellInfo.value + ' (' + cellInfo.subRows.length + ')'
                                                                       }
                                                                       return cellInfo.value
                                                                     }")),
-                                                           #V10 = colDef(style = "white-space: nowrap;", aggregate = "unique"),
-                                                           filename = colDef(name = "Filename",
-                                                                             minWidth=120,
-                                                                             aggregate = "count",
-                                                                             style = list(whiteSpace = "nowrap",
-                                                                                          fontSize=uni.font,
-                                                                                          align="center",
-                                                                                          fontFamily = "sans-serif")),
-                                                           phred_trim = colDef(name = "Q",
-                                                                               minWidth= 35,
-                                                                               align="center",
-                                                                               aggregate = JS("function(values, rows){
+                                                             #V10 = colDef(style = "white-space: nowrap;", aggregate = "unique"),
+                                                             filename = colDef(name = "Filename",
+                                                                               minWidth=120,
+                                                                               aggregate = "count",
+                                                                               style = list(whiteSpace = "nowrap",
+                                                                                            fontSize=uni.font,
+                                                                                            align="center",
+                                                                                            fontFamily = "sans-serif")),
+                                                             phred_trim = colDef(name = "Q",
+                                                                                 minWidth= 35,
+                                                                                 align="center",
+                                                                                 aggregate = JS("function(values, rows){
                                                                                return values[0]
                                                           }")),
                                                           Ns_trim = colDef(name = "Ns",
@@ -1373,15 +1375,15 @@ setMethod("export_html", "isoLIB",
                                                                            fontSize=uni.font,
                                                                            align="left",
                                                                            fontFamily = "sans-serif")
-                                                              ),
+                                                          ),
                                                           rank_family = colDef(name="Family",
                                                                                align = "left",
                                                                                vAlign = "center",
                                                                                headerVAlign = "top",
                                                                                minWidth=110,style = list(whiteSpace = "nowrap",
-                                                                                                        fontSize=uni.font,
-                                                                                                        align="left",
-                                                                                                        fontFamily = "sans-serif"),
+                                                                                                         fontSize=uni.font,
+                                                                                                         align="left",
+                                                                                                         fontFamily = "sans-serif"),
                                                                                aggregate = JS("function(values, rows){
                                                               return values[0]
                                                               }"),
@@ -1391,9 +1393,9 @@ setMethod("export_html", "isoLIB",
                                                                               vAlign = "center",
                                                                               headerVAlign = "top",
                                                                               minWidth=110, style = list(whiteSpace = "nowrap",
-                                                                                                        fontSize=uni.font,
-                                                                                                        align="left",
-                                                                                                        fontFamily = "sans-serif"),
+                                                                                                         fontSize=uni.font,
+                                                                                                         align="left",
+                                                                                                         fontFamily = "sans-serif"),
                                                                               aggregate = JS("function(values, rows){
                                                               return values[0]
                                                               }"),
@@ -1414,27 +1416,252 @@ setMethod("export_html", "isoLIB",
                                                           ref_strain = colDef(name = "Ref strain",
                                                                               minWidth=70,
                                                                               align="center")
-                                                          )) %>% reactablefmtr::google_font(font_family = "Source Sans Pro") %>%
-                                                 #add_subtitle("#", font_size = 24, font_style="normal", font_weight="normal") %>%
-                                                 add_subtitle("isoLIB output table", font_size = 24, font_style="normal", font_weight="bold") %>%
-                                                 add_subtitle(paste("Date last updated: ", Sys.Date(), sep=""), font_size = 14, font_style="italic", font_weight="normal") %>%
-                                               add_subtitle("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------", font_size = 14, font_style="normal", font_weight="normal") %>%
-                                                 add_subtitle(paste("Total sequences: " ,length(obj@filename) , set.spacing,
-                                                                    "Total strain groups: ", length(obj@ref_strain[obj@ref_strain == "yes"]) , set.spacing,
-                                                                    "Mean Phred quality: ", format(round(mean(obj@phred_trim), 0), 2),  set.spacing,
-                                                                    "Mean no. Ns: ", format(round(mean(obj@Ns_trim), 2), 2),  set.spacing,
-                                                                    "Mean sequence length: ", round(mean(obj@length_trim), 0),  set.spacing,
-                                                                    "No. unique phyla: ", round(length(unique(obj@rank_phylum)), 0),  set.spacing,
-                                                                    "No. unique classes: ", round(length(unique(obj@rank_class)), 0),  set.spacing,
-                                                                    "No. unique orders: ", round(length(unique(obj@rank_order)), 0),  set.spacing,
-                                                                    "No. unique families: ", round(length(unique(obj@rank_family)), 0),  set.spacing,
-                                                                    "No. unique genera: ", round(length(unique(obj@rank_genus)), 0),  set.spacing,
-                                                                    "No. unique species: ", round(length(unique(obj@rank_species)), 0),
-                                                                    sep=""), font_size = 14, font_style="normal", font_weight="normal", align="left") %>%
-                                                 add_subtitle("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------", font_size = 14, font_style="normal", font_weight="normal")
+                                                           )) %>% reactablefmtr::google_font(font_family = "Source Sans Pro") %>%
+                                                   #add_subtitle("#", font_size = 24, font_style="normal", font_weight="normal") %>%
+                                                   add_subtitle("isoLIB output table", font_size = 24, font_style="normal", font_weight="bold") %>%
+                                                   add_subtitle(paste("Date last updated: ", Sys.Date(), sep=""), font_size = 14, font_style="italic", font_weight="normal") %>%
+                                                   add_subtitle("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------", font_size = 14, font_style="normal", font_weight="normal") %>%
+                                                   add_subtitle(paste("Total sequences: " ,length(obj@filename) , set.spacing,
+                                                                      "Total strain groups: ", length(obj@ref_strain[obj@ref_strain == "yes"]) , set.spacing,
+                                                                      "Mean Phred quality: ", format(round(mean(obj@phred_trim), 0), 2),  set.spacing,
+                                                                      "Mean no. Ns: ", format(round(mean(obj@Ns_trim), 2), 2),  set.spacing,
+                                                                      "Mean sequence length: ", round(mean(obj@length_trim), 0),  set.spacing,
+                                                                      "No. unique phyla: ", round(length(unique(obj@rank_phylum)), 0),  set.spacing,
+                                                                      "No. unique classes: ", round(length(unique(obj@rank_class)), 0),  set.spacing,
+                                                                      "No. unique orders: ", round(length(unique(obj@rank_order)), 0),  set.spacing,
+                                                                      "No. unique families: ", round(length(unique(obj@rank_family)), 0),  set.spacing,
+                                                                      "No. unique genera: ", round(length(unique(obj@rank_genus)), 0),  set.spacing,
+                                                                      "No. unique species: ", round(length(unique(obj@rank_species)), 0),
+                                                                      sep=""), font_size = 14, font_style="normal", font_weight="normal", align="left") %>%
+                                                   add_subtitle("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------", font_size = 14, font_style="normal", font_weight="normal")
                                                  ,
-                                               )))
-
+                                                 )))
+            } else {html_output <- crosstalk::bscols(widths = c(1,10),
+                                               list(
+                                                 #filter_checkbox("categories", "Categories", data, ~categories, inline = TRUE),
+                                                 crosstalk::filter_slider("length_trim", "Seq length", round=-1, ticks=FALSE, data, ~length_trim),
+                                                 crosstalk::filter_slider("ID", "% identity", data, round=2, ticks=FALSE, ~ID),
+                                                 crosstalk::filter_checkbox("ref_strain", "Ref strain", data, ~ref_strain, inline = FALSE),
+                                                 crosstalk::filter_checkbox("date", "Date Sequenced", data, ~date, inline = FALSE)
+                                               ),
+                                               htmltools::browsable(
+                                                 shiny::tagList(tags$button(
+                                                   "Expand/collapse all",
+                                                   onclick = "Reactable.toggleAllRowsExpanded('html_input')"
+                                                 ),
+                                                 tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('html_input')"),
+                                                 #new_library_reactable <-
+                                                 reactable(data,
+                                                           fullWidth=FALSE,
+                                                           searchable = TRUE,
+                                                           bordered = TRUE,
+                                                           resizable =TRUE,
+                                                           pageSizeOptions = c(10, 20, 50, 100, 1000),
+                                                           showPageSizeOptions = TRUE,
+                                                           defaultPageSize=20,
+                                                           highlight = TRUE,
+                                                           showSortable = TRUE,
+                                                           compact=TRUE,
+                                                           style = list(minWidth = 1400),
+                                                           theme = reactableTheme(
+                                                             headerStyle = list(
+                                                               fontFamily = "sans-serif",
+                                                               fontWeight="bold",
+                                                               fontSize=uni.font+1,
+                                                               "&:hover[aria-sort]" = list(background = "hsl(0, 0%, 96%)"),
+                                                               "&[aria-sort='ascending'], &[aria-sort='descending']" = list(background = "hsl(0, 0%, 96%)"))),
+                                                           defaultColDef = colDef(minWidth= 75,
+                                                                                  vAlign = "center",
+                                                                                  style = list(whiteSpace = "nowrap",
+                                                                                               fontSize=uni.font,
+                                                                                               align="center",
+                                                                                               fontFamily = "sans-serif")),
+                                                           groupBy = "strain_group",
+                                                           elementId = "html_input",
+                                                           #colDef options
+                                                           #---------------
+                                                           columns = list(
+                                                             strain_group = colDef(name="Strain Group Representative", minWidth=140,
+                                                                                   grouped = JS("function(cellInfo) {
+                                                                      if (cellInfo.subRows.length > 100) {
+                                                                        return cellInfo.value + ' (' + cellInfo.subRows.length + ')'
+                                                                      }
+                                                                      return cellInfo.value
+                                                                    }")),
+                                                             #V10 = colDef(style = "white-space: nowrap;", aggregate = "unique"),
+                                                             filename = colDef(name = "Filename",
+                                                                               minWidth=120,
+                                                                               aggregate = "count",
+                                                                               style = list(whiteSpace = "nowrap",
+                                                                                            fontSize=uni.font,
+                                                                                            align="center",
+                                                                                            fontFamily = "sans-serif")),
+                                                             phred_trim = colDef(name = "Q",
+                                                                                 minWidth= 35,
+                                                                                 align="center",
+                                                                                 aggregate = JS("function(values, rows){
+                                                                               return values[0]
+                                                          }")),
+                                                          Ns_trim = colDef(name = "Ns",
+                                                                           minWidth= 40,
+                                                                           align="center",
+                                                                           aggregate = JS("function(values, rows){
+                                                                               return values[0]
+                                                          }")),
+                                                          length_trim = colDef(name = "Length",
+                                                                               minWidth=70,
+                                                                               align="left",
+                                                                               aggregate = JS("function(values, rows){
+                                                                                           return values[0]
+                                                                      }"),
+                                                                      cell = data_bars(html_input,
+                                                                                       text_position = "inside-base",
+                                                                                       text_size = 10,
+                                                                                       fill_color = c('#FFF2D9','#FFE1A6','#FFCB66','#FFB627'),
+                                                                                       fill_gradient = TRUE,
+                                                                                       background = 'transparent',
+                                                                                       number_fmt = scales::comma_format(accuracy = 1),
+                                                                                       round_edges = FALSE, align_bars="left")),
+                                                          seqs_trim = colDef(name="Sequence",
+                                                                             minWidth= 75,
+                                                                             style = list(whiteSpace = "nowrap",
+                                                                                          fontSize=uni.font,
+                                                                                          align="center",
+                                                                                          fontFamily = "sans-serif"),
+                                                                             aggregate = JS("function(values, rows){
+                                                                               return values[0]
+                                                          }")),
+                                                          closest_match = colDef(name="Closest match (type strain)",
+                                                                                 minWidth=220, #aggregate = "unique"
+                                                                                 aggregate = JS("function(values, rows){
+                                                             return values[0]
+                                                            }")),
+                                                          date = colDef(name= "Date",
+                                                                        minWidth= 58,
+                                                                        style = list(whiteSpace = "nowrap",
+                                                                                     fontSize=uni.font,
+                                                                                     align="center",
+                                                                                     fontFamily = "sans-serif"),
+                                                                        aggregate = JS("function(values, rows){
+                                                                               return values[0]
+                                                          }")),
+                                                          NCBI_acc = colDef(minWidth=80,
+                                                                            aggregate = JS("function(values, rows){
+                                                                               return values[0]
+                                                          }")),
+                                                          ID = colDef(align= "center",
+                                                                      vAlign = "center",
+                                                                      headerVAlign = "top",
+                                                                      minWidth= 50,
+                                                                      aggregate = "max",
+                                                                      cell = color_tiles(data=html_input,
+                                                                                         colors="black",
+                                                                                         number_fmt = scales::label_number(accuracy = 0.1),
+                                                                                         text_size=uni.font+3,
+                                                                                         bold_text=TRUE),
+                                                                      header = function(value, name) {
+                                                                        htmltools::div(title = "% sequence identity of query sequence to closest match sequence in database", value)}),
+                                                          rank_phylum = colDef(name="Phylum",
+                                                                               align = "left",
+                                                                               vAlign = "center",
+                                                                               headerVAlign = "top",
+                                                                               minWidth=110,
+                                                                               style = list(whiteSpace = "nowrap",
+                                                                                            fontSize=uni.font,
+                                                                                            align="left",
+                                                                                            fontFamily = "sans-serif"),
+                                                                               aggregate = JS("function(values, rows){
+                                                              return values[0]
+                                                              }"),
+                                                              cell = color_tiles(html_input2, color_ref="phylum_col")),
+                                                          rank_class = colDef(name="Class",
+                                                                              align = "left",
+                                                                              vAlign = "center",
+                                                                              headerVAlign = "top",
+                                                                              minWidth=110,
+                                                                              style = list(whiteSpace = "nowrap",
+                                                                                           fontSize=uni.font,
+                                                                                           align="left",
+                                                                                           fontFamily = "sans-serif"),
+                                                                              aggregate = JS("function(values, rows){
+                                                              return values[0]
+                                                              }"),
+                                                              cell = color_tiles(html_input2, color_ref="class_col")),
+                                                          rank_order = colDef(name="Order",
+                                                                              align = "left",
+                                                                              vAlign = "center",
+                                                                              headerVAlign = "top",
+                                                                              minWidth=110,
+                                                                              aggregate = JS("function(values, rows){
+                                                              return values[0]
+                                                              }"),
+                                                              cell = color_tiles(html_input2, color_ref="order_col"),
+                                                              style = list(whiteSpace = "nowrap",
+                                                                           fontSize=uni.font,
+                                                                           align="left",
+                                                                           fontFamily = "sans-serif")
+                                                          ),
+                                                          rank_family = colDef(name="Family",
+                                                                               align = "left",
+                                                                               vAlign = "center",
+                                                                               headerVAlign = "top",
+                                                                               minWidth=110,style = list(whiteSpace = "nowrap",
+                                                                                                         fontSize=uni.font,
+                                                                                                         align="left",
+                                                                                                         fontFamily = "sans-serif"),
+                                                                               aggregate = JS("function(values, rows){
+                                                              return values[0]
+                                                              }"),
+                                                              cell = color_tiles(html_input2, color_ref="family_col")),
+                                                          rank_genus = colDef(name="Genus",
+                                                                              align = "left",
+                                                                              vAlign = "center",
+                                                                              headerVAlign = "top",
+                                                                              minWidth=110, style = list(whiteSpace = "nowrap",
+                                                                                                         fontSize=uni.font,
+                                                                                                         align="left",
+                                                                                                         fontFamily = "sans-serif"),
+                                                                              aggregate = JS("function(values, rows){
+                                                              return values[0]
+                                                              }"),
+                                                              cell = color_tiles(html_input2, color_ref="genus_col")),
+                                                          rank_species = colDef(name="Species",
+                                                                                align = "left",
+                                                                                vAlign = "center",
+                                                                                headerVAlign = "top",
+                                                                                minWidth=175,
+                                                                                style = list(whiteSpace = "nowrap",
+                                                                                             fontSize=uni.font,
+                                                                                             align="left",
+                                                                                             fontFamily = "sans-serif"),
+                                                                                aggregate = JS("function(values, rows){
+                                                              return values[0]
+                                                              }"),
+                                                              cell = color_tiles(html_input2, color_ref="species_col")),
+                                                          ref_strain = colDef(name = "Ref strain",
+                                                                              minWidth=70,
+                                                                              align="center")
+                                                           )) %>% reactablefmtr::google_font(font_family = "Source Sans Pro") %>%
+                                                   #add_subtitle("#", font_size = 24, font_style="normal", font_weight="normal") %>%
+                                                   add_subtitle("isoLIB output table", font_size = 24, font_style="normal", font_weight="bold") %>%
+                                                   add_subtitle(paste("Date last updated: ", Sys.Date(), sep=""), font_size = 14, font_style="italic", font_weight="normal") %>%
+                                                   add_subtitle("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------", font_size = 14, font_style="normal", font_weight="normal") %>%
+                                                   add_subtitle(paste("Total sequences: " ,length(obj@filename) , set.spacing,
+                                                                      "Total strain groups: ", length(obj@ref_strain[obj@ref_strain == "yes"]) , set.spacing,
+                                                                      "Mean Phred quality: ", format(round(mean(obj@phred_trim), 0), 2),  set.spacing,
+                                                                      "Mean no. Ns: ", format(round(mean(obj@Ns_trim), 2), 2),  set.spacing,
+                                                                      "Mean sequence length: ", round(mean(obj@length_trim), 0),  set.spacing,
+                                                                      "No. unique phyla: ", round(length(unique(obj@rank_phylum)), 0),  set.spacing,
+                                                                      "No. unique classes: ", round(length(unique(obj@rank_class)), 0),  set.spacing,
+                                                                      "No. unique orders: ", round(length(unique(obj@rank_order)), 0),  set.spacing,
+                                                                      "No. unique families: ", round(length(unique(obj@rank_family)), 0),  set.spacing,
+                                                                      "No. unique genera: ", round(length(unique(obj@rank_genus)), 0),  set.spacing,
+                                                                      "No. unique species: ", round(length(unique(obj@rank_species)), 0),
+                                                                      sep=""), font_size = 14, font_style="normal", font_weight="normal", align="left") %>%
+                                                   add_subtitle("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------", font_size = 14, font_style="normal", font_weight="normal")
+                                                 ,
+                                                 )))
+            }
             fname_html <- file.path(path, output)
             htmltools::save_html(html_output, fname_html)
             writeLines(gsub('<meta charset="utf-8"/>', '<meta charset="utf-8"/>\n<title>isoLIB</title>', readLines(fname_html)), fname_html)
