@@ -21,6 +21,7 @@
 #' @importFrom utils download.file
 #' @importFrom utils untar
 #' @importFrom R.utils gunzip
+#' @importFrom stringr str_sub
 #' @examples
 #' #Set path to directory containing example .ab1 files
 #' fpath1 <- system.file("extdata/abif_examples/rocket_salad", package = "isolateR")
@@ -294,7 +295,7 @@ isoLIB <- function(input=NULL,
       ungroup() %>%
       mutate(ref_strain = ifelse(strain_group == unique_filename, "yes", "no")) %>%
       #Remove unique identifier characters
-      mutate(strain_group = sapply(1:length(.$strain_group),function(x) str_sub(.$strain_group[x], 6, nchar(.$strain_group[x]))))
+      mutate(strain_group = sapply(1:length(.$strain_group),function(x) stringr::str_sub(.$strain_group[x], 6, nchar(.$strain_group[x]))))
 
 
     merged.drep1.sub <- merged.drep2 %>% select(strain_group, date, filename, seqs_trim, phred_trim, Ns_trim, length_trim,
