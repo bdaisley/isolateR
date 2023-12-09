@@ -4,10 +4,10 @@
 \alias{S4_to_dataframe}
 \title{Converts S4 objects (isoQC, isoTAX, or isoLIB) to dataframe}
 \usage{
-S4_to_dataframe(s4obj)
+S4_to_dataframe(obj)
 }
 \arguments{
-\item{s4obj}{object generated from \code{\link{isoQC}}, \code{\link{isoTAX}}, or \code{\link{isoLIB}} steps}
+\item{obj}{S4 object generated from \code{\link{isoQC}}, \code{\link{isoTAX}}, or \code{\link{isoLIB}} steps}
 }
 \value{
 Returns a dataframe containing sequence information in columns.

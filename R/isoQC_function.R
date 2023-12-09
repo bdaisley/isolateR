@@ -45,34 +45,38 @@ isoQC <- function(input=NULL,
                   date=NULL,
                   files_manual=NULL){
 
-
+  
   # Reading files--------------------------------------------------------------------
   # Check input path
   if(is.null(input)) stop('Name of folder not supplied. Please check the execution script preamble to make sure it is entered correctly', call.=FALSE)
+  if(!is.null(sliding_window_size)){
+    if(sliding_window_size > 40){
+      warning('"sliding_window_size" is set to above 40. It is recommended to set this parameter between 1-40 for best trimming results.')
+    }
+  }
   if(is.null(sliding_window_size)) {
     sliding_window_size = 15
-    message(cat(paste0("\n", "\033[97;", 40, "m","Setting defaults for null inputs:", "\033[0m", "\n")))
-    message(cat(paste0("\n", "\033[97;", 40, "m","sliding_window_size = 15", "\033[0m", "\n")))
+    message(cat(paste0("\n", "\033[97;", 40, "m","Setting defaults for NULL inputs:", "\033[0m", "\033[35;", 49, "m"," 'sliding_window_size = 15'", "\033[0m" )))
   }
-
+  
   #Setting folder paths for ABIF files----------------------------------------------------
-
+  
   folder <- input
   setwd(folder)
   folder <- getwd()
-  path <- str_replace_all(folder, '\\\\', '/')
+  path <- stringr::str_replace_all(folder, '\\\\', '/')
   fname <- list.files(path)
   pattern <- 'ab1'
-  abif_files <- str_subset(fname, pattern)
+  abif_files <- stringr::str_subset(fname, pattern)
   if(is.null(files_manual)==FALSE){abif_files <- files_manual}
-
+  
   #excluding specified files
   if(!is.null(exclude)) {
-
+    
     # first check if files specified in exclude are in abif_files
     if(any(!exclude %in% abif_files)) {
       absent <- exclude[!exclude %in% abif_files]
-
+      
       msg <- sprintf('%s could not be excluded because they were not found in your input folder. Only files in the input folder can be excluded.',
                      str_c(absent, collapse=', '))
       stop(msg, call.=FALSE)
@@ -84,7 +88,7 @@ isoQC <- function(input=NULL,
       message(msg)
     }
   }
-
+  
   #Checking overwrite inputs-------------------------------------------------
   if(!is.null(date)){
     date.formatted <- paste(str_pad(str_split_fixed(date, "_", 3)[,1], 2, pad = "0"),
@@ -92,11 +96,11 @@ isoQC <- function(input=NULL,
                             str_pad(str_split_fixed(date, "_", 3)[,3], 2, pad = "0"), sep="_")
     message(cat(paste0("\n", "\033[97;", 40, "m","Setting date (YY/MM/DD) as: ",date.formatted, "\033[0m", "\n")))
   }
-
+  
   if(!is.null(min_length)){
     min_length <- 200
   }
-
+  
   #initializing objects--------------------------------------------------------------
   trim.start <- c()
   trim.end <- c()
@@ -107,47 +111,46 @@ isoQC <- function(input=NULL,
   checkseq <- c()
   date.list <- c()
   length.list <- c()
-
+  
   #set progress bar----------------------------------------------------------------
-  message(cat(paste0("\n", "\033[97;", 95, "m","Trimming ", paste(length(abif_files)) ," input files", "\033[0m", "\n")))
+  message(cat(paste0("\033[97;", 95, "m","...Trimming ", paste(length(abif_files)) ," input files...", "\033[0m")))
   prog.bar.x <- txtProgressBar(min = 0,      			       # Minimum value of the progress bar
                                max = length(abif_files), # Maximum value of the progress bar
                                style = 3,    			       # Progress bar style (also available style = 1 and style = 2)
                                #width = 50,   			     # Progress bar width. Defaults to getOption("width")
                                char = "=")
-
-
-
+  
+  
+  
   #Get max sequence length info-----------------------------------------------------------
   for(i in 1:length(abif_files)){
     fpath <- file.path(path, abif_files[i])
     length.list <- c(length.list, as.numeric(nchar(unlist((sangerseqR::read.abif(fpath))@data['PBAS.2'])))+5)
   }
   length.list.max <- max(length.list)
-
-
+  
   for(i in 1:length(abif_files)){
-
+    
     fpath <- file.path(path, abif_files[i])
     #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     # Basecalling steps
     #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     abif.pre <- sangerseqR::read.abif(fpath)
-
+    
     if(is.null(sliding_window_cutoff)){
       sliding_window_cutoff <- max(unlist(abif.pre@data['PCON.1']))
     } else {
       sliding_window_cutoff <- sliding_window_cutoff
     }
-
+    
     if(!is.null(date)){
       date.list <- c(date.list, date.formatted)
     } else {
       date.list <- c(date.list, get_sanger_date(file=abif.pre))
     }
-
+    
     if(verbose==TRUE){message(cat(paste0("\033[97;", 40, "m","Trimming file: ", fpath, "\033[0m")))}
-
+    
     if(verbose==FALSE){
       invisible(capture.output(capture.output(abif1 <- tryCatch(
         {
@@ -203,18 +206,18 @@ isoQC <- function(input=NULL,
                                    signalRatioCutoff     = 0.33)
       }
     )}
-
+    
     #start=abif1@QualityReport@trimmedStartPos
     abif1.start = NULL
     abif1.start <- abif1@QualityReport@trimmedStartPos + 5
     if(abif1.start >= abif1@QualityReport@rawSeqLength){abif1.start <- abif1@QualityReport@trimmedStartPos}
     if(abif1.start >= abif1@QualityReport@trimmedFinishPos){abif1.start <- abif1@QualityReport@trimmedStartPos}
-
+    
     abif1.end <- nchar(paste(abif1@primarySeq))
     abif2 <- DNAStringSet(abif1@primarySeq, start=abif1.start, end=abif1.end)
-
+    
     if(verbose==TRUE){message(cat(paste0("\033[97;", 40, "m","Searching for reverse primer endpoint: ", fpath, "\033[0m")))}
-
+    
     if(verbose==FALSE){
       invisible(capture.output(capture.output(abif3 <- DECIPHER::TrimDNA(DNAStringSet(paste(abif2)),
                                                                          leftPatterns="",
@@ -240,7 +243,7 @@ isoQC <- function(input=NULL,
                                  maxAmbiguities = 0.5,
                                  type="both")
     }
-
+    
     #This code chunk checks if trimmed sequence region looks okay before proceeding to next step
     #----------------------------------------------------------------------------------------------
     if(verbose==TRUE){message(cat(paste0("\033[97;", 40, "m","Removing anything beyond reverse primer: ", fpath, "\033[0m")))}
@@ -260,15 +263,15 @@ isoQC <- function(input=NULL,
     trim.start <- c(trim.start,abif1.start.new)
     trim.end <- c(trim.end,(abif1.start + abif3.end -1))
     rawseq <- as.character(paste(abif))
-
+    
     if(verbose==TRUE){message(cat(paste0("\033[97;", 40, "m","Saving seq info: ", fpath, "\033[0m")))}
-
+    
     if(verbose==TRUE){
       msg <- sprintf('Processing "%s"', abif_files[i])
       message(msg)
     }
-
-
+    
+    
     #:::::::::::::::::::::::::::::::
     # Save seq + quality scores
     #:::::::::::::::::::::::::::::::
@@ -276,10 +279,9 @@ isoQC <- function(input=NULL,
     if(length(abif1@QualityReport@qualityPhredScores) >= length.list.max){rawspark.adj <- rawspark.adj[1:length.list.max]}
     rawsparklist[[i]] <- c(rawspark.adj, rep(0.1, length.list.max-length(rawspark.adj)))
     trimsparklist[[i]] <- abif.scores
-    rawlist[[i]] <- paste(abif1@primarySeq)
+    rawlist[[i]] <- paste(abif1@primarySeqRaw)
     trimlist[[i]] <- paste(abif)
-
-
+    
     # building trim check for export-------------------------------------------------
     entry <- data.frame(date=date.list[i],
                         filename=abif_files[i],
@@ -296,7 +298,7 @@ isoQC <- function(input=NULL,
                         seqs_raw = rawlist[[i]],
                         seqs_trim = trimlist[[i]]) %>%
       mutate(decision = ifelse(.$length_trim < min_length | .$phred_trim < min_phred_score, "Fail", "Pass"))
-
+    
     # building trim check for export-------------------------------------------------
     checkseq <- rbind(checkseq, entry)
     if(verbose==FALSE){setTxtProgressBar(prog.bar.x, i)}
@@ -304,12 +306,12 @@ isoQC <- function(input=NULL,
   }
   # end of file loop
   Sys.sleep(0.02)
-
-
+  
+  
   # building isoQC file--------------------------------------------------------
+  
   isoQC <- new("isoQC", input=paste(path))
-
-
+  
   isoQC@date <- checkseq$date
   isoQC@trim.start.pos <- checkseq$trim.start.pos
   isoQC@trim.end.pos <- checkseq$trim.end.pos
@@ -324,8 +326,7 @@ isoQC <- function(input=NULL,
   isoQC@seqs_raw <- checkseq$seqs_raw
   isoQC@seqs_trim <- checkseq$seqs_trim
   isoQC@decision <- checkseq$decision
-
-
+  
   #:::::::::::::::::::::::::::::::
   # Output results
   #:::::::::::::::::::::::::::::::
@@ -343,27 +344,27 @@ isoQC <- function(input=NULL,
            Ns_trim,
            length_trim,
            decision)
-
+  
   #building output file--------------------------------------------------------------
-
+  
   seq.warnings <- (isoQC.df %>% filter(decision!="Pass"))$filename
-
+  
   if(is.null(seq.warnings)==FALSE){
     decision.txt <- paste(seq.warnings, collapse="\r\n     ")
     message(cat(paste0("\033[97;", 40, "m","\r\nThe following sequences failed with a length of <", min_length," bp and/or a quality score <", min_phred_score ," after trimming:","\033[0m","\n     ",
                        "\033[0;", 95, "m", decision.txt,"\033[0m","\n")))
   }
-
+  
   message(cat(paste0("\n", "\033[97;", 40, "m","Export directory:", "\033[0m",
                      "\033[0;", 32, "m", " ", file.path(path, "isolateR_output"), "\033[0m","\n")))
-
+  
   suppressWarnings(dir.create(file.path(path, "isolateR_output")))
   fname <- file.path(path,"isolateR_output", paste0("01_isoQC_results", sep=""))
   fname_pass <- file.path(path,"isolateR_output", paste0("01_isoQC_trimmed_sequences_PASS", sep=""))
   fname_fail <- file.path(path,"isolateR_output", paste0("01_isoQC_trimmed_sequences_FAIL", sep=""))
   isoQC.df.pass <- isoQC.df %>% filter(!filename %in% seq.warnings)
   isoQC.df.fail <- isoQC.df %>% filter(filename %in% seq.warnings)
-
+  
   #export HTML file----------------------------------------------------------------------
   if(export_html == TRUE) {
     fname_html <- paste0(fname, ".html", sep="")
@@ -371,7 +372,7 @@ isoQC <- function(input=NULL,
     message(cat(paste0("\033[97;", 40, "m","HTML results exported: ", "\033[0m",
                        "\033[0;", 32, "m", " ", file.path(path, "isolateR_output", unlist(strsplit(fname_html, '/'))[length(unlist(strsplit(fname_html, '/')))]),"\033[0m", "\n")))
   }
-
+  
   #export CSV files----------------------------------------------------------------------
   if(export_csv == TRUE) {
     #PASS sequences
@@ -396,10 +397,10 @@ isoQC <- function(input=NULL,
       write.csv(file=fname_csv_fail,isoQC.df.fail, row.names = FALSE)
       message(cat(paste0("\033[97;", 40, "m","CSV results exported: ", "\033[0m",
                          "\033[0;", 32, "m", " ", file.path(path, "isolateR_output", unlist(strsplit(fname_csv_fail, '/'))[length(unlist(strsplit(fname_csv_fail, '/')))]),"\033[0m")))
-                         }
     }
-
-
+  }
+  
+  
   #export trimmed sequences in FASTA file-------------------------------------------------
   if(export_fasta == TRUE) {
     #PASS sequences
@@ -465,10 +466,9 @@ isoQC <- function(input=NULL,
                          "\033[0;", 32, "m", " ", file.path(path, "isolateR_output", unlist(strsplit(fname_fasta_revcomp_fail, '/'))[length(unlist(strsplit(fname_fasta_revcomp_fail, '/')))]),"\033[0m")))
     }
   }
-
+  
   #remove the folder of misc files for the script
   unlink(paste0(fname,"_files/"),recursive = TRUE)
   return(isoQC)
 }
-
 

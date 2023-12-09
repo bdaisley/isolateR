@@ -493,18 +493,23 @@ setMethod("show", "isoLIB",
 #' @rdname S4_to_dataframe
 #' @title Converts S4 objects (isoQC, isoTAX, or isoLIB) to dataframe
 #' @description Helper function to convert S4 class objects (\code{\link{isoQC}}, \code{\link{isoTAX}}, or \code{\link{isoLIB}}) to dataframe
-#' @param s4obj object generated from \code{\link{isoQC}}, \code{\link{isoTAX}}, or \code{\link{isoLIB}} steps
+#' @param obj S4 object generated from \code{\link{isoQC}}, \code{\link{isoTAX}}, or \code{\link{isoLIB}} steps
 #' @returns Returns a dataframe containing sequence information in columns.
 #' @import dplyr
 #' @import methods
 
-S4_to_dataframe <- function(s4obj) {
-  nms <- slotNames(s4obj)
-  lst <- sapply(nms, function(nm) slot(s4obj, nm))
+S4_to_dataframe <- function(obj) {
+  nms <- slotNames(obj)
+  lst <- sapply(nms, function(nm) slot(obj, nm))
   if("phred_spark_raw" %in% nms ==TRUE){
     lst$phred_spark_raw <- sapply(lst$phred_spark_raw, function(x) paste(unlist(x), collapse="_"))
   }
   df.out <- as.data.frame(lst)
+  
+  if(length(obj@filename) < 2){
+    df.out <- df.out[1,]
+    df.out$phred_spark_raw <- paste(unlist(lst$phred_spark_raw), collapse="_")
+  }
   return(df.out)
 }
 
@@ -786,7 +791,7 @@ setMethod("export_html", "isoQC",
                                                                   number_fmt = scales::comma_format(accuracy = 0.1),
                                                                   round_edges = FALSE, align_bars="left")) )) %>% reactablefmtr::google_font(font_family = "Source Sans Pro") %>%
                   reactablefmtr::add_subtitle("isoQC output table", font_size = 24, font_style="normal", font_weight="bold", margin=c(20,0,0,0)) %>%
-                  reactablefmtr::add_subtitle(paste("Total sequences:       ", nrow(isoQC.df), sep=""), font_size = 14, font_style="normal", font_weight="bold") %>%
+                  reactablefmtr::add_subtitle(paste("Total sequences:       ", nrow(isoQC.df), sep=""), font_size = 14, font_style="normal", font_weight="normal") %>%
                   reactablefmtr::add_subtitle(paste("Mean Phred quality before/after trimming:     ", round(mean(isoQC.df$phred_raw)), "\t|  ", round(mean(isoQC.df$phred_trim)), sep=""), font_size = 14, font_style="normal", font_weight="normal") %>%
                   reactablefmtr::add_subtitle(paste("Mean number of Ns before/after trimming:      ", round(mean(isoQC.df$Ns_raw)), "\t|  ", round(mean(isoQC.df$Ns_trim)), sep=""), font_size = 14, font_style="normal", font_weight="normal") %>%
                   reactablefmtr::add_subtitle(paste("Mean sequence length before/after trimming:   ", round(mean(isoQC.df$length_raw)), "\t|  ", round(mean(isoQC.df$length_trim)), sep=""), font_size = 14, font_style="normal", font_weight="normal", margin=c(0,0,0,0))
