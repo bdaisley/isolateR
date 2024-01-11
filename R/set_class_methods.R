@@ -1666,6 +1666,8 @@ setMethod("export_html", "isoLIB",
             htmltools::save_html(html_output, fname_html)
             writeLines(gsub('<meta charset="utf-8"/>', '<meta charset="utf-8"/>\n<title>isoLIB</title>', readLines(fname_html)), fname_html)
             writeLines(gsub('amp;', '', readLines(fname_html)), fname_html)
+            
+            writeLines(gsub('">---', ';white-space:nowrap">---', readLines(fname_html)), fname_html)
             writeLines(gsub('">Total seq', ';white-space:nowrap">Total seq', readLines(fname_html)), fname_html)
             pander::openFileInOS(fname_html)
             return(html_output)

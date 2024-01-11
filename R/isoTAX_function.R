@@ -66,7 +66,7 @@ isoTAX <- function(input=NULL,
 
 
   #Setting file paths-------------------------------------------------
-  input <- str_replace_all(input, '\\\\', '/')
+  input <- stringr::str_replace_all(input, '\\\\', '/')
 
 
   path <- paste(unlist(strsplit(input, '/'))[1:(length(unlist(strsplit(input, '/')))-1)], collapse="/")
@@ -236,6 +236,8 @@ isoTAX <- function(input=NULL,
     mutate(closest_match = paste(str_split_fixed(INSDSeq_organism, " ", 3)[,1], " ", str_split_fixed(INSDSeq_organism, " ", 3)[,2], " (", culture_collection, ")", sep="")) %>%
     mutate(species = paste(str_split_fixed(INSDSeq_organism, " ", 3)[,1],str_split_fixed(INSDSeq_organism, " ", 3)[,2], sep=" "))
 
+  #::::::::::::::::::::::::::::::::
+  if(db=="cpn60"){fetch.list.df$INSDSeq_accession_version <- stringr::str_split_fixed(fetch.list.df$INSDSeq_accession_version, "[.]", 2)[,1]}
   #::::::::::::::::::::::::::::::::
   lookup.list <- setNames(fetch.list.df$INSDSeq_taxonomy, fetch.list.df$INSDSeq_accession_version)
   lookup.list2 <- setNames(fetch.list.df$closest_match, fetch.list.df$INSDSeq_accession_version)
