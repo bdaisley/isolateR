@@ -20,8 +20,25 @@ isolateR aims to enhance microbial isolation workflows and support the identific
 devtools::install_github("bdaisley/isolateR")
 ```
 
-
 ## Quick start
+The one-step command <code>isoALL</code> wraps the three main functions below to quickly process .ab1 files in batch. Simply specify the folder(s) containing .ab1 sequence files you want to process.
+
+#### Example with a single input folder
+```r
+library(isolateR)
+isoALL.S4 <- isoALL(input="/path/to/folder_containing_ab1_files")
+```
+#### Example with multiple input folders + merging results
+```r
+library(isolateR)
+folder_list <- c("/path/to/folder_containing_ab1_files1",
+                 "/path/to/folder_containing_ab1_files2",
+                 "/path/to/folder_containing_ab1_files3")
+
+isoALL.S4 <- isoALL(input=folder_list, merge=TRUE)
+```
+
+## Overview of the 3 main functions
 
 ### Step 1: <code>isoQC</code> - Automated quality trimming of sequences
 
