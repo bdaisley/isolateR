@@ -175,7 +175,7 @@ search_db <- function(query.path = NULL,
     invisible(file.copy(db.path, path, overwrite = TRUE))
     db.path.x <- unlist(strsplit(db.path, '/'))[length(unlist(strsplit(db.path, '/')))]
     db.path.x <- file.path("temp_vsearch", db.path.x)
-    system2(vsearch.path, paste(" --usearch_global ", query.path, " --db ", db.path.x, " --blast6out ", b6.out, " --uc ", uc.out, " --iddef ",iddef, " --id 0.7 -query_cov 0.95 --maxaccepts 0 --maxrejects 0 --top_hits_only --strand both", sep=""), stdout="", stderr="")
+    system2(vsearch.path, paste(" --usearch_global ", query.path, " --db ", db.path.x, " --blast6out ", b6.out, " --uc ", uc.out, " --iddef ",iddef, " --id 0.7 -query_cov 0.95 --maxaccepts 0 --maxrejects 0 --top_hits_only --strand both ", sep=""), stdout="", stderr="")
     #Clean up
     unlink(file.path(path, db.path.x),recursive=TRUE)
   }

@@ -53,7 +53,6 @@ isoLIB <- function(input=NULL,
                    genus_cutoff=96.5,
                    species_cutoff=98.7){
 
-
   #Input checks------------------------------------------------------------
 
   if(!is.null(strain_group_cutoff)){
@@ -63,12 +62,11 @@ isoLIB <- function(input=NULL,
 
   #Set paths------------------------------------------------------------
 
-	new_lib <- str_replace_all(input, '\\\\', '/')
+	new_lib <- stringr::str_replace_all(input, '\\\\', '/')
 	new_lib_path <- paste(unlist(strsplit(new_lib, '/'))[1:(length(unlist(strsplit(new_lib, '/')))-1)],collapse="/")
 	new_lib_file <- read.csv(new_lib) #, row.names = 1) removing row.names setting
-
-  setwd(new_lib_path)
-
+	setwd(new_lib_path)
+	
   #-------------------------------------------------
   #:::::::::::::::::::::::::::
   #Download VSEARCH software
@@ -142,6 +140,29 @@ isoLIB <- function(input=NULL,
   temp_drep <- paste0("03_isoLIB_temp.drep", sep="")
 
 
+  #Make unique strain names incase any duplicated-----------------------
+  
+  new_lib_file <- new_lib_file %>% arrange(desc(length_trim))
+  
+  #Check for duplicate names
+  new_lib_file <- new_lib_file %>% 
+    mutate(undup = stringr::str_split_fixed(filename, "_dup", 2)[,1]) %>% 
+    mutate(duplicated = duplicated(undup)) %>%
+    mutate(duplicated2 = paste(undup, duplicated, sep="___")) %>%
+    group_by(duplicated2) %>%
+    mutate(filename = ifelse(any(duplicated), paste(undup, "_dup", rep(1:n()), sep=""), filename)) %>%
+    ungroup()
+  
+  if(length((new_lib_file %>% filter(duplicated==TRUE))$filename) > 0){
+    message(cat(paste0("\033[0;", 31, "m", "Duplicated filenames detected: ", paste(unique((new_lib_file %>% filter(duplicated==TRUE))$undup), collapse="|"), "\033[0m")))
+    message(cat(paste0("\033[0;", 30, "m", "Renaming duplicates with suffix '_dup1','_dup2', '_dup3', etc.", "\033[0m")))
+    message(cat(paste0("\033[0;", 30, "m",  paste((new_lib_file %>% filter(duplicated==TRUE))$filename, collapse="\n"), "\033[0m")))
+  }
+  
+  new_lib_file <- new_lib_file %>% select(-undup, -duplicated, -duplicated2)
+  
+  new_lib_file$unique_filename <- paste(stringr::str_pad(1:nrow(new_lib_file), 4, pad="0"), new_lib_file$filename, sep="_")
+  
   if(include_warnings == TRUE){
     write.csv(new_lib_file, file=paste(temp_csv, sep=""))
     new_lib_file <- read.csv(paste(temp_csv, sep=""), row.names = 1)
@@ -160,62 +181,97 @@ isoLIB <- function(input=NULL,
     new_lib_file_path <- paste(temp_csv, sep="")
   }
 
-  make_fasta((file.path(getwd(), new_lib_file_path)), col_names="filename", col_seqs="seqs_trim", output=paste(temp_fasta, sep="")) # exports as "output.fasta"
+  make_fasta((file.path(getwd(), new_lib_file_path)), col_names="unique_filename", col_seqs="seqs_trim", output=paste(temp_fasta, sep="")) # exports as "output.fasta"
 
-  #------------------------------------------------- Trying with global searching instead...
+  #------------------------------------------------- 
   system2(vsearch.path, paste(" --usearch_global ", temp_fasta, " --db ", temp_fasta, " --uc_allhits --uc ", temp_drep, " --id ", strain_group_cutoff, " --query_cov 0.95 --maxaccepts 0 --maxrejects 0 --strand plus ", sep=""), stdout="", stderr="")
-  #readline
   #-------------------------------------------------
 
-  #:::::::::::::::::
-  #Organize results
-  #:::::::::::::::::
+  #::::::::::::::::::::::::::::
+  #Organize search results
+  #::::::::::::::::::::::::::::
   drep.results <- read.csv(temp_drep, sep="\t", header = FALSE) %>%
-    arrange(V2) %>%
-    group_by(V9) %>%
-    mutate(grouping = dplyr::first(V2)) %>%
-    select(V9, grouping) %>%
-    ungroup() %>%
-    dplyr::rename("filename" = "V9") %>%
+    group_by(V10) %>% mutate(counts = n()) %>% ungroup %>% # Calculate number of matches for each sequence
+    .[((sort(.$V8, index.return=TRUE))$ix),] %>% #arrange(desc(as.numeric(V3))) %>%
+    arrange(desc(as.numeric(V3))) %>% #V3 is sequence length, sorting from longest to shortest
+    arrange(desc(as.numeric(V4))) %>% #V4 is % similarity between query and match, sorting from highest to lowest
+    arrange(desc(as.numeric(counts))) %>% #Sorting from sequence with most matches to least matches
+    mutate(row_no = row_number()) %>% #distinct(V9, .keep_all=TRUE)
+    dplyr::rename("filename" = "V9")
+  
+  #::::::::::::::::::::::::::::
+  # Grouping - Iteration 1
+  #::::::::::::::::::::::::::::
+  #--------------------------------------------------------------
+  unique.groups <- unique(drep.results$V10) #Subtracting list
+  match.index <- c()                        #Adding list
+  #--------------------------------------------------------------
+  while (length(unique.groups) > 0) {
+    # do something
+    unique.groups.x <- drep.results %>% filter(V10==unique.groups[1]) %>% filter(!(filename %in% names(match.index)))
+    match.index.add <- setNames(unique.groups.x$V10, unique.groups.x$filename) 
+    match.index <- c(match.index, match.index.add)
+    # check for success
+    unique.groups <- unique.groups[!(unique.groups %in% unique.groups[1])]
+    unique.groups <- unique.groups[!(unique.groups %in% unique.groups.x$filename)]
+  }
+
+  #::::::::::::::::::::::::::::
+  # Grouping - Iteration 2
+  #::::::::::::::::::::::::::::
+  #-----------------------------------------------------------------------------
+  drep.results.x <- drep.results %>% 
+    filter(V10 %in% (unique(paste(match.index)))) %>% #Filtering so that matches in V10 represent only the ref strains  
+    #arrange(V10) #%>% #V10 is match column, sorting from oldest to newest added sequences
+    arrange(desc(as.numeric(V4))) %>% #V4 is % similarity between query and match, sorting from highest to lowest
     distinct(filename, .keep_all=TRUE)
+  
+  #-----------------------------------------------------------------------------
+  unique.groups2 <- sort(unique(drep.results.x$V10))    #Subtracting list
+  match.index2 <- c()                                   #Adding list
+  #-----------------------------------------------------------------------------
+  while (length(unique.groups2) > 0) {
+    # do something
+    unique.groups2.x <- drep.results.x %>% filter(V10==unique.groups2[1]) %>% filter(!(filename %in% names(match.index2)))
+    match.index2.add <- setNames(unique.groups2.x$V10, unique.groups2.x$filename) 
+    match.index2 <- c(match.index2, match.index2.add)
+    # check for success
+    unique.groups2 <- unique.groups2[!(unique.groups2 %in% unique.groups2[1])]
+    unique.groups2 <- unique.groups2[!(unique.groups2 %in% unique.groups2.x$filename)]
+  }
+  #-----------------------------------------------------------------------------
 
   unlink(file.path(temp_fasta)) #Remove temp FASTA
-  unlink(file.path(temp_drep)) #Remove temp DREP
-  unlink(file.path(temp_csv)) #Remove temp CSV
-
+  unlink(file.path(temp_drep))  #Remove temp DREP
+  unlink(file.path(temp_csv))   #Remove temp CSV
+  
   #:::::::::::::::::::::::::::::::::::::::::::::
-  #Merge de-rep results with *new* lib file
+  #Merge results
   #:::::::::::::::::::::::::::::::::::::::::::::
+  match.index2 <- setNames(drep.results.x$V10, drep.results.x$filename)
 
-  merged.drep <- merge(drep.results, new_lib_file, by.x="filename", by.y="filename", all=TRUE) %>%
-    mutate(grouping = ifelse(is.na(grouping) == TRUE, filename, grouping))
-
-  #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-  #Pick the best representative for de-replicated sequence list
-  #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
-  merged.drep1 <- merged.drep %>% select(-warning) %>% #select(-phylum,-class,-order,-family,-class,-genus, -species_col, -genus_col, -family_col) %>%
-    mutate(qual_bin = ifelse(phred_trim >= 60, 6,
-                             ifelse(phred_trim >= 50 & phred_trim <60, 5,
-                                    ifelse(phred_trim >=40 & phred_trim <50, 4,
-                                           ifelse(phred_trim >=30 & phred_trim <40, 3,
-                                                  ifelse(phred_trim >= 20 & phred_trim <30, 2, 1)))))) %>%
-    mutate(override_priority = 1) %>%
-    arrange(desc(qual_bin)) %>%
-    arrange(desc(length_trim)) %>% #filter(grepl("1015|HB534", filename))
-    arrange(desc(override_priority)) %>%
-    group_by(grouping) %>%
-    mutate(strain_group = dplyr::first(filename)) %>%
-    ungroup() %>%
-    mutate(ref_strain = ifelse(strain_group == filename, "yes", "no"))
-
+  merged.drep <- drep.results %>% 
+    mutate(grouping = dplyr::recode(!!!match.index2, filename, .default="")) %>% #Add strain grouping from index
+    filter(V10 == grouping) %>%
+    merge(.,  new_lib_file, by.x="filename", by.y="unique_filename", all=TRUE) %>% 
+    mutate(strain_group = grouping) %>%
+    mutate(ref_strain = ifelse(strain_group == filename, "yes", "no")) %>%
+    mutate(filename = sapply(1:length(.$filename),function(x) stringr::str_sub(.$filename[x], 6, nchar(.$filename[x])))) %>%
+    mutate(strain_group = sapply(1:length(.$strain_group),function(x) stringr::str_sub(.$strain_group[x], 6, nchar(.$strain_group[x]))))
+  
   #Subset only columns of interest------------------------------------------------------------------
 
-  merged.drep1.sub <- merged.drep1 %>% select(strain_group, date, filename, seqs_trim, phred_trim, Ns_trim, length_trim,
+  merged.drep1 <- merged.drep %>% select(strain_group, date, filename, seqs_trim, phred_trim, Ns_trim, length_trim,
                                               closest_match, NCBI_acc, ID,
                                               rank_phylum, rank_class, rank_order, rank_family, rank_genus, rank_species, ref_strain)
 
-
+  #:::::::::::::::::::::::::::::::::::::::::::::
+  #Sanity check
+  #:::::::::::::::::::::::::::::::::::::::::::::
+  
+  message(cat(paste0("\033[0;", 32, "m","A total of ", length(unique(merged.drep$grouping)), 
+                     " unique sequence groups detected (strain_group_cutoff=", strain_group_cutoff, ")", "\033[0m")))
+  
   #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
   #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
   #Combining OLD database if provided---------------------------------------------------------
@@ -226,89 +282,136 @@ isoLIB <- function(input=NULL,
     old_lib_file <- read.csv(old_lib_csv)#, row.names=1)
     message(cat(paste0("\n", "\033[0;", 32, "m","Checking old/new library CSV files have same dimensions", "\033[0m")))
     message(cat(paste0("\033[0;", 32, "m",paste("No. of columns in old library: ", ncol(old_lib_file), sep=""), "\033[0m")))
-    message(cat(paste0("\033[0;", 32, "m",paste("No. of columns in old library: ", ncol(merged.drep1.sub), sep=""), "\033[0m")))
-    if(!ncol(old_lib_file)==ncol(merged.drep1.sub)) stop('Library file dimensions are not the same and require manual inspection.', call.=FALSE)
+    message(cat(paste0("\033[0;", 32, "m",paste("No. of columns in new library: ", ncol(merged.drep1), sep=""), "\033[0m")))
+    if(!ncol(old_lib_file)==ncol(merged.drep1)) stop('Library file dimensions are not the same and require manual inspection.', call.=FALSE)
     message(cat(paste0("\033[0;", 32, "m","Same dimensions detected, proceeding...", "\033[0m", "\n")))
     #
 
+    #Combine old and new isoLIB files-----------------------
+    combined_lib_file <- rbind(old_lib_file, merged.drep1 %>% mutate(ref_strain="")) #old_lib_file must be at top so older seqs take priority
+    
     #Check for duplicate names
-    #dup.names <- merged.drep1.sub$filename[merged.drep1.sub$filename %in% old_lib_file$filename]
-    #dup.names.index <- setNames(paste(str_split_fixed(dup.names, "[.]", 2)[,1], "_rep.", str_split_fixed(dup.names, "[.]", 2)[,2], sep=""), dup.names)
-    #merged.drep1.sub <- merged.drep1.sub %>% dplyr::recode(filename, !!!dup.names.index) # doesn't work - can't handle periods (.)
+    combined_lib_file <- combined_lib_file %>% 
+      mutate(undup = stringr::str_split_fixed(filename, "_dup", 2)[,1]) %>% 
+      mutate(duplicated = duplicated(undup)) %>%
+      mutate(duplicated2 = paste(undup, duplicated, sep="___")) %>%
+      group_by(duplicated2) %>%
+      mutate(filename = ifelse(any(duplicated), paste(undup, "_dup", rep(1:n()), sep=""), filename)) %>%
+      ungroup()
+    
+    if(length((combined_lib_file %>% filter(duplicated==TRUE))$filename) > 0){
+      message(cat(paste0("\033[0;", 31, "m", "Duplicated filenames detected: ", paste(unique((combined_lib_file %>% filter(duplicated==TRUE))$undup), collapse="|"), "\033[0m")))
+      message(cat(paste0("\033[0;", 30, "m", "Renaming duplicates with suffix '_dup1','_dup2', '_dup3', etc.", "\033[0m")))
+      message(cat(paste0("\033[0;", 30, "m", paste((combined_lib_file %>% filter(duplicated==TRUE))$filename, collapse="\n"), "\033[0m")))
+    }
+    
+    combined_lib_file <- combined_lib_file %>% select(-undup, -duplicated, -duplicated2)
 
-    #combine old and new isoLIB files-----------------------
-    combined_lib_file <- rbind(old_lib_file, merged.drep1.sub) #old_lib_file must be at top so older seqs take priority
+    #Make unique strain names incase any duplicated-----------------------
+    combined_lib_file$unique_filename <- paste(stringr::str_pad(1:nrow(combined_lib_file), 4, pad="0"), combined_lib_file$filename, sep="_")
 
-    #make unique strain names incase any duplicated-----------------------
-    combined_lib_file$unique_filename <- paste(str_pad(1:nrow(combined_lib_file), 4, pad="0"), combined_lib_file$filename, sep="_")
-
+    #Write temp files
     #-------------------------------------------------------
     temp_combined_fasta <- "03_isoLIB_combined_temp.fasta"
     temp_combined_drep <- paste0("03_isoLIB_combined_temp.drep", sep="")
     temp_combined_csv <- "03_isoLIB_combined_temp.csv"
     #-------------------------------------------------------
     write.csv(combined_lib_file, file= temp_combined_csv)
-
-    #De-replicating-------------------------------------------------------
     make_fasta((file.path(getwd(), temp_combined_csv)), col_names="unique_filename", col_seqs="seqs_trim", output=paste(temp_combined_fasta, sep="")) # exports as "output.fasta"
 
-    #-------------------------------------------------
+    #VSEARCH
+    #-------------------------------------------------------
+    system2(vsearch.path, paste(" --usearch_global ", temp_combined_fasta, " --db ", temp_combined_fasta, " --uc ", temp_combined_drep, " --id ", strain_group_cutoff, " --query_cov 0.95 --maxaccepts 0 --maxrejects 0 --uc_allhits --strand plus ", sep=""), stdout="", stderr="")
+    #-------------------------------------------------------
+    
+    #::::::::::::::::::::::::::::
+    #Organize search results
+    #::::::::::::::::::::::::::::
+    ref.index <- setNames((combined_lib_file %>% filter(ref_strain!="") %>% filter(filename %in% old_lib_file$filename))$ref_strain,
+                          (combined_lib_file %>% filter(ref_strain!="") %>% filter(filename %in% old_lib_file$filename))$unique_filename)
+    
+    drep.results2 <- read.csv(temp_combined_drep, sep="\t", header = FALSE) %>% 
+      group_by(V10) %>% mutate(counts = n()) %>% ungroup %>% # Calculate number of matches for each sequence
+      .[((sort(.$V8, index.return=TRUE))$ix),] %>% #arrange(desc(as.numeric(V3))) %>%
+      arrange(desc(as.numeric(V3))) %>% #V3 is sequence length, sorting from longest to shortest
+      arrange(desc(as.numeric(V4))) %>% #V4 is % similarity between query and match, sorting from highest to lowest
+      arrange(desc(as.numeric(counts))) %>% #Sorting from sequence with most matches to least matches
+      mutate(row_no = row_number()) %>% #distinct(V9, .keep_all=TRUE)
+      dplyr::rename("filename" = "V9") %>%
+      {drep.results3 <<- .} %>%
+      filter(!(V10 %in% names(ref.index)[ref.index=="no"])) #Filtering so that matches in V10 do not contain non-ref strains from 'old_lib_csv' 
 
+    #::::::::::::::::::::::::::::
+    # Regrouping - Iteration 1
+    #::::::::::::::::::::::::::::
+    #-----------------------------------------------------------------------------
+    unique.groups2 <- sort(unique(drep.results2$V10))   #Subtracting list - #Sorting so that sequences from 'old_lib_csv' are at top and have priority
+    match.index2 <- c()                                 #Adding list
+    #-----------------------------------------------------------------------------
+    while (length(unique.groups2) > 0) {
+      # do something
+      match.index2.x <- drep.results2 %>% filter(V10==unique.groups2[1]) %>% filter(!(filename %in% names(match.index2)))
+      match.index2.add <- setNames(match.index2.x$V10, match.index2.x$filename) 
+      match.index2 <- c(match.index2, match.index2.add)
+      # check for success
+      unique.groups2 <- unique.groups2[!(unique.groups2 %in% unique.groups2[1])]
+      unique.groups2 <- unique.groups2[!(unique.groups2 %in% match.index2.x$filename)]
+    }
+    #-----------------------------------------------------------------------------
 
-    #system2(vsearch.path, paste(" --derep_prefix ", "output.fasta", " --output ", out.fasta, " --uc ", temp_drep, " --sizein --sizeout", sep=""), stdout="", stderr="")
-    system2(vsearch.path, paste(" --usearch_global ", temp_combined_fasta, " --db ", temp_combined_fasta, " --uc ", temp_combined_drep, " --id ", strain_group_cutoff, " --query_cov 0.95 --maxaccepts 0 --maxrejects 0 --top_hits_only --strand plus ", sep=""), stdout="", stderr="")
-
-    #-------------------------------------------------
-    #:::::::::::::::::
-    #Organize results
-    #:::::::::::::::::
-    drep.results <- read.csv(temp_combined_drep, sep="\t", header = FALSE) %>%
-      arrange(V2) %>%
-      group_by(V9) %>%
-      mutate(grouping = dplyr::first(V2)) %>%
-      select(V9, grouping) %>%
-      ungroup() %>%
-      dplyr::rename("unique_filename" = "V9") %>%
-      distinct(unique_filename, .keep_all=TRUE)
+    #::::::::::::::::::::::::::::
+    # Regrouping - Iteration 2
+    #::::::::::::::::::::::::::::
+    #-----------------------------------------------------------------------------
+    drep.results3.x <- drep.results3 %>% 
+      #filter(!(filename %in% ref.index.new)) %>%
+      filter(V10 %in% unique(paste(match.index2))) %>% #Filtering so that matches in V10 represent only the ref strains  
+      #arrange(V10) %>% #V10 is match column, sorting from oldest to newest added sequences
+      arrange(desc(as.numeric(V4))) %>% #V4 is % similarity between query and match, sorting from highest to lowest
+      distinct(filename, .keep_all=TRUE)
 
     unlink(file.path(temp_combined_fasta)) #Remove temp FASTA
-    unlink(file.path(temp_combined_drep)) #Remove temp DREP
-    unlink(file.path(temp_combined_csv)) #Remove temp CSV
-
+    unlink(file.path(temp_combined_drep))  #Remove temp DREP
+    unlink(file.path(temp_combined_csv))   #Remove temp CSV
+    
     #:::::::::::::::::::::::::::::::::::::::::::::
-    #Merge de-rep results with *combined* lib file
+    #Merge results
     #:::::::::::::::::::::::::::::::::::::::::::::
-    regroup.list.list1 <- setNames(drep.results$grouping, drep.results$unique_filename)
-
+    match.index3 <- setNames(drep.results3.x$V10, drep.results3.x$filename)
+    
     combined_lib_file_regroup <- combined_lib_file %>%
-      mutate(grouping = dplyr::recode(unique_filename, !!!regroup.list.list1))
-
-
-    #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    #Pick the best representative for de-replicated sequence list
-    #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
-    merged.drep2 <- combined_lib_file_regroup %>% #%>% select(-warning) %>% #select(-phylum,-class,-order,-family,-class,-genus, -species_col, -genus_col, -family_col) %>%
+      mutate(grouping = dplyr::recode(!!!match.index3, unique_filename, .default="")) %>% #%>% select(-warning) %>% #select(-phylum,-class,-order,-family,-class,-genus, -species_col, -genus_col, -family_col) %>%
       arrange(unique_filename) %>%
-      group_by(grouping) %>%
-      mutate(strain_group = dplyr::first(unique_filename)) %>%
-      ungroup() %>%
+      mutate(strain_group = grouping) %>%
       mutate(ref_strain = ifelse(strain_group == unique_filename, "yes", "no")) %>%
       #Remove unique identifier characters
       mutate(strain_group = sapply(1:length(.$strain_group),function(x) stringr::str_sub(.$strain_group[x], 6, nchar(.$strain_group[x]))))
-
-
-    merged.drep1.sub <- merged.drep2 %>% select(strain_group, date, filename, seqs_trim, phred_trim, Ns_trim, length_trim,
+    
+    merged.drep2 <- combined_lib_file_regroup %>% select(strain_group, date, filename, seqs_trim, phred_trim, Ns_trim, length_trim,
                                                 closest_match, NCBI_acc, ID,
                                                 rank_phylum, rank_class, rank_order, rank_family, rank_genus, rank_species, ref_strain)
-  } #-----------end of old library add-in
-
-
-  #merged.drep1 %>% group_by(grouping) %>% mutate(strain_group = last(filename))
-  #merged.drep1.sub <- merged.drep1 %>% select(grouping,strain_group) %>% mutate(same = case_when(grouping == strain_group ~ "same", TRUE ~ "other"))
-  #merged.drep1 <- merged.drep
-
-
+    
+    #:::::::::::::::::::::::::::::::::::::::::::::
+    #Sanity check
+    #:::::::::::::::::::::::::::::::::::::::::::::
+    
+    old.match.comparisons <- cbind(combined_lib_file %>% filter(ref_strain!="") %>% select(filename, strain_group) %>% distinct(filename, .keep_all=TRUE) %>% {tmp <<- .},
+                                   merged.drep2 %>% filter(filename %in% tmp$filename) %>% rename("strain_group2" = "strain_group") %>% distinct(filename, .keep_all=TRUE) %>% select(strain_group2)) %>%
+      filter(strain_group != strain_group2) #%>% `colnames<-`(c("filename", "Old", "New"))
+    
+    message(cat(paste0("\033[0;", 32, "m","**********Sanity check**********", "\033[0m")))
+    message(cat(paste0("\033[0;", 32, "m","After merging, the library has a total of ", length(unique(merged.drep2$strain_group)), 
+                       " unique sequence groups (strain_group_cutoff=", strain_group_cutoff, ")", "\033[0m")))
+    
+    if(length(old.match.comparisons$filename) > 0){
+      message(cat(paste0("\033[0;", 32, "m","The following ", length(old.match.comparisons$filename), 
+                         " strains were assigned to new reference sequence groups after merging: \n", "\033[0m")))
+      message(cat(paste0("\033[0;", 30, "m", "\n",(old.match.comparisons$filename), "\033[0m")))
+    }
+    
+    } #-----------end of old library add-in
+    
+    
   ###########################################################################################################
   ###########################################################################################################
   ###########################################################################################################
@@ -318,8 +421,9 @@ isoLIB <- function(input=NULL,
   #::::::::::::::::::::::::::::::::::::::::::::::
   # Set cutoffs for taxonomic rank demarcation
   #::::::::::::::::::::::::::::::::::::::::::::::
-
-  merged.drep1.sub <- merged.drep1.sub %>%
+  
+  
+  merged.drep1 <- merged.drep1 %>%
     mutate(phylum_cutoff= phylum_cutoff) %>%
     mutate(class_cutoff= class_cutoff) %>%
     mutate(order_cutoff= order_cutoff) %>%
@@ -327,42 +431,68 @@ isoLIB <- function(input=NULL,
     mutate(genus_cutoff= genus_cutoff) %>%
     mutate(species_cutoff= species_cutoff)
 
-
+  if(is.null(old_lib_csv)==FALSE){
+    merged.drep2 <- merged.drep2 %>%
+      mutate(phylum_cutoff= phylum_cutoff) %>%
+      mutate(class_cutoff= class_cutoff) %>%
+      mutate(order_cutoff= order_cutoff) %>%
+      mutate(family_cutoff= family_cutoff) %>%
+      mutate(genus_cutoff= genus_cutoff) %>%
+      mutate(species_cutoff= species_cutoff)
+  }
+  
   ###############
   # Output
   ###############
 
   #Set S4 class for outputs
-  isolib.S4 <- df_to_isoLIB(merged.drep1.sub)
-
+  isolib.S4.1 <- df_to_isoLIB(merged.drep1)
+  if(is.null(old_lib_csv)==FALSE){isolib.S4.2 <- df_to_isoLIB(merged.drep2)}
+    
   #--------------------------------------------------
-
   #Export messages
   message(cat(paste0("\033[97;", 40, "m","'isoLIB' steps completed. Exporting files...", "\033[0m")))
 
   #Export HTML file----------------------------------------------------------------------
   if(export_html==TRUE){
     output_name <- "03_isoLIB_results.html"
-    export_html(isolib.S4)
+    export_html(isolib.S4.1)
     #merged.df3_react <- export_html(out_df, path, output=output_name)
     message(cat(paste0("\033[97;", 40, "m","HTML results exported: ", "\033[0m",
                        "\033[0;", 32, "m", " ", file.path(path, output_name),"\033[0m", "\n")))
+    if(is.null(old_lib_csv)==FALSE){
+      output_name <- "03_isoLIB_results_merged.html"
+      export_html(isolib.S4.2)
+      #merged.df3_react <- export_html(out_df, path, output=output_name)
+      message(cat(paste0("\033[97;", 40, "m","HTML results exported: ", "\033[0m",
+                         "\033[0;", 32, "m", " ", file.path(path, output_name),"\033[0m", "\n")))
+    }
     } else if(export_html==FALSE){}
 
   #export CSV files----------------------------------------------------------------------
   if(export_csv==TRUE){
     output_name <- "03_isoLIB_results.csv"
-    csv_output <- S4_to_dataframe(isolib.S4) %>% select(strain_group, date, filename,  seqs_trim, phred_trim, Ns_trim, length_trim,
+    csv_output <- S4_to_dataframe(isolib.S4.1) %>% select(strain_group, date, filename,  seqs_trim, phred_trim, Ns_trim, length_trim,
                                                         closest_match, NCBI_acc, ID,
                                                         rank_phylum, rank_class, rank_order, rank_family, rank_genus, rank_species, ref_strain)
     write.csv(csv_output, file=paste(output_name, sep=""), row.names = FALSE)
     message(cat(paste0("\033[97;", 40, "m","CSV file exported:", "\033[0m",
                        "\033[0;", 32, "m", " ", file.path(path, output_name),"\033[0m",
                        "\033[0;", 31, "m", "  <--- Final strain library output","\033[0m")))
+    if(is.null(old_lib_csv)==FALSE){
+      output_name <- "03_isoLIB_results_merged.csv"
+      csv_output <- S4_to_dataframe(isolib.S4.2) %>% select(strain_group, date, filename,  seqs_trim, phred_trim, Ns_trim, length_trim,
+                                                          closest_match, NCBI_acc, ID,
+                                                          rank_phylum, rank_class, rank_order, rank_family, rank_genus, rank_species, ref_strain)
+      write.csv(csv_output, file=paste(output_name, sep=""), row.names = FALSE)
+      message(cat(paste0("\033[97;", 40, "m","CSV file exported:", "\033[0m",
+                         "\033[0;", 32, "m", " ", file.path(path, output_name),"\033[0m",
+                         "\033[0;", 31, "m", "  <--- Final MERGED strain library output","\033[0m")))
+    }
   } else if(export_csv==FALSE){}
 
-
-  return(isolib.S4)
+  if(is.null(old_lib_csv)==TRUE){return(isolib.S4.1)}
+  if(is.null(old_lib_csv)==FALSE){return(isolib.S4.2)}
 
 } #end of function
 

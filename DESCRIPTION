@@ -1,7 +1,7 @@
 Package: isolateR
 Type: Package
 Title: Automated processing of Sanger sequencing data, taxonomic profiling, and generation of microbial strain libraries
-Version: 0.0.0.9002
+Version: 0.0.0.9003
 Date: 2023-11-20
 Author: Brendan Daisley, Sarah Vancuren, Dylan Brettingham, Jacob Wilde, Emma Allen-Vercoe.
 Maintainer: Brendan Daisley <bdaisley@uoguelph.ca>
