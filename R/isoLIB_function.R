@@ -455,11 +455,13 @@ isoLIB <- function(input=NULL,
 
   #Export HTML file----------------------------------------------------------------------
   if(export_html==TRUE){
-    output_name <- "03_isoLIB_results.html"
-    export_html(isolib.S4.1)
-    #merged.df3_react <- export_html(out_df, path, output=output_name)
-    message(cat(paste0("\033[97;", 40, "m","HTML results exported: ", "\033[0m",
-                       "\033[0;", 32, "m", " ", file.path(path, output_name),"\033[0m", "\n")))
+    if(is.null(old_lib_csv)==TRUE){
+      output_name <- "03_isoLIB_results.html"
+      export_html(isolib.S4.1)
+      #merged.df3_react <- export_html(out_df, path, output=output_name)
+      message(cat(paste0("\033[97;", 40, "m","HTML results exported: ", "\033[0m",
+                         "\033[0;", 32, "m", " ", file.path(path, output_name),"\033[0m", "\n")))
+    }
     if(is.null(old_lib_csv)==FALSE){
       output_name <- "03_isoLIB_results_merged.html"
       export_html(isolib.S4.2)
@@ -471,14 +473,16 @@ isoLIB <- function(input=NULL,
 
   #export CSV files----------------------------------------------------------------------
   if(export_csv==TRUE){
-    output_name <- "03_isoLIB_results.csv"
-    csv_output <- S4_to_dataframe(isolib.S4.1) %>% select(strain_group, date, filename,  seqs_trim, phred_trim, Ns_trim, length_trim,
-                                                        closest_match, NCBI_acc, ID,
-                                                        rank_phylum, rank_class, rank_order, rank_family, rank_genus, rank_species, ref_strain)
-    write.csv(csv_output, file=paste(output_name, sep=""), row.names = FALSE)
-    message(cat(paste0("\033[97;", 40, "m","CSV file exported:", "\033[0m",
-                       "\033[0;", 32, "m", " ", file.path(path, output_name),"\033[0m",
-                       "\033[0;", 31, "m", "  <--- Final strain library output","\033[0m")))
+    if(is.null(old_lib_csv)==TRUE){
+      output_name <- "03_isoLIB_results.csv"
+      csv_output <- S4_to_dataframe(isolib.S4.1) %>% select(strain_group, date, filename,  seqs_trim, phred_trim, Ns_trim, length_trim,
+                                                            closest_match, NCBI_acc, ID,
+                                                            rank_phylum, rank_class, rank_order, rank_family, rank_genus, rank_species, ref_strain)
+      write.csv(csv_output, file=paste(output_name, sep=""), row.names = FALSE)
+      message(cat(paste0("\033[97;", 40, "m","CSV file exported:", "\033[0m",
+                         "\033[0;", 32, "m", " ", file.path(path, output_name),"\033[0m",
+                         "\033[0;", 31, "m", "  <--- Final strain library output","\033[0m")))
+    }
     if(is.null(old_lib_csv)==FALSE){
       output_name <- "03_isoLIB_results_merged.csv"
       csv_output <- S4_to_dataframe(isolib.S4.2) %>% select(strain_group, date, filename,  seqs_trim, phred_trim, Ns_trim, length_trim,
