@@ -1,8 +1,8 @@
 #' @title Download taxonomic reference database
 #' @name get_db
-#' @description This function donwloads taxonomic reference database and formats them for use.
+#' @description This function downloads taxonomic reference database and formats them for use.
 #' @param db Database selection. One of "16S", "16S_arc", "18S", "ITS", or "cpn60"
-#' @param force_update Forces new datbases to be downloaded.
+#' @param force_update Forces new databases to be downloaded.
 #' @returns Returns file path for database of interest
 #' @importFrom utils download.file
 #' @importFrom stringr str_subset
@@ -26,7 +26,7 @@ get_db <- function(db="16S", force_update=FALSE){
   dblink_16S_arc <- "https://ftp.ncbi.nlm.nih.gov/refseq/TargetedLoci/Archaea/archaea.16SrRNA.fna.gz"
   dblink_18S <- "https://ftp.ncbi.nlm.nih.gov/refseq/TargetedLoci/Fungi/fungi.18SrRNA.fna.gz"
   dblink_cpn60 <- "https://github.com/HillLabSask/cpn60-Classifier/releases/download/v11.1/cpn60-Classifier_v11.0_training.tar.gz"
-  dblink_ITS <- "https://ftp.ncbi.nlm.nih.gov/refseq/TargetedLoci/Bacteria/bacteria.16SrRNA.fna.gz"
+  dblink_ITS <- "https://ftp.ncbi.nlm.nih.gov/refseq/TargetedLoci/Fungi/fungi.ITS.fna.gz"
 
   #Set vector list for database matching---------------------------------------------------------------------------------------
 
