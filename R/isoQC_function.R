@@ -138,7 +138,7 @@ isoQC <- function(input=NULL,
     abif.pre <- sangerseqR::read.abif(fpath)
     
     if(is.null(sliding_window_cutoff)){
-      sliding_window_cutoff <- max(unlist(abif.pre@data['PCON.1']))
+      sliding_window_cutoff <- max(unlist(abif.pre@data['PCON.1']))*0.5
     } else {
       sliding_window_cutoff <- sliding_window_cutoff
     }
@@ -159,7 +159,7 @@ isoQC <- function(input=NULL,
                                      geneticCode           = GENETIC_CODE,
                                      TrimmingMethod        = "M2",
                                      M1TrimmingCutoff      = NULL,
-                                     M2CutoffQualityScore  = round(sliding_window_cutoff*0.66),
+                                     M2CutoffQualityScore  = round(sliding_window_cutoff),
                                      M2SlidingWindowSize   = sliding_window_size,
                                      baseNumPerRow         = 100,
                                      heightPerRow          = 200,
@@ -172,7 +172,7 @@ isoQC <- function(input=NULL,
                                      geneticCode           = GENETIC_CODE,
                                      TrimmingMethod        = "M2",
                                      M1TrimmingCutoff      = NULL,
-                                     M2CutoffQualityScore  = round(sliding_window_cutoff*0.66),
+                                     M2CutoffQualityScore  = round(sliding_window_cutoff),
                                      M2SlidingWindowSize   = 1,
                                      baseNumPerRow         = 100,
                                      heightPerRow          = 200,
@@ -186,7 +186,7 @@ isoQC <- function(input=NULL,
                                    geneticCode           = GENETIC_CODE,
                                    TrimmingMethod        = "M2",
                                    M1TrimmingCutoff      = NULL,
-                                   M2CutoffQualityScore  = round(sliding_window_cutoff*0.66),
+                                   M2CutoffQualityScore  = round(sliding_window_cutoff),
                                    M2SlidingWindowSize   = sliding_window_size,
                                    baseNumPerRow         = 100,
                                    heightPerRow          = 200,
@@ -199,7 +199,7 @@ isoQC <- function(input=NULL,
                                    geneticCode           = GENETIC_CODE,
                                    TrimmingMethod        = "M2",
                                    M1TrimmingCutoff      = NULL,
-                                   M2CutoffQualityScore  = round(sliding_window_cutoff*0.66),
+                                   M2CutoffQualityScore  = round(sliding_window_cutoff),
                                    M2SlidingWindowSize   = 1,
                                    baseNumPerRow         = 100,
                                    heightPerRow          = 200,
@@ -246,7 +246,7 @@ isoQC <- function(input=NULL,
     
     #This code chunk checks if trimmed sequence region looks okay before proceeding to next step
     #----------------------------------------------------------------------------------------------
-    if(verbose==TRUE){message(cat(paste0("\033[97;", 40, "m","Removing anything beyond reverse primer: ", fpath, "\033[0m")))}
+    #if(verbose==TRUE){message(cat(paste0("\033[97;", 40, "m","Removing anything beyond reverse primer: ", fpath, "\033[0m")))} #Not implemented yet, estimating 30mer primer length
     abif3.end <- end(abif3[[1]]) - 30  #+ nchar("CTGCTGCCTYCCGTA")
     if(abif3.end > width(abif3[[1]])){abif3.end <- width(abif3[[1]])}
     if(width(abif3[[1]]) <= 300){abif3.end <- nchar(paste(abif2)) }

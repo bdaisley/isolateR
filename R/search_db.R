@@ -11,10 +11,10 @@
 #' If TRUE, performs quick search equivalent to setting VSEARCH parameters "--maxaccepts 100 --maxrejects 100".
 #' If FALSE, performs comprehensive search equivalent to setting VSEARCH parameters "--maxaccepts 0 --maxrejects 0"
 #' Note: This option is provided for convenience and rough approximation of taxonomy only, set to FALSE for accurate % pairwise identity results.
-#' @param db.path Path of FASTA-formatted database sequence file. Ignored if 'database' parameter is set to anything other than NULL
+#' @param db.path Path of FASTA-formatted database sequence file. Ignored if 'db' parameter is set to anything other than "custom"
 #' @param db Optional: Select any of the standard database option(s) including "16S" (for searching against the NCBI Refseq targeted loci 16S rRNA database),
 #' "ITS" (for searching against the NCBI Refseq targeted loci ITS  database. For combined databases in cases where input sequences are dervied from
-#' bacteria and fungi, select "16S|ITS". Setting to anything other than NULL causes 'db.path' parameter to be ignored.
+#' bacteria and fungi, select "16S|ITS". Setting to anything other than db=NULL or db="custom" causes 'db.path' parameter to be ignored.
 #' @param keep_temp_files Toggle (TRUE/FALSE). If TRUE, temporary .uc and .b6o output files are kept from VSEARCH --uc and --blast6out commands, respectively. If FALSE, temporary files are removed.
 #' @param iddef Set pairwise identity definition as per VSEARCH definitions (Default=2, and is recommended for highest taxonomic accuracy)
 #' (0) CD-HIT definition: (matching columns) / (shortest sequence length).
@@ -65,7 +65,7 @@ search_db <- function(query.path = NULL,
                       b6.out = "VSEARCH_output.b6o",
                       path = getwd(),
                       quick_search = FALSE,
-                      db.path = NULL,
+                      db_path = NULL,
                       db = NULL,
                       keep_temp_files=FALSE,
                       iddef=2){
@@ -73,6 +73,10 @@ search_db <- function(query.path = NULL,
   #:::::::::::::::::::::::::::::::::
   #Paths and parameter checks
   #:::::::::::::::::::::::::::::::::
+  db.path <- db_path
+  if(is.null(db) & !is.null(db.path)){message('Setting db="custom" as `db_path` was specified without specifiying `db`')
+    db <- "custom"
+    }
   if(is.null(db) & is.null(db.path)) stop("...Aborting step....Both 'db.path' and 'db' cannot be set to NULL.
   Select any of the standard database option(s) including '16S' (for searching
   against the NCBI Refseq targeted loci 16S rRNA database), 'ITS' (for searching
@@ -86,70 +90,40 @@ search_db <- function(query.path = NULL,
   #:::::::::::::::::::::::::::::::::
   #Download reference databases
   #:::::::::::::::::::::::::::::::::
+  
+  if(db!="custom"){
+    db.splits <- unlist(stringr::str_split(db, pattern="\\|"))
+    
+    #Single database requested------------------------------------------------------
+    if(length(db.splits) == 1){db.path <- get_db(db=db)}
+    
+    #Combine databases if requested-------------------------------------------------
+    if(length(db.splits) > 1){
+      db.splits.list <- lapply(db.splits, function(x){
+        db.tmp <- Biostrings::readBStringSet(get_db(x))
+        as.data.frame(cbind("names" = names(db.tmp), "seqs" = paste(db.tmp)))
+      })
+      db.splits.list.combined <- dplyr::bind_rows(db.splits.list)
+      fasta.combined <- DNAStringSet(setNames(db.splits.list.combined$seqs, db.splits.list.combined$names))
+      db.fasta.path <- paste(file.path(system.file("", package="isolateR"), "databases"), "/", paste(db.splits, collapse="_"), ".fna", sep="")
+      #Write combined database to FASTA file
+      Biostrings::writeXStringSet(fasta.combined, file=db.fasta.path)
+      db.path <- db.fasta.path
+    }
+  }
 
-  db.path <- get_db(db = db, force_update=FALSE)
-
+  if(db=="custom"){
+    if(is.null(db.path)){ stop("The database file specified does not exist: db.path=", db.path, ". Please provide the correct path to your database file.",call.=FALSE)}
+    if(!file.exists(db.path)){ stop("The database file specified does not exist: db.path=", db.path, ". Please provide the correct path to your database file.",call.=FALSE)}
+    db.path <- db.path
+  }
+    
   #:::::::::::::::::::::::::::
   #Download VSEARCH software
   #:::::::::::::::::::::::::::
-  message(cat(paste0("\n", "\033[97;", 40, "m","Detecting operating system...", "\033[0m")))
-
-  vsearch.path.dl <- file.path(system.file("", package="isolateR"), "vsearch")
-  suppressWarnings(dir.create(vsearch.path.dl))
-  vsearch_files <- stringr::str_subset(dir(vsearch.path.dl, full.names = FALSE), 'vsearch')
-
-
-  if(paste(isolateR::get_os())=="windows"){
-    if(identical(vsearch_files, character(0))){
-      message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is ---> Windows-based <---", "\033[0m")))
-      utils::download.file("https://github.com/torognes/vsearch/releases/download/v2.23.0/vsearch-2.23.0-win-x86_64.zip", file.path(vsearch.path.dl, 'vsearch-2.23.0-win-x86_64.zip'), mode='wb')
-      unzip(file.path(vsearch.path.dl,"vsearch-2.23.0-win-x86_64.zip"),  exdir=file.path(vsearch.path.dl))
-      file.copy(file.path(vsearch.path.dl, "vsearch-2.23.0-win-x86_64/bin/vsearch.exe"), file.path(vsearch.path.dl, "vsearch-2.23.0.exe"), overwrite=TRUE)
-      unlink(file.path(vsearch.path.dl,"vsearch-2.23.0-win-x86_64"),recursive=TRUE)
-      unlink(file.path(vsearch.path.dl,"vsearch-2.23.0-win-x86_64.zip"),recursive=TRUE)
-      message(cat(paste0("\n", "\033[0;", 32, "m","Download complete. VSEARCH 2.23.0 has been installed.", "\033[0m", "\n")))
-      vsearch.path <- file.path(vsearch.path.dl,"vsearch-2.23.0.exe")
-    } else {
-      message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is ---> Windows-based <---", "\033[0m")))
-      message(cat(paste0("\033[0;", 32, "m","VSEARCH already downloaded", "\033[0m", "\n")))
-      vsearch.path <- file.path(vsearch.path.dl,"vsearch-2.23.0.exe")
-    }
-  }
-
-  if(paste(get_os())=="osx-mac"){
-    if(identical(vsearch_files, character(0))){
-      message(cat(paste0("\033[0;", 32, "m","Operating system is ---> MacOS-based <---", "\033[0m")))
-      utils::download.file("https://github.com/torognes/vsearch/releases/download/v2.23.0/vsearch-2.23.0-macos-universal.tar.gz", file.path(vsearch.path.dl, 'vsearch-2.23.0-macos-universal.tar.gz'), mode='wb')
-      untar(file.path(vsearch.path.dl,"vsearch-2.23.0-macos-universal.tar.gz"),  exdir=file.path(vsearch.path.dl))
-      file.copy(file.path(vsearch.path.dl, "vsearch-2.23.0-macos-universal/bin/vsearch"), file.path(vsearch.path.dl, "vsearch-2.23.0_macos"), overwrite=TRUE)
-      unlink(file.path(vsearch.path.dl,"vsearch-2.23.0-macos-universal"),recursive=TRUE)
-      unlink(file.path(vsearch.path.dl,"vsearch-2.23.0-macos-universal.tar.gz"),recursive=TRUE)
-      message(cat(paste0("\033[0;", 32, "m","Download complete. VSEARCH 2.23.0 has been installed.", "\033[0m", "\n")))
-      vsearch.path <- file.path(vsearch.path.dl,"vsearch-2.23.0_macos")
-    } else {
-      message(cat(paste0("\033[0;", 32, "m","Operating system is ---> MacOS-based <---", "\033[0m")))
-      message(cat(paste0("\033[0;", 32, "m","VSEARCH already downloaded.", "\033[0m", "\n")))
-      vsearch.path <- file.path(vsearch.path.dl,"vsearch-2.23.0_macos")
-    }
-  }
-
-  if(paste(get_os())=="linux"){
-    if(identical(vsearch_files, character(0))){
-      message(cat(paste0("\033[0;", 32, "m","Operating system is ---> Linux-based <---", "\033[0m")))
-      utils::download.file("https://github.com/torognes/vsearch/releases/download/v2.23.0/vsearch-2.23.0-linux-x86_64.tar.gz", file.path(vsearch.path.dl, 'vsearch-2.23.0-linux-x86_64.tar.gz'), mode='wb')
-      untar(file.path(vsearch.path.dl, "vsearch-2.23.0-linux-x86_64.tar.gz"),  exdir=file.path(vsearch.path.dl))
-      file.copy(file.path(vsearch.path.dl, "vsearch-2.23.0-linux-x86_64/bin/vsearch"), file.path(vsearch.path.dl, "vsearch-2.23.0"), overwrite=TRUE)
-      unlink(file.path(vsearch.path.dl,"vsearch-2.23.0-linux-x86_64"),recursive=TRUE)
-      unlink(file.path(vsearch.path.dl,"vsearch-2.23.0-linux-x86_64.tar.gz"),recursive=TRUE)
-      message(cat(paste0("\033[0;", 32, "m","Download complete. VSEARCH 2.23.0 has been installed.", "\033[0m", "\n")))
-      vsearch.path <- file.path(vsearch.path.dl,"vsearch-2.23.0")
-    } else {
-      message(cat(paste0("\033[0;", 32, "m","Operating system is ---> Linux-based <---", "\033[0m")))
-      message(cat(paste0("\033[0;", 32, "m","VSEARCH already downloaded.", "\033[0m", "\n")))
-      vsearch.path <- file.path(vsearch.path.dl,"vsearch-2.23.0")
-    }
-  }
-
+  
+  vsearch.path <- get_vsearch()
+  
   #:::::::::::::::::::::
   # Search function
   #:::::::::::::::::::::
@@ -162,7 +136,7 @@ search_db <- function(query.path = NULL,
   b6.out <- file.path("temp_vsearch", b6.out)
 
   if(quick_search==TRUE){
-    #Set compatable database path for VSEARCH
+    #Set compatible database path for VSEARCH
     invisible(file.copy(db.path, path, overwrite = TRUE))
     db.path.x <- unlist(strsplit(db.path, '/'))[length(unlist(strsplit(db.path, '/')))]
     db.path.x <- file.path("temp_vsearch", db.path.x)
@@ -171,7 +145,7 @@ search_db <- function(query.path = NULL,
     unlink(file.path(path, db.path.x),recursive=TRUE)
     }
   if(quick_search==FALSE){
-    #Set compatable database path for VSEARCH
+    #Set compatible database path for VSEARCH
     invisible(file.copy(db.path, path, overwrite = TRUE))
     db.path.x <- unlist(strsplit(db.path, '/'))[length(unlist(strsplit(db.path, '/')))]
     db.path.x <- file.path("temp_vsearch", db.path.x)

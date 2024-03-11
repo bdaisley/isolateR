@@ -1,6 +1,6 @@
 #' @title Perform all commands in one step.
-#' @name isoLIB
-#' @rdname isoLIB
+#' @name isoALL
+#' @rdname isoALL
 #' @description This function effectively wraps isoQC, isoTAX, and isoLIB steps into a single command for convenience. Input can be a single directory
 #' or a list of directories to process at once. If multiple directories are provided, the resultant libraries can be sequentially merged together 
 #' by toggling the parameter 'merge=TRUE'. All other respective parameters from the wrapped functions can be passed through this command.
@@ -41,6 +41,7 @@
 #' @param species_cutoff Percent cutoff for species rank demarcation
 #' @param include_warnings (Default=FALSE) Whether or not to keep sequences with poor alignment warnings from Step 2 'isoTAX' function. Set TRUE to keep warning sequences, and FALSE to remove warning sequences.
 #' @param strain_group_cutoff (Default=0.995) Similarity cutoff (0-1) for delineating between strain groups. 1 = 100% identical/0.995=0.5% difference/0.95=5.0% difference/etc.
+#' @param merge If TRUE, combines isoLIB output files consecutively in the order they are listed. Default=FALSE performs all the steps (isoQC/isoTAX/isoLIB) on each directory separately.
 #' @seealso \code{\link{isoQC}}, \code{\link{isoTAX}}, \code{\link{isoLIB}}
 #' @return Returns a list of \code{\link{class-isoLIB}} class objects.
 #' @examples

@@ -10,6 +10,7 @@
   export_csv = TRUE,
   quick_search = TRUE,
   db = "16S",
+  db_path = NULL,
   iddef = 2,
   phylum_cutoff = 75,
   class_cutoff = 78.5,

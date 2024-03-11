@@ -10,6 +10,7 @@ isoTAX(
   export_csv = TRUE,
   quick_search = TRUE,
   db = "16S",
+  db_path = NULL,
   iddef = 2,
   phylum_cutoff = 75,
   class_cutoff = 78.5,
@@ -31,8 +32,10 @@ If TRUE, performs quick search equivalent to setting VSEARCH parameters "--maxac
 If FALSE, performs comprehensive search equivalent to setting VSEARCH parameters "--maxaccepts 0 --maxrejects 0"}
 
 \item{db}{(Default="16S") Select database option(s) including "16S" (for searching against the NCBI Refseq targeted loci 16S rRNA database),
-"ITS" (for searching against the NCBI Refseq targeted loci ITS  database. For combined databases in cases where input sequences are dervied from
-bacteria and fungi, select "16S|ITS".}
+"ITS" (for searching against the NCBI Refseq targeted loci ITS  database. For combined databases in cases where input sequences are derived from
+bacteria and fungi, select "16S|ITS". Setting to anything other than db=NULL or db="custom" causes 'db.path' parameter to be ignored.}
+
+\item{db_path}{Path of FASTA-formatted database sequence file. Ignored if 'db' parameter is set to anything other than NULL or "custom".}
 
 \item{iddef}{Set pairwise identity definition as per VSEARCH definitions (Default=2, and is recommended for highest taxonomic accuracy)
 (0) CD-HIT definition: (matching columns) / (shortest sequence length).

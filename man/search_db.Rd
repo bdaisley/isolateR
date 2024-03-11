@@ -10,7 +10,7 @@ search_db(
   b6.out = "VSEARCH_output.b6o",
   path = getwd(),
   quick_search = FALSE,
-  db.path = NULL,
+  db_path = NULL,
   db = NULL,
   keep_temp_files = FALSE,
   iddef = 2
@@ -30,11 +30,9 @@ If TRUE, performs quick search equivalent to setting VSEARCH parameters "--maxac
 If FALSE, performs comprehensive search equivalent to setting VSEARCH parameters "--maxaccepts 0 --maxrejects 0"
 Note: This option is provided for convenience and rough approximation of taxonomy only, set to FALSE for accurate \% pairwise identity results.}
 
-\item{db.path}{Path of FASTA-formatted database sequence file. Ignored if 'database' parameter is set to anything other than NULL}
-
 \item{db}{Optional: Select any of the standard database option(s) including "16S" (for searching against the NCBI Refseq targeted loci 16S rRNA database),
 "ITS" (for searching against the NCBI Refseq targeted loci ITS  database. For combined databases in cases where input sequences are dervied from
-bacteria and fungi, select "16S|ITS". Setting to anything other than NULL causes 'db.path' parameter to be ignored.}
+bacteria and fungi, select "16S|ITS". Setting to anything other than db=NULL or db="custom" causes 'db.path' parameter to be ignored.}
 
 \item{keep_temp_files}{Toggle (TRUE/FALSE). If TRUE, temporary .uc and .b6o output files are kept from VSEARCH --uc and --blast6out commands, respectively. If FALSE, temporary files are removed.}
 
@@ -44,6 +42,8 @@ bacteria and fungi, select "16S|ITS". Setting to anything other than NULL causes
 (2) Edit distance excluding terminal gaps (default definition).
 (3) Marine Biological Lab definition counting each gap opening (internal or terminal) as a single mismatch, whether or not the gap was extended: 1.0- ((mismatches + gap openings)/(longest sequence length)).
 (4) BLAST definition, equivalent to --iddef 1 for global pairwise alignments.}
+
+\item{db.path}{Path of FASTA-formatted database sequence file. Ignored if 'db' parameter is set to anything other than "custom"}
 }
 \value{
 Returns a dataframe matching the UC-formatted output table from VSEARCH. Query sequences are automatically added to the final column.

@@ -10,8 +10,9 @@
 #' If TRUE, performs quick search equivalent to setting VSEARCH parameters "--maxaccepts 100 --maxrejects 100".
 #' If FALSE, performs comprehensive search equivalent to setting VSEARCH parameters "--maxaccepts 0 --maxrejects 0"
 #' @param db (Default="16S") Select database option(s) including "16S" (for searching against the NCBI Refseq targeted loci 16S rRNA database),
-#' "ITS" (for searching against the NCBI Refseq targeted loci ITS  database. For combined databases in cases where input sequences are dervied from
-#' bacteria and fungi, select "16S|ITS".
+#' "ITS" (for searching against the NCBI Refseq targeted loci ITS  database. For combined databases in cases where input sequences are derived from
+#' bacteria and fungi, select "16S|ITS". Setting to anything other than db=NULL or db="custom" causes 'db.path' parameter to be ignored.
+#' @param db_path Path of FASTA-formatted database sequence file. Ignored if 'db' parameter is set to anything other than NULL or "custom".
 #' @param iddef Set pairwise identity definition as per VSEARCH definitions (Default=2, and is recommended for highest taxonomic accuracy)
 #' (0) CD-HIT definition: (matching columns) / (shortest sequence length).
 #' (1) Edit distance: (matching columns) / (alignment length).
@@ -55,6 +56,7 @@ isoTAX <- function(input=NULL,
                    export_csv=TRUE,
                    quick_search=TRUE,
                    db="16S",
+                   db_path=NULL,
                    iddef=2,
                    phylum_cutoff=75.0,
                    class_cutoff=78.5,
@@ -67,72 +69,8 @@ isoTAX <- function(input=NULL,
 
   #Setting file paths-------------------------------------------------
   input <- stringr::str_replace_all(input, '\\\\', '/')
-
-
   path <- paste(unlist(strsplit(input, '/'))[1:(length(unlist(strsplit(input, '/')))-1)], collapse="/")
-
   setwd(path)
-  vsearch.path.dl <- file.path(system.file("", package="isolateR"), "vsearch")
-  suppressWarnings(dir.create(vsearch.path.dl))
-
-    #:::::::::::::::::::::::::::
-    #Download VSEARCH software
-    #:::::::::::::::::::::::::::
-    message(cat(paste0("\n", "\033[97;", 40, "m","Detecting operating system...", "\033[0m")))
-
-    vsearch_files <- stringr::str_subset(dir(vsearch.path.dl, full.names = FALSE), 'vsearch')
-
-    if(paste(isolateR::get_os())=="windows"){
-      if(identical(vsearch_files, character(0))){
-        message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is ---> Windows-based <---", "\033[0m")))
-        download.file("https://github.com/torognes/vsearch/releases/download/v2.23.0/vsearch-2.23.0-win-x86_64.zip", file.path(vsearch.path.dl, 'vsearch-2.23.0-win-x86_64.zip'), mode='wb')
-        unzip(file.path(vsearch.path.dl,"vsearch-2.23.0-win-x86_64.zip"),  exdir=file.path(vsearch.path.dl))
-        file.copy(file.path(vsearch.path.dl, "vsearch-2.23.0-win-x86_64/bin/vsearch.exe"), file.path(vsearch.path.dl, "vsearch-2.23.0.exe"), overwrite=TRUE)
-        unlink(file.path(vsearch.path.dl,"vsearch-2.23.0-win-x86_64"),recursive=TRUE)
-        unlink(file.path(vsearch.path.dl,"vsearch-2.23.0-win-x86_64.zip"),recursive=TRUE)
-        message(cat(paste0("\n", "\033[0;", 32, "m","Download complete. VSEARCH 2.23.0 has been installed.", "\033[0m", "\n")))
-        vsearch.path <- file.path(vsearch.path.dl,"vsearch-2.23.0.exe")
-      } else {
-        message(cat(paste0("\n", "\033[0;", 32, "m","Operating system is ---> Windows-based <---", "\033[0m")))
-        message(cat(paste0("\033[0;", 32, "m","VSEARCH already downloaded", "\033[0m", "\n")))
-        vsearch.path <- file.path(vsearch.path.dl,"vsearch-2.23.0.exe")
-      }
-    }
-
-    if(paste(isolateR::get_os())=="osx-mac"){
-      if(identical(vsearch_files, character(0))){
-        message(cat(paste0("\033[0;", 32, "m","Operating system is ---> MacOS-based <---", "\033[0m")))
-        download.file("https://github.com/torognes/vsearch/releases/download/v2.23.0/vsearch-2.23.0-macos-universal.tar.gz", file.path(vsearch.path.dl, 'vsearch-2.23.0-macos-universal.tar.gz'), mode='wb')
-        untar(file.path(vsearch.path.dl,"vsearch-2.23.0-macos-universal.tar.gz"),  exdir=file.path(vsearch.path.dl))
-        file.copy(file.path(vsearch.path.dl, "vsearch-2.23.0-macos-universal/bin/vsearch"), file.path(vsearch.path.dl, "vsearch-2.23.0_macos"), overwrite=TRUE)
-        unlink(file.path(vsearch.path.dl,"vsearch-2.23.0-macos-universal"),recursive=TRUE)
-        unlink(file.path(vsearch.path.dl,"vsearch-2.23.0-macos-universal.tar.gz"),recursive=TRUE)
-        message(cat(paste0("\033[0;", 32, "m","Download complete. VSEARCH 2.23.0 has been installed.", "\033[0m", "\n")))
-        vsearch.path <- file.path(vsearch.path.dl,"vsearch-2.23.0_macos")
-      } else {
-        message(cat(paste0("\033[0;", 32, "m","Operating system is ---> MacOS-based <---", "\033[0m")))
-        message(cat(paste0("\033[0;", 32, "m","VSEARCH already downloaded.", "\033[0m", "\n")))
-        vsearch.path <- file.path(vsearch.path.dl,"vsearch-2.23.0_macos")
-      }
-    }
-
-    if(paste(isolateR::get_os())=="linux"){
-      if(identical(vsearch_files, character(0))){
-        message(cat(paste0("\033[0;", 32, "m","Operating system is ---> Linux-based <---", "\033[0m")))
-        download.file("https://github.com/torognes/vsearch/releases/download/v2.23.0/vsearch-2.23.0-linux-x86_64.tar.gz", file.path(vsearch.path.dl, 'vsearch-2.23.0-linux-x86_64.tar.gz'), mode='wb')
-        untar(file.path(vsearch.path.dl, "vsearch-2.23.0-linux-x86_64.tar.gz"),  exdir=file.path(vsearch.path.dl))
-        file.copy(file.path(vsearch.path.dl, "vsearch-2.23.0-linux-x86_64/bin/vsearch"), file.path(vsearch.path.dl, "vsearch-2.23.0"), overwrite=TRUE)
-        unlink(file.path(vsearch.path.dl,"vsearch-2.23.0-linux-x86_64"),recursive=TRUE)
-        unlink(file.path(vsearch.path.dl,"vsearch-2.23.0-linux-x86_64.tar.gz"),recursive=TRUE)
-        message(cat(paste0("\033[0;", 32, "m","Download complete. VSEARCH 2.23.0 has been installed.", "\033[0m", "\n")))
-        vsearch.path <- file.path(vsearch.path.dl,"vsearch-2.23.0")
-      } else {
-        message(cat(paste0("\033[0;", 32, "m","Operating system is ---> Linux-based <---", "\033[0m")))
-        message(cat(paste0("\033[0;", 32, "m","VSEARCH already downloaded.", "\033[0m", "\n")))
-        vsearch.path <- file.path(vsearch.path.dl,"vsearch-2.23.0")
-      }
-
-    }
 
     #:::::::::::::::::::::::::::::::::::::::::
     #Filtering input file
@@ -164,6 +102,7 @@ isoTAX <- function(input=NULL,
                             path = path,
                             quick_search = quick_search,
                             db = db,
+                            db_path = db_path,
                             iddef=iddef)
 
 
@@ -178,7 +117,8 @@ isoTAX <- function(input=NULL,
   message(cat(paste0("\033[97;", 40, "m","Merging results...", "\033[0m")))
 
   merged.df <- merge(query.info, uc.results, by.x="filename", by.y="V9", all=TRUE) %>%
-    mutate(NCBI_acc = str_split_fixed(.$V10, " ", 8)[,1]) %>%
+    mutate(V10 = gsub(" ", ";", V10)) %>%
+    mutate(NCBI_acc = stringr::str_split_fixed(.$V10, ";", 8)[,1]) %>%
     dplyr::rename("ID" = "V4", "closest_match" = "V10") %>%
     mutate(NCBI_acc = ifelse(length_trim < 20, "No_match", NCBI_acc)) %>%
     mutate(closest_match = ifelse(length_trim < 20, "No_match", closest_match)) %>%
@@ -187,6 +127,7 @@ isoTAX <- function(input=NULL,
   message(cat(paste0("\033[97;", 40, "m","Done.", "\033[0m")))
 
   #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  if(db!="custom"){
   #------------------------------------------------- library(rentrez)
   message(cat(paste0("\n", "\033[97;", 40, "m","Collecting higher level taxonomic rank information of closest species match", "\033[0m", "\n")))
   message(cat(paste0("\033[97;", 40, "m","\n", "\033[0m")))
@@ -222,20 +163,49 @@ isoTAX <- function(input=NULL,
   }
 
   message(cat(paste0("\n", "\033[97;", 40, "m","Done.", "\033[0m")))
-  message(cat(paste0("\033[97;", 40, "m","Exporting csv file", "\033[0m")))
+  #message(cat(paste0("\033[97;", 40, "m","Exporting csv file", "\033[0m")))
 
   #Add columns of interest to lookup table
-  fetch.list.df <- as.data.frame(fetch.list$acc_1, stringsasfactors=FALSE) %>%
-    rowwise() %>%
-    mutate(NCBI_txid = unlist(strsplit(unlist(strsplit(INSDSeq_feature_table, 'INSDQualifier_name~db_xref||INSDQualifier_value~taxon:', fixed=TRUE))[2], '|', fixed=TRUE))[1]) %>%
-    mutate(isolation_source = unlist(strsplit(unlist(strsplit(INSDSeq_feature_table, 'isolation_source||INSDQualifier_value~', fixed=TRUE))[2], '|', fixed=TRUE))[1]) %>%
-    mutate(strain = unlist(strsplit(unlist(strsplit(INSDSeq_feature_table, 'strain||INSDQualifier_value~', fixed=TRUE))[2], '|', fixed=TRUE))[1]) %>%
-    mutate(culture_collection = gsub(":", " ", unlist(strsplit(unlist(strsplit(INSDSeq_feature_table, 'culture_collection||INSDQualifier_value~', fixed=TRUE))[2], '|', fixed=TRUE))[1])) %>%
-    mutate(culture_collection = ifelse(is.na(culture_collection), strain, culture_collection)) %>%
-    ungroup() %>%
-    mutate(closest_match = paste(str_split_fixed(INSDSeq_organism, " ", 3)[,1], " ", str_split_fixed(INSDSeq_organism, " ", 3)[,2], " (", culture_collection, ")", sep="")) %>%
-    mutate(species = paste(str_split_fixed(INSDSeq_organism, " ", 3)[,1],str_split_fixed(INSDSeq_organism, " ", 3)[,2], sep=" "))
-
+  suppressWarnings(fetch.list.df <- dplyr::bind_rows(fetch.list, .id = "column_label") %>%
+                     rowwise() %>%
+                     mutate(NCBI_txid = unlist(strsplit(unlist(strsplit(INSDSeq_feature_table, 'INSDQualifier_name~db_xref||INSDQualifier_value~taxon:', fixed=TRUE))[2], '|', fixed=TRUE))[1]) %>%
+                     mutate(isolation_source = unlist(strsplit(unlist(strsplit(INSDSeq_feature_table, 'isolation_source||INSDQualifier_value~', fixed=TRUE))[2], '|', fixed=TRUE))[1]) %>%
+                     mutate(strain = unlist(strsplit(unlist(strsplit(INSDSeq_feature_table, 'strain||INSDQualifier_value~', fixed=TRUE))[2], '|', fixed=TRUE))[1]) %>%
+                     mutate(culture_collection = gsub(":", " ", unlist(strsplit(unlist(strsplit(INSDSeq_feature_table, 'culture_collection||INSDQualifier_value~', fixed=TRUE))[2], '|', fixed=TRUE))[1])) %>%
+                     mutate(culture_collection = ifelse(is.na(culture_collection), strain, culture_collection)) %>%
+                     ungroup() %>%
+                     mutate(closest_match = paste(stringr::str_split_fixed(INSDSeq_organism, " ", 3)[,1], " ", stringr::str_split_fixed(INSDSeq_organism, " ", 3)[,2], " (", culture_collection, ")", sep="")) %>%
+                     mutate(species = paste(stringr::str_split_fixed(INSDSeq_organism, " ", 3)[,1],stringr::str_split_fixed(INSDSeq_organism, " ", 3)[,2], sep=" ")) %>%
+                     mutate(taxonomy = gsub(" ", "", .$INSDSeq_taxonomy)) %>%
+                     mutate(taxonomy = gsub(";*[Gg]roup*;", ";", taxonomy, perl=TRUE)) %>% #Remove clade rank
+                     mutate(taxonomy = gsub(";[A-Za-z]+deae;", ";", taxonomy, perl=TRUE)) %>% #Remove subclass rank
+                     mutate(taxonomy = gsub("ales;[A-Za-z]+neae;", "ales;", taxonomy, perl=TRUE)) %>% #Remove suborder ranks
+                     mutate(taxonomy = gsub("aceae;[A-Za-z]+eae;", "aceae;", taxonomy, perl=TRUE)) %>% #Remove tribe ranks
+                     mutate(rank_domain = stringr::str_split_fixed(.$taxonomy, ";", 6)[,1]) %>%
+                     mutate(rank_phylum = stringr::str_split_fixed(.$taxonomy, ";", 6)[,2]) %>%
+                     mutate(rank_class = stringr::str_split_fixed(.$taxonomy, ";", 6)[,3]) %>%
+                     mutate(rank_order = stringr::str_split_fixed(.$taxonomy, ";", 6)[,4]) %>%
+                     mutate(rank_family = stringr::str_split_fixed(.$taxonomy, ";", 6)[,5]) %>%
+                     mutate(rank_genus = stringr::str_split_fixed(.$taxonomy, ";", 6)[,6]) %>%
+                     mutate(rank_species = gsub("'", "", species)) %>% #Replace instances where single quotations are in species name
+                     mutate(genus_tmp = stringr::str_split_fixed(rank_species, " ", 2)[,1]) %>% #Fixing instances where genus is in wrong spot
+                     mutate(genus_tmp = gsub("\\[|\\]", "", genus_tmp)) %>% #Fixing instances where genus is in wrong spot
+                     mutate(rank_phylum = ifelse(genus_tmp == rank_phylum, "", rank_phylum)) %>% #Fixing instances where genus is in wrong spot
+                     mutate(rank_class = ifelse( genus_tmp == rank_class, "", rank_class)) %>% #Fixing instances where genus is in wrong spot
+                     mutate(rank_order = ifelse(genus_tmp == rank_order, "", rank_order)) %>% #Fixing instances where genus is in wrong spot
+                     mutate(rank_family = ifelse(genus_tmp == rank_family, "", rank_family)) %>% #Fixing instances where genus is in wrong spot
+                     mutate(rank_family = ifelse(grepl("aceae$", rank_order), rank_order, rank_family)) %>% #Fixing family upward
+                     mutate(rank_family = ifelse(grepl("aceae$", rank_class), rank_class, rank_family)) %>% #Fixing family upward
+                     mutate(rank_order = ifelse(rank_order==rank_family, "", rank_order)) %>% #Fixing family upward
+                     mutate(rank_class = ifelse(rank_class==rank_family, "", rank_class)) %>% #Fixing family upward
+                     mutate(rank_order = ifelse(grepl("ales$", rank_class), rank_class, rank_order)) %>% #Fixing order upward
+                     mutate(rank_class = ifelse(rank_class==rank_order, "", rank_class)) %>% #Fixing order upward
+                     mutate(rank_genus = stringr::str_split_fixed(species, ";", 2)[,1]) %>% 
+                     mutate(species = gsub(" ", "_", species)) %>% #Replace spaces in species name
+                     mutate_at(vars(rank_class, rank_order, rank_family), funs(ifelse(. == "", "NA", .))) %>% #Replace unknown ranks with "NA"
+                     mutate(species = paste(stringr::str_split_fixed(INSDSeq_organism, " ", 3)[,1],stringr::str_split_fixed(INSDSeq_organism, " ", 3)[,2], sep=" "))
+  )
+  
   #::::::::::::::::::::::::::::::::
   if(db=="cpn60"){fetch.list.df$INSDSeq_accession_version <- stringr::str_split_fixed(fetch.list.df$INSDSeq_accession_version, "[.]", 2)[,1]}
   #::::::::::::::::::::::::::::::::
@@ -243,35 +213,50 @@ isoTAX <- function(input=NULL,
   lookup.list2 <- setNames(fetch.list.df$closest_match, fetch.list.df$INSDSeq_accession_version)
   lookup.list3 <- setNames(fetch.list.df$species, fetch.list.df$INSDSeq_accession_version)
 
-
   merged.df2 <- merged.df %>%
     mutate(closest_match = dplyr::recode(NCBI_acc, !!!lookup.list2)) %>%
     mutate(taxonomy = dplyr::recode(NCBI_acc, !!!lookup.list)) %>%
     mutate(taxonomy = gsub(" ", "", .$taxonomy)) %>%
-    mutate(rank_domain = str_split_fixed(.$taxonomy, ";", 6)[,1]) %>%
-    mutate(rank_phylum = str_split_fixed(.$taxonomy, ";", 6)[,2]) %>%
-    mutate(rank_class = str_split_fixed(.$taxonomy, ";", 6)[,3]) %>%
-    mutate(rank_order = str_split_fixed(.$taxonomy, ";", 6)[,4]) %>%
-    mutate(rank_family = str_split_fixed(.$taxonomy, ";", 6)[,5]) %>%
-    mutate(rank_genus = str_split_fixed(.$taxonomy, ";", 6)[,6]) %>%
+    mutate(rank_domain = stringr::str_split_fixed(.$taxonomy, ";", 6)[,1]) %>%
+    mutate(rank_phylum = stringr::str_split_fixed(.$taxonomy, ";", 6)[,2]) %>%
+    mutate(rank_class = stringr::str_split_fixed(.$taxonomy, ";", 6)[,3]) %>%
+    mutate(rank_order = stringr::str_split_fixed(.$taxonomy, ";", 6)[,4]) %>%
+    mutate(rank_family = stringr::str_split_fixed(.$taxonomy, ";", 6)[,5]) %>%
+    mutate(rank_genus = stringr::str_split_fixed(.$taxonomy, ";", 6)[,6]) %>%
     mutate(rank_species = dplyr::recode(NCBI_acc, !!!lookup.list3)) %>%
     mutate(warning = ifelse(decision =="Fail" | decision =="Pass" & ID <90 & phred_trim <40, "Poor alignment", ""))
+  }
 
-
+  if(db=="custom"){
+    suppressWarnings(merged.df2 <- merged.df %>%
+      mutate(taxonomy = stringr::str_split_fixed(closest_match, ";", 2)[,2]) %>%
+      mutate(closest_match = stringr::str_split_fixed(closest_match, ";", 8)[,8]) %>% mutate(closest_match = gsub("_", " ", closest_match)) %>%
+      mutate(rank_domain = stringr::str_split_fixed(.$taxonomy, ";", 7)[,1]) %>%
+      mutate(rank_phylum = stringr::str_split_fixed(.$taxonomy, ";", 7)[,2]) %>%
+      mutate(rank_class = stringr::str_split_fixed(.$taxonomy, ";", 7)[,3]) %>%
+      mutate(rank_order = stringr::str_split_fixed(.$taxonomy, ";", 7)[,4]) %>%
+      mutate(rank_family = stringr::str_split_fixed(.$taxonomy, ";", 7)[,5]) %>%
+      mutate(rank_genus = stringr::str_split_fixed(.$taxonomy, ";", 7)[,6]) %>%
+      mutate(rank_species = closest_match) %>%
+      mutate_at(vars(rank_domain, rank_phylum, rank_class, rank_order, rank_family, rank_genus, rank_species, closest_match), funs(gsub("^d__|^p__|^c__|^o__|^f__|^g__|^s  ", "", .))) %>%
+      mutate(warning = ifelse(decision =="Fail" | decision =="Pass" & ID <90 & phred_trim <40, "Poor alignment", ""))
+    )
+  }
+  
   message(cat(paste0("\n", "\033[97;", 40, "m","Done.", "\033[0m")))
 
   #::::::::::::::::::::::::
   #Make reactable output
   #::::::::::::::::::::::::
   merged.df3 <- merged.df2 %>% select(warning, date,filename,seqs_raw, phred_raw,Ns_raw, length_raw, phred_spark_raw, seqs_trim, phred_trim,Ns_trim,length_trim, closest_match, NCBI_acc, ID, rank_phylum, rank_class, rank_order, rank_family, rank_genus, rank_species) %>%
-    mutate(rank_genus= paste(str_split_fixed(rank_genus, ";", 3)[,1])) %>%
+    mutate(rank_genus= paste(stringr::str_split_fixed(rank_genus, ";", 3)[,1])) %>%
     mutate(rank_species = ifelse(grepl("No_match",rank_species) | rank_species == "", "No_match", rank_species)) %>%
     mutate(rank_phylum=ifelse(rank_phylum=="","No_match",rank_phylum)) %>%
     mutate(rank_class=ifelse(rank_class=="","No_match",rank_class)) %>%
     mutate(rank_order=ifelse(rank_order=="","No_match",rank_order)) %>%
     mutate(rank_family=ifelse(rank_family=="","No_match",rank_family)) %>%
     mutate(rank_genus=ifelse(rank_genus=="","No_match",rank_genus)) %>%
-    mutate(filename = str_remove(filename,'_[:alpha:][:digit:][:digit:]\\.ab1$'))
+    mutate(filename = stringr::str_remove(filename,'_[:alpha:][:digit:][:digit:]\\.ab1$'))
 
   seq.warnings2 <- c()
   seq.warnings2 <- (merged.df3 %>% filter(!warning ==""))$filename

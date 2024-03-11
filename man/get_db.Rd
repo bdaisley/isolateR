@@ -4,18 +4,20 @@
 \alias{get_db}
 \title{Download taxonomic reference database}
 \usage{
-get_db(db = "16S", force_update = FALSE)
+get_db(db = "16S_bac", force_update = FALSE, add_taxonomy = FALSE)
 }
 \arguments{
 \item{db}{Database selection. One of "16S", "16S_arc", "18S", "ITS", or "cpn60"}
 
-\item{force_update}{Forces new datbases to be downloaded.}
+\item{force_update}{Forces new databases to be downloaded.}
+
+\item{add_taxonomy}{Add full taxonomy to header to enable classification of sequences offline. This is primarily for cases of operation with no internet or when computing within an HPC cluster without administrator access. Results in a semicolon (;) delimited FASTA header as follows: Accession_no;d__Domain;p__Phylum;c__Class;o__Order;f__Family;g__Genus;s__Species}
 }
 \value{
 Returns file path for database of interest
 }
 \description{
-This function donwloads taxonomic reference database and formats them for use.
+This function downloads taxonomic reference database and formats them for use.
 }
 \examples{
 db.path <- get_db(db="16S", force_update=FALSE)
