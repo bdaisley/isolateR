@@ -200,8 +200,9 @@ isoTAX <- function(input=NULL,
                      mutate(rank_class = ifelse(rank_class==rank_family, "", rank_class)) %>% #Fixing family upward
                      mutate(rank_order = ifelse(grepl("ales$", rank_class), rank_class, rank_order)) %>% #Fixing order upward
                      mutate(rank_class = ifelse(rank_class==rank_order, "", rank_class)) %>% #Fixing order upward
-                     mutate(rank_genus = stringr::str_split_fixed(species, ";", 2)[,1]) %>% 
                      mutate(species = gsub(" ", "_", species)) %>% #Replace spaces in species name
+                     mutate(rank_genus = stringr::str_split_fixed(species, "_", 2)[,1]) %>%
+                     mutate(INSDSeq_taxonomy = paste(rank_domain, rank_phylum, rank_class, rank_order, rank_family, rank_genus, rank_species, sep=";")) %>%
                      mutate_at(vars(rank_class, rank_order, rank_family), funs(ifelse(. == "", "NA", .))) %>% #Replace unknown ranks with "NA"
                      mutate(species = paste(stringr::str_split_fixed(INSDSeq_organism, " ", 3)[,1],stringr::str_split_fixed(INSDSeq_organism, " ", 3)[,2], sep=" "))
   )
