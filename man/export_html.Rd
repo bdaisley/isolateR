@@ -11,7 +11,7 @@
 
 \S4method{export_html}{isoTAX}(obj)
 
-\S4method{export_html}{isoLIB}(obj)
+\S4method{export_html}{isoLIB}(obj, method = NULL, group_cutoff = NULL)
 }
 \arguments{
 \item{obj}{An S4 class object generated from one of \code{\link{isoQC}}, \code{\link{isoTAX}}, or \code{\link{isoLIB}} steps}

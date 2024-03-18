@@ -11,13 +11,14 @@ isoTAX(
   quick_search = TRUE,
   db = "16S",
   db_path = NULL,
+  vsearch_path = NULL,
   iddef = 2,
-  phylum_cutoff = 75,
-  class_cutoff = 78.5,
-  order_cutoff = 82,
-  family_cutoff = 86.5,
-  genus_cutoff = 96.5,
-  species_cutoff = 98.7
+  phylum_threshold = 75,
+  class_threshold = 78.5,
+  order_threshold = 82,
+  family_threshold = 86.5,
+  genus_threshold = 96.5,
+  species_threshold = 98.7
 )
 }
 \arguments{
@@ -37,6 +38,8 @@ bacteria and fungi, select "16S|ITS". Setting to anything other than db=NULL or 
 
 \item{db_path}{Path of FASTA-formatted database sequence file. Ignored if 'db' parameter is set to anything other than NULL or "custom".}
 
+\item{vsearch_path}{Path of VSEARCH software if manually downloaded in a custom directory. If NULL (Default), will attempt automatic download.}
+
 \item{iddef}{Set pairwise identity definition as per VSEARCH definitions (Default=2, and is recommended for highest taxonomic accuracy)
 (0) CD-HIT definition: (matching columns) / (shortest sequence length).
 (1) Edit distance: (matching columns) / (alignment length).
@@ -44,17 +47,17 @@ bacteria and fungi, select "16S|ITS". Setting to anything other than db=NULL or 
 (3) Marine Biological Lab definition counting each gap opening (internal or terminal) as a single mismatch, whether or not the gap was extended: 1.0- ((mismatches + gap openings)/(longest sequence length)).
 (4) BLAST definition, equivalent to --iddef 1 for global pairwise alignments.}
 
-\item{phylum_cutoff}{Percent cutoff for phylum rank demarcation}
+\item{phylum_threshold}{Percent sequence similarity threshold for phylum rank demarcation}
 
-\item{class_cutoff}{Percent cutoff for class rank demarcation}
+\item{class_threshold}{Percent sequence similarity threshold for class rank demarcation}
 
-\item{order_cutoff}{Percent cutoff for order rank demarcation}
+\item{order_threshold}{Percent sequence similarity threshold for order rank demarcation}
 
-\item{family_cutoff}{Percent cutoff for family rank demarcation}
+\item{family_threshold}{Percent sequence similarity threshold for family rank demarcation}
 
-\item{genus_cutoff}{Percent cutoff for genus rank demarcation}
+\item{genus_threshold}{Percent sequence similarity threshold for genus rank demarcation}
 
-\item{species_cutoff}{Percent cutoff for species rank demarcation}
+\item{species_threshold}{Percent sequence similarity threshold for species rank demarcation}
 }
 \value{
 Returns taxonomic classification table of class isoTAX. Default taxonomic cutoffs for phylum (75.0), class (78.5), order (82.0), family (86.5), genus (96.5), and species (98.7) demarcation are based on Yarza et al. 2014, Nature Reviews Microbiology (DOI:10.1038/nrmicro3330)

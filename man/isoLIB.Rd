@@ -7,16 +7,19 @@
 isoLIB(
   input = NULL,
   old_lib_csv = NULL,
+  method = "dark_mode",
+  group_cutoff = 0.995,
+  keep_old_reps = TRUE,
   export_html = TRUE,
   export_csv = TRUE,
-  include_warnings = FALSE,
-  strain_group_cutoff = 0.995,
-  phylum_cutoff = 75,
-  class_cutoff = 78.5,
-  order_cutoff = 82,
-  family_cutoff = 86.5,
-  genus_cutoff = 96.5,
-  species_cutoff = 98.7
+  include_warnings = TRUE,
+  vsearch_path = NULL,
+  phylum_threshold = 75,
+  class_threshold = 78.5,
+  order_threshold = 82,
+  family_threshold = 86.5,
+  genus_threshold = 96.5,
+  species_threshold = 98.7
 )
 }
 \arguments{
@@ -24,25 +27,44 @@ isoLIB(
 
 \item{old_lib_csv}{Optional: Path of CSV output isoLIB file or combined isoLIB file from previous run(s)}
 
+\item{method}{Method used for grouping sequences. Either 1) "dark_mode", or 2) "closest_species" (Default="dark_mode").
+\itemize{
+\item Method 1 ("dark_mode") performs agglomerative hierarchical-based clustering to group similar sequences based on pairwise identity (see 'id' parameter)
+and then within each group, attempts to assign the longest sequence with the most top hits as the group representative. This method is tailored for capturing distinct
+strains which may represent novel taxa (i.e. microbial dark matter) during isolation workflows. As such, the sequence representatives chosen in each group will not always
+have the highest \% identity to the closest matching type strain. In some cases, sequence members within a group may also have different taxonomic classifications
+due to them having close to equidistant \% identities to different matching type strain material – indicative of a potentially novel taxonomic grouping.
+\item Method 2 ("closest_species") groups similar sequences based on their closest matching type strain. For each unique grouping, this results in all sequence members having
+the same taxonomic classification. The longest sequence with the highest \% identity to the closest matching type strain will be assigned as the group representative.
+Note: The "id" parameter is only used for Method 1 ("dark_mode") and otherwise ignored if using Method 2 ("closest_species").
+}}
+
+\item{group_cutoff}{(Default=0.995) Similarity threshold based on pairwise identity (0-1) for delineating between sequence groups. 1 = 100\% identical/0.995=0.5\% difference/0.95=5.0\% difference/etc.
+Used only if method="dark_mode", otherwise ignored.}
+
+\item{keep_old_reps}{(Default=TRUE) If TRUE, original sequence representatives from old library will be kept when merging with new library.
+If FALSE, sequence group representatives will be recalculated after combining old and new libraries.
+Ignored if old_lib_csv=NULL.}
+
 \item{export_html}{(Default=TRUE) Output the results as an HTML file}
 
 \item{export_csv}{(Default=TRUE) Output the results as a CSV file.}
 
 \item{include_warnings}{(Default=FALSE) Whether or not to keep sequences with poor alignment warnings from Step 2 'isoTAX' function. Set TRUE to keep warning sequences, and FALSE to remove warning sequences.}
 
-\item{strain_group_cutoff}{(Default=0.995) Similarity cutoff (0-1) for delineating between strain groups. 1 = 100\% identical/0.995=0.5\% difference/0.95=5.0\% difference/etc.}
+\item{vsearch_path}{Path of VSEARCH software if manually downloaded in a custom directory. If NULL (Default), will attempt automatic download.}
 
-\item{phylum_cutoff}{Percent cutoff for phylum rank demarcation}
+\item{phylum_threshold}{Percent sequence similarity threshold for phylum rank demarcation}
 
-\item{class_cutoff}{Percent cutoff for class rank demarcation}
+\item{class_threshold}{Percent sequence similarity threshold for class rank demarcation}
 
-\item{order_cutoff}{Percent cutoff for order rank demarcation}
+\item{order_threshold}{Percent sequence similarity threshold for order rank demarcation}
 
-\item{family_cutoff}{Percent cutoff for family rank demarcation}
+\item{family_threshold}{Percent sequence similarity threshold for family rank demarcation}
 
-\item{genus_cutoff}{Percent cutoff for genus rank demarcation}
+\item{genus_threshold}{Percent sequence similarity threshold for genus rank demarcation}
 
-\item{species_cutoff}{Percent cutoff for species rank demarcation}
+\item{species_threshold}{Percent sequence similarity threshold for species rank demarcation}
 }
 \value{
 Returns an isoLIB class object. Default taxonomic cutoffs for phylum (75.0), class (78.5), order (82.0), family (86.5), genus (96.5), and species (98.7) demarcation are based on Yarza et al. 2014, Nature Reviews Microbiology (DOI:10.1038/nrmicro3330)

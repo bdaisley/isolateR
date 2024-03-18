@@ -9,7 +9,7 @@
 #' @param export_csv Toggle (TRUE/FALSE). Set TRUE to automatically write .CSV file of results to current directory. (Default=TRUE)
 #' @importFrom LPSN open_lpsn
 #' @importFrom stringr str_squish
-#' @return Returns a dataframe containing
+#' @return Returns a CSV saved in working directory
 
 valid_tax_check<- function(input = NULL, col_species = "species", export_csv=TRUE){
   if(is.null(input)) stop('Input file not supplied. Please check the execution script preamble to make sure it is entered correctly', call.=FALSE)

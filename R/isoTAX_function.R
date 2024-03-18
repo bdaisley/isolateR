@@ -13,18 +13,19 @@
 #' "ITS" (for searching against the NCBI Refseq targeted loci ITS  database. For combined databases in cases where input sequences are derived from
 #' bacteria and fungi, select "16S|ITS". Setting to anything other than db=NULL or db="custom" causes 'db.path' parameter to be ignored.
 #' @param db_path Path of FASTA-formatted database sequence file. Ignored if 'db' parameter is set to anything other than NULL or "custom".
+#' @param vsearch_path Path of VSEARCH software if manually downloaded in a custom directory. If NULL (Default), will attempt automatic download.
 #' @param iddef Set pairwise identity definition as per VSEARCH definitions (Default=2, and is recommended for highest taxonomic accuracy)
 #' (0) CD-HIT definition: (matching columns) / (shortest sequence length).
 #' (1) Edit distance: (matching columns) / (alignment length).
 #' (2) Edit distance excluding terminal gaps (default definition).
 #' (3) Marine Biological Lab definition counting each gap opening (internal or terminal) as a single mismatch, whether or not the gap was extended: 1.0- ((mismatches + gap openings)/(longest sequence length)).
 #' (4) BLAST definition, equivalent to --iddef 1 for global pairwise alignments.
-#' @param phylum_cutoff Percent cutoff for phylum rank demarcation
-#' @param class_cutoff Percent cutoff for class rank demarcation
-#' @param order_cutoff Percent cutoff for order rank demarcation
-#' @param family_cutoff Percent cutoff for family rank demarcation
-#' @param genus_cutoff Percent cutoff for genus rank demarcation
-#' @param species_cutoff Percent cutoff for species rank demarcation
+#' @param phylum_threshold Percent sequence similarity threshold for phylum rank demarcation
+#' @param class_threshold Percent sequence similarity threshold for class rank demarcation
+#' @param order_threshold Percent sequence similarity threshold for order rank demarcation
+#' @param family_threshold Percent sequence similarity threshold for family rank demarcation
+#' @param genus_threshold Percent sequence similarity threshold for genus rank demarcation
+#' @param species_threshold Percent sequence similarity threshold for species rank demarcation
 #' @seealso \code{\link{isoQC}}, \code{\link{isoLIB}}, \code{\link{search_db}}
 #' @return Returns taxonomic classification table of class isoTAX. Default taxonomic cutoffs for phylum (75.0), class (78.5), order (82.0), family (86.5), genus (96.5), and species (98.7) demarcation are based on Yarza et al. 2014, Nature Reviews Microbiology (DOI:10.1038/nrmicro3330)
 #' @importFrom stringr str_subset
@@ -54,16 +55,17 @@
 isoTAX <- function(input=NULL,
                    export_html=TRUE,
                    export_csv=TRUE,
-                   quick_search=TRUE,
+                   quick_search=FALSE,
                    db="16S",
                    db_path=NULL,
+                   vsearch_path=NULL,
                    iddef=2,
-                   phylum_cutoff=75.0,
-                   class_cutoff=78.5,
-                   order_cutoff=82.0,
-                   family_cutoff=86.5,
-                   genus_cutoff=96.5,
-                   species_cutoff=98.7
+                   phylum_threshold=75.0,
+                   class_threshold=78.5,
+                   order_threshold=82.0,
+                   family_threshold=86.5,
+                   genus_threshold=96.5,
+                   species_threshold=98.7
                    ){
 
 
@@ -103,6 +105,7 @@ isoTAX <- function(input=NULL,
                             quick_search = quick_search,
                             db = db,
                             db_path = db_path,
+                            vsearch_path= vsearch_path,
                             iddef=iddef)
 
 
@@ -275,12 +278,12 @@ isoTAX <- function(input=NULL,
 
   #Set S4 class for outputs
   isoTAX <- df_to_isoTAX(merged.df3)
-  isoTAX@phylum_cutoff <- phylum_cutoff
-  isoTAX@class_cutoff <- class_cutoff
-  isoTAX@order_cutoff <- order_cutoff
-  isoTAX@family_cutoff <- family_cutoff
-  isoTAX@genus_cutoff <- genus_cutoff
-  isoTAX@species_cutoff <- species_cutoff
+  isoTAX@phylum_threshold <- phylum_threshold
+  isoTAX@class_threshold <- class_threshold
+  isoTAX@order_threshold <- order_threshold
+  isoTAX@family_threshold <- family_threshold
+  isoTAX@genus_threshold <- genus_threshold
+  isoTAX@species_threshold <- species_threshold
 
   #Set dataframe for outputs
   out_df <- S4_to_dataframe(isoTAX)

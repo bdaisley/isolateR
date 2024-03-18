@@ -14,7 +14,7 @@ valid_tax_check(input = NULL, col_species = "species", export_csv = TRUE)
 \item{export_csv}{Toggle (TRUE/FALSE). Set TRUE to automatically write .CSV file of results to current directory. (Default=TRUE)}
 }
 \value{
-Returns a dataframe containing
+Returns a CSV saved in working directory
 }
 \description{
 This function will determine if each species in a CSV file is validly published or not.

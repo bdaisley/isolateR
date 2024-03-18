@@ -19,6 +19,7 @@
 #' @seealso \code{\link{isoTAX}}, \code{\link{isoLIB}}
 #' @return Returns quality trimmed Sanger sequences in FASTA format.
 #' @importFrom stringr str_count
+#' @importFrom seqinr write.fasta
 #' @importFrom sangerseqR read.abif
 #' @importFrom sangeranalyseR SangerRead
 #' @examples
@@ -138,9 +139,9 @@ isoQC <- function(input=NULL,
     abif.pre <- sangerseqR::read.abif(fpath)
     
     if(is.null(sliding_window_cutoff)){
-      sliding_window_cutoff <- max(unlist(abif.pre@data['PCON.1']))*0.5
+      sliding_window_cutoff.x <- max(unlist(abif.pre@data['PCON.1']))*0.66
     } else {
-      sliding_window_cutoff <- sliding_window_cutoff
+      sliding_window_cutoff.x <- sliding_window_cutoff
     }
     
     if(!is.null(date)){
@@ -159,7 +160,7 @@ isoQC <- function(input=NULL,
                                      geneticCode           = GENETIC_CODE,
                                      TrimmingMethod        = "M2",
                                      M1TrimmingCutoff      = NULL,
-                                     M2CutoffQualityScore  = round(sliding_window_cutoff),
+                                     M2CutoffQualityScore  = round(sliding_window_cutoff.x),
                                      M2SlidingWindowSize   = sliding_window_size,
                                      baseNumPerRow         = 100,
                                      heightPerRow          = 200,
@@ -172,7 +173,7 @@ isoQC <- function(input=NULL,
                                      geneticCode           = GENETIC_CODE,
                                      TrimmingMethod        = "M2",
                                      M1TrimmingCutoff      = NULL,
-                                     M2CutoffQualityScore  = round(sliding_window_cutoff),
+                                     M2CutoffQualityScore  = round(sliding_window_cutoff.x),
                                      M2SlidingWindowSize   = 1,
                                      baseNumPerRow         = 100,
                                      heightPerRow          = 200,
@@ -186,7 +187,7 @@ isoQC <- function(input=NULL,
                                    geneticCode           = GENETIC_CODE,
                                    TrimmingMethod        = "M2",
                                    M1TrimmingCutoff      = NULL,
-                                   M2CutoffQualityScore  = round(sliding_window_cutoff),
+                                   M2CutoffQualityScore  = round(sliding_window_cutoff.x),
                                    M2SlidingWindowSize   = sliding_window_size,
                                    baseNumPerRow         = 100,
                                    heightPerRow          = 200,
@@ -199,7 +200,7 @@ isoQC <- function(input=NULL,
                                    geneticCode           = GENETIC_CODE,
                                    TrimmingMethod        = "M2",
                                    M1TrimmingCutoff      = NULL,
-                                   M2CutoffQualityScore  = round(sliding_window_cutoff),
+                                   M2CutoffQualityScore  = round(sliding_window_cutoff.x),
                                    M2SlidingWindowSize   = 1,
                                    baseNumPerRow         = 100,
                                    heightPerRow          = 200,
@@ -412,7 +413,7 @@ isoQC <- function(input=NULL,
     } else {
       trimlist_pass <- as.list((unlist(trimlist))[which(!isoQC.df$filename %in% seq.warnings)])
       abif_files_pass <- abif_files[!abif_files %in% seq.warnings]
-      write.fasta(sequences=trimlist_pass, names=abif_files_pass, as.string=TRUE, nbchar = 1000,
+      seqinr::write.fasta(sequences=trimlist_pass, names=abif_files_pass, as.string=TRUE, nbchar = 1000,
                   file.out=fname_fasta_pass)
       message(cat(paste0("\033[97;", 40, "m","FASTA file with [PASS] sequences exported: ", "\033[0m",
                          "\033[0;", 32, "m", " ", file.path(path, "isolateR_output", unlist(strsplit(fname_fasta_pass, '/'))[length(unlist(strsplit(fname_fasta_pass, '/')))]),"\033[0m")))
@@ -426,7 +427,7 @@ isoQC <- function(input=NULL,
     } else {
       trimlist_fail <- as.list((unlist(trimlist))[which(isoQC.df$filename %in% seq.warnings)])
       abif_files_fail <- abif_files[abif_files %in% seq.warnings]
-      write.fasta(sequences=trimlist_fail, names=abif_files_fail, as.string=TRUE, nbchar = 1000,
+      seqinr::write.fasta(sequences=trimlist_fail, names=abif_files_fail, as.string=TRUE, nbchar = 1000,
                   file.out=fname_fasta_fail)
       message(cat(paste0("\033[97;", 40, "m","FASTA file with [FAIL] sequences exported: ", "\033[0m",
                          "\033[0;", 32, "m", " ", file.path(path, "isolateR_output", unlist(strsplit(fname_fasta_fail, '/'))[length(unlist(strsplit(fname_fasta_fail, '/')))]),"\033[0m", "\n")))
@@ -443,7 +444,7 @@ isoQC <- function(input=NULL,
       trimlist_pass <- as.list(paste(Biostrings::reverseComplement(DNAStringSet((unlist(trimlist))[which(!isoQC.df$filename %in% seq.warnings)]))))
       abif_files_pass <- abif_files[!abif_files %in% seq.warnings]
       suppressWarnings({
-        write.fasta(sequences=trimlist_pass, names=abif_files_pass, as.string=TRUE, nbchar = 1000,
+        seqinr::write.fasta(sequences=trimlist_pass, names=abif_files_pass, as.string=TRUE, nbchar = 1000,
                     file.out=fname_fasta_revcomp_pass)
       })
       message(cat(paste0("\033[97;", 40, "m","FASTA (reverse complement) file with [PASS] sequences exported: ", "\033[0m",
@@ -459,7 +460,7 @@ isoQC <- function(input=NULL,
       trimlist_fail <- as.list(paste(Biostrings::reverseComplement(DNAStringSet((unlist(trimlist))[which(isoQC.df$filename %in% seq.warnings)]))))
       abif_files_fail <- abif_files[abif_files %in% seq.warnings]
       suppressWarnings({
-        write.fasta(sequences=trimlist_fail, names=abif_files_fail, as.string=TRUE, nbchar = 1000,
+        seqinr::write.fasta(sequences=trimlist_fail, names=abif_files_fail, as.string=TRUE, nbchar = 1000,
                     file.out=fname_fasta_revcomp_fail)
       })
       message(cat(paste0("\033[97;", 40, "m","FASTA (reverse complement) file with [FAIL] sequences exported: ", "\033[0m",

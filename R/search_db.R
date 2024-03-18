@@ -11,10 +11,11 @@
 #' If TRUE, performs quick search equivalent to setting VSEARCH parameters "--maxaccepts 100 --maxrejects 100".
 #' If FALSE, performs comprehensive search equivalent to setting VSEARCH parameters "--maxaccepts 0 --maxrejects 0"
 #' Note: This option is provided for convenience and rough approximation of taxonomy only, set to FALSE for accurate % pairwise identity results.
-#' @param db.path Path of FASTA-formatted database sequence file. Ignored if 'db' parameter is set to anything other than "custom"
 #' @param db Optional: Select any of the standard database option(s) including "16S" (for searching against the NCBI Refseq targeted loci 16S rRNA database),
 #' "ITS" (for searching against the NCBI Refseq targeted loci ITS  database. For combined databases in cases where input sequences are dervied from
 #' bacteria and fungi, select "16S|ITS". Setting to anything other than db=NULL or db="custom" causes 'db.path' parameter to be ignored.
+#' @param db.path Path of FASTA-formatted database sequence file. Ignored if 'db' parameter is set to anything other than "custom"
+#' @param vsearch_path Path of VSEARCH software if manually downloaded in a custom directory. If NULL (Default), will attempt automatic download.
 #' @param keep_temp_files Toggle (TRUE/FALSE). If TRUE, temporary .uc and .b6o output files are kept from VSEARCH --uc and --blast6out commands, respectively. If FALSE, temporary files are removed.
 #' @param iddef Set pairwise identity definition as per VSEARCH definitions (Default=2, and is recommended for highest taxonomic accuracy)
 #' (0) CD-HIT definition: (matching columns) / (shortest sequence length).
@@ -65,8 +66,9 @@ search_db <- function(query.path = NULL,
                       b6.out = "VSEARCH_output.b6o",
                       path = getwd(),
                       quick_search = FALSE,
-                      db_path = NULL,
                       db = NULL,
+                      db_path = NULL,
+                      vsearch_path=NULL,
                       keep_temp_files=FALSE,
                       iddef=2){
 
@@ -122,7 +124,11 @@ search_db <- function(query.path = NULL,
   #Download VSEARCH software
   #:::::::::::::::::::::::::::
   
-  vsearch.path <- get_vsearch()
+  if(is.null(vsearch_path)){
+    vsearch.path <- get_vsearch()
+  } else {
+    vsearch.path <- vsearch_path
+  }
   
   #:::::::::::::::::::::
   # Search function

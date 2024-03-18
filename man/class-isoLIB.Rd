@@ -15,7 +15,7 @@ S4 wrapper for \code{\link{isoLIB}} function. Access data via S4 slot functions.
 \describe{
 \item{\code{input}}{Character string containing input directory information.}
 
-\item{\code{strain_group}}{Character string containing list of group representative filenames.}
+\item{\code{sequence_group}}{Character string containing list of group representative filenames.}
 
 \item{\code{date}}{Character string containing run date from each of the input Sanger sequence .ab1 files ("YYYY_MM_DD" format).}
 
@@ -55,17 +55,17 @@ Calculation of ID is determined by isoTAX 'iddef' parameter (0-4, Default=2). Se
 
 \item{\code{rank_species}}{Character string containing Species rank taxonomy}
 
-\item{\code{phylum_cutoff}}{Numeric string containing Phylum-level cutoff threshold}
+\item{\code{phylum_threshold}}{Numeric string containing Phylum-level sequence similarity threshold for rank demarcation}
 
-\item{\code{class_cutoff}}{Numeric string containing Class-level cutoff threshold}
+\item{\code{class_threshold}}{Numeric string containing Class-level sequence similarity threshold for rank demarcation}
 
-\item{\code{order_cutoff}}{Numeric string containing Order-level cutoff threshold}
+\item{\code{order_threshold}}{Numeric string containing Order-level sequence similarity threshold for rank demarcation}
 
-\item{\code{family_cutoff}}{Numeric string containing Family-level cutoff threshold}
+\item{\code{family_threshold}}{Numeric string containing Family-level sequence similarity threshold for rank demarcation}
 
-\item{\code{genus_cutoff}}{Numeric string containing Genus-level cutoff threshold}
+\item{\code{genus_threshold}}{Numeric string containing Genus-level sequence similarity threshold for rank demarcation}
 
-\item{\code{species_cutoff}}{Numeric string containing Species-level cutoff threshold}
+\item{\code{species_threshold}}{Numeric string containing Species-level sequence similarity threshold for rank demarcation}
 }}
 
 \seealso{

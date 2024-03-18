@@ -33,14 +33,27 @@
 #' (2) Edit distance excluding terminal gaps (default definition).
 #' (3) Marine Biological Lab definition counting each gap opening (internal or terminal) as a single mismatch, whether or not the gap was extended: 1.0- ((mismatches + gap openings)/(longest sequence length)).
 #' (4) BLAST definition, equivalent to --iddef 1 for global pairwise alignments.
-#' @param phylum_cutoff Percent cutoff for phylum rank demarcation
-#' @param class_cutoff Percent cutoff for class rank demarcation
-#' @param order_cutoff Percent cutoff for order rank demarcation
-#' @param family_cutoff Percent cutoff for family rank demarcation
-#' @param genus_cutoff Percent cutoff for genus rank demarcation
-#' @param species_cutoff Percent cutoff for species rank demarcation
+#' @param phylum_threshold Percent cutoff for phylum rank demarcation
+#' @param class_threshold Percent cutoff for class rank demarcation
+#' @param order_threshold Percent cutoff for order rank demarcation
+#' @param family_threshold Percent cutoff for family rank demarcation
+#' @param genus_threshold Percent cutoff for genus rank demarcation
+#' @param species_threshold Percent cutoff for species rank demarcation
 #' @param include_warnings (Default=FALSE) Whether or not to keep sequences with poor alignment warnings from Step 2 'isoTAX' function. Set TRUE to keep warning sequences, and FALSE to remove warning sequences.
-#' @param strain_group_cutoff (Default=0.995) Similarity cutoff (0-1) for delineating between strain groups. 1 = 100% identical/0.995=0.5% difference/0.95=5.0% difference/etc.
+#' @param method Method used for grouping sequences. Either 1) "dark_mode", or 2) "closest_species" (Default="dark_mode").
+#' - Method 1 ("dark_mode") performs agglomerative hierarchical-based clustering to group similar sequences based on pairwise identity (see 'id' parameter)
+#' and then within each group, attempts to assign the longest sequence with the most top hits as the group representative. This method is tailored for capturing distinct 
+#' strains which may represent novel taxa (i.e. microbial dark matter) during isolation workflows. As such, the sequence representatives chosen in each group will not always 
+#' have the highest % identity to the closest matching type strain. In some cases, sequence members within a group may also have different taxonomic classifications
+#' due to them having close to equidistant % identities to different matching type strain material – indicative of a potentially novel taxonomic grouping.
+#' - Method 2 ("closest_species") groups similar sequences based on their closest matching type strain. For each unique grouping, this results in all sequence members having
+#' the same taxonomic classification. The longest sequence with the highest % identity to the closest matching type strain will be assigned as the group representative.
+#' Note: The "id" parameter is only used for Method 1 ("dark_mode") and otherwise ignored if using Method 2 ("closest_species").
+#' @param group_cutoff (Default=0.995) Similarity threshold based on pairwise identity (0-1) for delineating between sequence groups. 1 = 100% identical/0.995=0.5% difference/0.95=5.0% difference/etc.
+#' Used only if method="dark_mode", otherwise ignored.
+#' @param keep_old_reps (Default=TRUE) If TRUE, original sequence representatives from old library will be kept when merging with new library. 
+#' If FALSE, sequence group representatives will be recalculated after combining old and new libraries.
+#' Ignored if old_lib_csv=NULL.
 #' @param merge If TRUE, combines isoLIB output files consecutively in the order they are listed. Default=FALSE performs all the steps (isoQC/isoTAX/isoLIB) on each directory separately.
 #' @seealso \code{\link{isoQC}}, \code{\link{isoTAX}}, \code{\link{isoLIB}}
 #' @return Returns a list of \code{\link{class-isoLIB}} class objects.
@@ -59,14 +72,16 @@ isoALL <- function(input=NULL,
                    quick_search=FALSE,
                    db="16S",
                    iddef=2,
-                   phylum_cutoff=75.0,
-                   class_cutoff=78.5,
-                   order_cutoff=82.0,
-                   family_cutoff=86.5,
-                   genus_cutoff=96.5,
-                   species_cutoff=98.7,
+                   phylum_threshold=75.0,
+                   class_threshold=78.5,
+                   order_threshold=82.0,
+                   family_threshold=86.5,
+                   genus_threshold=96.5,
+                   species_threshold=98.7,
                    include_warnings=FALSE,
-                   strain_group_cutoff = 0.995,
+                   method="dark_mode",
+                   group_cutoff = 0.995,
+                   keep_old_reps=TRUE,
                    merge=FALSE){
   
   #Initial input checks
@@ -111,12 +126,12 @@ isoALL <- function(input=NULL,
                           quick_search=quick_search,
                           db=db,
                           iddef=iddef,
-                          phylum_cutoff=phylum_cutoff,
-                          class_cutoff=class_cutoff,
-                          order_cutoff=order_cutoff,
-                          family_cutoff=family_cutoff,
-                          genus_cutoff=genus_cutoff,
-                          species_cutoff=species_cutoff)
+                          phylum_threshold=phylum_threshold,
+                          class_threshold=class_threshold,
+                          order_threshold=order_threshold,
+                          family_threshold=family_threshold,
+                          genus_threshold=genus_threshold,
+                          species_threshold=species_threshold)
       
       #::::::::::::::::::::
       # Step 3) isoLIB
@@ -126,16 +141,18 @@ isoALL <- function(input=NULL,
       
       isoLIB.S4 <- isoLIB(input=paste(input[i], "/isolateR_output/02_isoTAX_results.csv", sep=""),
                           old_lib_csv=old_lib_csv.x,
+                          method=method,
+                          group_cutoff = group_cutoff,
+                          keep_old_reps=keep_old_reps,
                           export_html=export_html,
                           export_csv=TRUE,
                           include_warnings=include_warnings,
-                          strain_group_cutoff = strain_group_cutoff,
-                          phylum_cutoff=phylum_cutoff,
-                          class_cutoff=class_cutoff,
-                          order_cutoff=order_cutoff,
-                          family_cutoff=family_cutoff,
-                          genus_cutoff=genus_cutoff,
-                          species_cutoff=species_cutoff)
+                          phylum_threshold=phylum_threshold,
+                          class_threshold=class_threshold,
+                          order_threshold=order_threshold,
+                          family_threshold=family_threshold,
+                          genus_threshold=genus_threshold,
+                          species_threshold=species_threshold)
       
       isoALL.list <- c(isoALL.list, isoLIB.S4)
     }
@@ -169,12 +186,12 @@ isoALL <- function(input=NULL,
                           quick_search=quick_search,
                           db=db,
                           iddef=iddef,
-                          phylum_cutoff=phylum_cutoff,
-                          class_cutoff=class_cutoff,
-                          order_cutoff=order_cutoff,
-                          family_cutoff=family_cutoff,
-                          genus_cutoff=genus_cutoff,
-                          species_cutoff=species_cutoff)
+                          phylum_threshold=phylum_threshold,
+                          class_threshold=class_threshold,
+                          order_threshold=order_threshold,
+                          family_threshold=family_threshold,
+                          genus_threshold=genus_threshold,
+                          species_threshold=species_threshold)
       
       #::::::::::::::::::::
       # Step 3) isoLIB
@@ -188,14 +205,16 @@ isoALL <- function(input=NULL,
                           old_lib_csv=old_lib_csv.x,
                           export_html=export_html,
                           export_csv=TRUE,
+                          method=method,
+                          group_cutoff = group_cutoff,
+                          keep_old_reps=keep_old_reps,
                           include_warnings=include_warnings,
-                          strain_group_cutoff = strain_group_cutoff,
-                          phylum_cutoff=phylum_cutoff,
-                          class_cutoff=class_cutoff,
-                          order_cutoff=order_cutoff,
-                          family_cutoff=family_cutoff,
-                          genus_cutoff=genus_cutoff,
-                          species_cutoff=species_cutoff)
+                          phylum_threshold=phylum_threshold,
+                          class_threshold=class_threshold,
+                          order_threshold=order_threshold,
+                          family_threshold=family_threshold,
+                          genus_threshold=genus_threshold,
+                          species_threshold=species_threshold)
       
       isoALL.list <- c(isoALL.list, isoLIB.S4)
     }

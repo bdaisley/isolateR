@@ -85,12 +85,12 @@ setClass("isoQC",
 #' @slot rank_family Character string containing Family rank taxonomy
 #' @slot rank_genus Character string containing Genus rank taxonomy
 #' @slot rank_species Character string containing Species rank taxonomy
-#' @slot phylum_cutoff Numeric string containing Phylum-level cutoff threshold
-#' @slot class_cutoff Numeric string containing Class-level cutoff threshold
-#' @slot order_cutoff Numeric string containing Order-level cutoff threshold
-#' @slot family_cutoff Numeric string containing Family-level cutoff threshold
-#' @slot genus_cutoff Numeric string containing Genus-level cutoff threshold
-#' @slot species_cutoff Numeric string containing Species-level cutoff threshold
+#' @slot phylum_threshold Numeric string containing Phylum-level sequence similarity threshold for rank demarcation
+#' @slot class_threshold Numeric string containing Class-level sequence similarity threshold for rank demarcation
+#' @slot order_threshold Numeric string containing Order-level sequence similarity threshold for rank demarcation
+#' @slot family_threshold Numeric string containing Family-level sequence similarity threshold for rank demarcation
+#' @slot genus_threshold Numeric string containing Genus-level sequence similarity threshold for rank demarcation
+#' @slot species_threshold Numeric string containing Species-level sequence similarity threshold for rank demarcation
 #' @return Returns an class-isoTAX object.
 #' @seealso \code{\link{isoTAX}}
 
@@ -122,12 +122,12 @@ setClass("isoTAX",
            rank_family="character",
            rank_genus="character",
            rank_species="character",
-           phylum_cutoff="numeric",
-           class_cutoff="numeric",
-           order_cutoff="numeric",
-           family_cutoff="numeric",
-           genus_cutoff="numeric",
-           species_cutoff="numeric"
+           phylum_threshold="numeric",
+           class_threshold="numeric",
+           order_threshold="numeric",
+           family_threshold="numeric",
+           genus_threshold="numeric",
+           species_threshold="numeric"
          )
 )
 
@@ -143,7 +143,7 @@ setClass("isoTAX",
 #' @description S4 wrapper for \code{\link{isoLIB}} function. Access data via S4 slot functions.
 #' @export
 #' @slot input Character string containing input directory information.
-#' @slot strain_group Character string containing list of group representative filenames.
+#' @slot sequence_group Character string containing list of group representative filenames.
 #' @slot date Character string containing run date from each of the input Sanger sequence .ab1 files ("YYYY_MM_DD" format).
 #' @slot filename Character string containing input filenames.
 #' @slot phred_trim Numeric string containing mean Phred scores after trimming.
@@ -165,19 +165,19 @@ setClass("isoTAX",
 #' @slot rank_family Character string containing Family rank taxonomy
 #' @slot rank_genus Character string containing Genus rank taxonomy
 #' @slot rank_species Character string containing Species rank taxonomy
-#' @slot phylum_cutoff Numeric string containing Phylum-level cutoff threshold
-#' @slot class_cutoff Numeric string containing Class-level cutoff threshold
-#' @slot order_cutoff Numeric string containing Order-level cutoff threshold
-#' @slot family_cutoff Numeric string containing Family-level cutoff threshold
-#' @slot genus_cutoff Numeric string containing Genus-level cutoff threshold
-#' @slot species_cutoff Numeric string containing Species-level cutoff threshold
+#' @slot phylum_threshold Numeric string containing Phylum-level sequence similarity threshold for rank demarcation
+#' @slot class_threshold Numeric string containing Class-level sequence similarity threshold for rank demarcation
+#' @slot order_threshold Numeric string containing Order-level sequence similarity threshold for rank demarcation
+#' @slot family_threshold Numeric string containing Family-level sequence similarity threshold for rank demarcation
+#' @slot genus_threshold Numeric string containing Genus-level sequence similarity threshold for rank demarcation
+#' @slot species_threshold Numeric string containing Species-level sequence similarity threshold for rank demarcation
 #' @return Returns an class-isoLIB object.
 #' @seealso \code{\link{isoLIB}}
 
 setClass("isoLIB",
          representation(
            input="character",
-           strain_group="character",
+           sequence_group="character",
            date="character",
            filename="character",
            seqs_trim="character",
@@ -193,13 +193,13 @@ setClass("isoLIB",
            rank_family="character",
            rank_genus="character",
            rank_species="character",
-           ref_strain="character",
-           phylum_cutoff="numeric",
-           class_cutoff="numeric",
-           order_cutoff="numeric",
-           family_cutoff="numeric",
-           genus_cutoff="numeric",
-           species_cutoff="numeric"
+           representative="character",
+           phylum_threshold="numeric",
+           class_threshold="numeric",
+           order_threshold="numeric",
+           family_threshold="numeric",
+           genus_threshold="numeric",
+           species_threshold="numeric"
          )
 )
 
@@ -240,13 +240,14 @@ setGeneric("isoTAX",  function(input=NULL,
                                quick_search=TRUE,
                                db="16S",
                                db_path=NULL,
+                               vsearch_path=NULL,
                                iddef=2,
-                               phylum_cutoff = 75,
-                               class_cutoff = 78.5,
-                               order_cutoff = 82,
-                               family_cutoff = 86.5,
-                               genus_cutoff = 96.5,
-                               species_cutoff = 98.7) standardGeneric("isoTAX"), signature=c("input"))
+                               phylum_threshold = 75,
+                               class_threshold = 78.5,
+                               order_threshold = 82,
+                               family_threshold = 86.5,
+                               genus_threshold = 96.5,
+                               species_threshold = 98.7) standardGeneric("isoTAX"), signature=c("input"))
 
 
 ###########################################################################################################
@@ -259,16 +260,19 @@ setGeneric("isoTAX",  function(input=NULL,
 #' @aliases isoLIB
 setGeneric("isoLIB",  function(input=NULL,
                                old_lib_csv=NULL,
+                               method="dark_mode",
+                               group_cutoff = 0.995,
+                               keep_old_reps=TRUE,
                                export_html=TRUE,
                                export_csv=TRUE,
-                               include_warnings=FALSE,
-                               strain_group_cutoff = 0.995,
-                               phylum_cutoff=75.0,
-                               class_cutoff=78.5,
-                               order_cutoff=82.0,
-                               family_cutoff=86.5,
-                               genus_cutoff=96.5,
-                               species_cutoff=98.7) standardGeneric("isoLIB"), signature=c("input"))
+                               include_warnings=TRUE,
+                               vsearch_path=NULL,
+                               phylum_threshold=75.0,
+                               class_threshold=78.5,
+                               order_threshold=82.0,
+                               family_threshold=86.5,
+                               genus_threshold=96.5,
+                               species_threshold=98.7) standardGeneric("isoLIB"), signature=c("input"))
 
 
 ###########################################################################################################
@@ -279,7 +283,7 @@ setGeneric("isoLIB",  function(input=NULL,
 
 #' @export
 #' @aliases export_html
-setGeneric("export_html", function(obj) standardGeneric("export_html"))
+setGeneric("export_html", function(obj, method=NULL, group_cutoff=NULL) standardGeneric("export_html"))
 
 
 
@@ -367,25 +371,27 @@ setMethod("isoTAX", signature(input="missing"), function(input= NULL,
                                                          quick_search=TRUE,
                                                          db="16S",
                                                          db_path=NULL,
+                                                         vsearch_path=NULL,
                                                          iddef=2,
-                                                         phylum_cutoff = 75,
-                                                         class_cutoff = 78.5,
-                                                         order_cutoff = 82,
-                                                         family_cutoff = 86.5,
-                                                         genus_cutoff = 96.5,
-                                                         species_cutoff = 98.7) isoTAX(input,
+                                                         phylum_threshold = 75,
+                                                         class_threshold = 78.5,
+                                                         order_threshold = 82,
+                                                         family_threshold = 86.5,
+                                                         genus_threshold = 96.5,
+                                                         species_threshold = 98.7) isoTAX(input,
                                                                                        export_html,
                                                                                        export_csv,
                                                                                        quick_search,
                                                                                        db,
                                                                                        db_path,
+                                                                                       vsearch_path,
                                                                                        iddef,
-                                                                                       phylum_cutoff,
-                                                                                       class_cutoff ,
-                                                                                       order_cutoff,
-                                                                                       family_cutoff,
-                                                                                       genus_cutoff,
-                                                                                       species_cutoff))
+                                                                                       phylum_threshold,
+                                                                                       class_threshold ,
+                                                                                       order_threshold,
+                                                                                       family_threshold,
+                                                                                       genus_threshold,
+                                                                                       species_threshold))
 
 
 ###########################################################################################################
@@ -401,27 +407,33 @@ setMethod("isoTAX", signature(input="missing"), function(input= NULL,
 #' @rdname method-isoLIB
 setMethod("isoLIB", signature(input="missing"), function(input=NULL,
                                                          old_lib_csv=NULL,
+                                                         method="dark_mode",
+                                                         group_cutoff = 0.995,
+                                                         keep_old_reps=TRUE,
                                                          export_html=TRUE,
                                                          export_csv=TRUE,
-                                                         include_warnings=FALSE,
-                                                         strain_group_cutoff = 0.995,
-                                                         phylum_cutoff=75.0,
-                                                         class_cutoff=78.5,
-                                                         order_cutoff=82.0,
-                                                         family_cutoff=86.5,
-                                                         genus_cutoff=96.5,
-                                                         species_cutoff=98.7) isoLIB(input,
+                                                         include_warnings=TRUE,
+                                                         vsearch_path=NULL,
+                                                         phylum_threshold=75.0,
+                                                         class_threshold=78.5,
+                                                         order_threshold=82.0,
+                                                         family_threshold=86.5,
+                                                         genus_threshold=96.5,
+                                                         species_threshold=98.7) isoLIB(input,
                                                                                      old_lib_csv,
+                                                                                     method,
+                                                                                     group_cutoff,
+                                                                                     keep_old_reps,
                                                                                      export_html,
                                                                                      export_csv,
                                                                                      include_warnings,
-                                                                                     strain_group_cutoff,
-                                                                                     phylum_cutoff,
-                                                                                     class_cutoff,
-                                                                                     order_cutoff,
-                                                                                     family_cutoff,
-                                                                                     genus_cutoff,
-                                                                                     species_cutoff))
+                                                                                     vsearch_path,
+                                                                                     phylum_threshold,
+                                                                                     class_threshold,
+                                                                                     order_threshold,
+                                                                                     family_threshold,
+                                                                                     genus_threshold,
+                                                                                     species_threshold))
 
 
 ###########################################################################################################
@@ -460,12 +472,12 @@ setMethod("show", "isoTAX",
             cat(paste("isolateR library file overview:"), "\n")
             cat(paste("========================================================="), "\n")
             cat(paste("Total sequences                             = \t   ", length(object@date), sep=""), "\n")
-            cat(paste("Number of sequences under Phylum threshod   = \t   ", length(isoTAX.S4@ID[isoTAX.S4@ID < isoTAX.S4@phylum_cutoff[1]]), sep=""), "\n")
-            cat(paste("Number of sequences under Class threshod    = \t   ", length(isoTAX.S4@ID[isoTAX.S4@ID < isoTAX.S4@class_cutoff[1]]), sep=""), "\n")
-            cat(paste("Number of sequences under Order threshod    = \t   ", length(isoTAX.S4@ID[isoTAX.S4@ID < isoTAX.S4@order_cutoff[1]]), sep=""), "\n")
-            cat(paste("Number of sequences under Family threshod   = \t   ", length(isoTAX.S4@ID[isoTAX.S4@ID < isoTAX.S4@family_cutoff[1]]), sep=""), "\n")
-            cat(paste("Number of sequences under Genus threshod    = \t   ", length(isoTAX.S4@ID[isoTAX.S4@ID < isoTAX.S4@genus_cutoff[1]]), sep=""), "\n")
-            cat(paste("Number of sequences under Species threshod  = \t   ", length(isoTAX.S4@ID[isoTAX.S4@ID < isoTAX.S4@species_cutoff[1]]), sep=""), "\n")
+            cat(paste("Number of sequences under Phylum threshod   = \t   ", length(isoTAX.S4@ID[isoTAX.S4@ID < isoTAX.S4@phylum_threshold[1]]), sep=""), "\n")
+            cat(paste("Number of sequences under Class threshod    = \t   ", length(isoTAX.S4@ID[isoTAX.S4@ID < isoTAX.S4@class_threshold[1]]), sep=""), "\n")
+            cat(paste("Number of sequences under Order threshod    = \t   ", length(isoTAX.S4@ID[isoTAX.S4@ID < isoTAX.S4@order_threshold[1]]), sep=""), "\n")
+            cat(paste("Number of sequences under Family threshod   = \t   ", length(isoTAX.S4@ID[isoTAX.S4@ID < isoTAX.S4@family_threshold[1]]), sep=""), "\n")
+            cat(paste("Number of sequences under Genus threshod    = \t   ", length(isoTAX.S4@ID[isoTAX.S4@ID < isoTAX.S4@genus_threshold[1]]), sep=""), "\n")
+            cat(paste("Number of sequences under Species threshod  = \t   ", length(isoTAX.S4@ID[isoTAX.S4@ID < isoTAX.S4@species_threshold[1]]), sep=""), "\n")
           }
 )
 #-------------------------------
@@ -557,9 +569,9 @@ df_to_isoTAX <- function(df) {
   isotax.S4@rank_family <- df$rank_family
   isotax.S4@rank_genus <- df$rank_genus
   isotax.S4@rank_species <- df$rank_species
-
+  
   return(isotax.S4)
-
+  
 }
 
 #-------------------------------
@@ -573,10 +585,10 @@ df_to_isoTAX <- function(df) {
 
 
 df_to_isoLIB <- function(df) {
-
+  
   isolib.S4 <- new("isoLIB", input=getwd())
   # Make phred scores into lists for sparkline formatting (V1=raw, V2=trim)
-  isolib.S4@strain_group <- df$strain_group
+  isolib.S4@sequence_group <- df$sequence_group
   isolib.S4@filename <- df$filename
   isolib.S4@date <- df$date
   isolib.S4@seqs_trim <- df$seqs_trim
@@ -592,13 +604,13 @@ df_to_isoLIB <- function(df) {
   isolib.S4@rank_family <- df$rank_family
   isolib.S4@rank_genus <- df$rank_genus
   isolib.S4@rank_species <- df$rank_species
-  isolib.S4@ref_strain <- df$ref_strain
-  isolib.S4@phylum_cutoff <- df$phylum_cutoff
-  isolib.S4@class_cutoff <- df$class_cutoff
-  isolib.S4@order_cutoff <- df$order_cutoff
-  isolib.S4@family_cutoff <- df$family_cutoff
-  isolib.S4@genus_cutoff <- df$genus_cutoff
-  isolib.S4@species_cutoff <- df$species_cutoff
+  isolib.S4@representative <- df$representative
+  isolib.S4@phylum_threshold <- df$phylum_threshold
+  isolib.S4@class_threshold <- df$class_threshold
+  isolib.S4@order_threshold <- df$order_threshold
+  isolib.S4@family_threshold <- df$family_threshold
+  isolib.S4@genus_threshold <- df$genus_threshold
+  isolib.S4@species_threshold <- df$species_threshold
   return(isolib.S4)
 }
 
@@ -644,159 +656,159 @@ setMethod("export_html", "isoQC",
               mutate(phred_spark_raw = strsplit(phred_spark_raw, '_')) %>%
               mutate(phred_spark_raw = lapply(.$phred_spark_raw, function(x) list(as.numeric(x)))) %>%
               select(date,
-               filename,
-               seqs_raw,
-               phred_raw,
-               Ns_raw,
-               length_raw,
-               phred_spark_raw,
-               seqs_trim,
-               phred_trim,
-               Ns_trim,
-               length_trim,
-               decision)
-
+                     filename,
+                     seqs_raw,
+                     phred_raw,
+                     Ns_raw,
+                     length_raw,
+                     phred_spark_raw,
+                     seqs_trim,
+                     phred_trim,
+                     Ns_trim,
+                     length_trim,
+                     decision)
+            
             #Set universal font size
             uni.font <- 11
-
+            
             suppressWarnings(
               html_output <- crosstalk::bscols(
                 reactable::reactable(isoQC.df,
-                          fullWidth=FALSE,
-                          searchable = TRUE,
-                          bordered = TRUE,
-                          resizable =TRUE,
-                          defaultPageSize=20,
-                          pageSizeOptions = c(10, 25, 50, 100, 1000),
-                          showPageSizeOptions = TRUE,
-                          highlight = TRUE,
-                          showSortable = TRUE,
-                          compact=TRUE,
-                          wrap = TRUE,
-                          theme = reactableTheme(
-                            headerStyle = list(
-                              fontFamily = "sans-serif", fontWeight="bold", fontSize=uni.font,
-                              "&:hover[aria-sort]" = list(background = "hsl(0, 0%, 96%)"),
-                              "&[aria-sort='ascending'], &[aria-sort='descending']" = list(background = "hsl(0, 0%, 96%)")),
-                            style = list(
-                              fontFamily = "sans-serif", fontWeight="normal",
-                              "&:hover[aria-sort]" = list(background = "hsl(0, 0%, 96%)"),
-                              "&[aria-sort='ascending'], &[aria-sort='descending']" = list(background = "hsl(0, 0%, 96%)"))),
-                          style = list(minWidth = 1400),
-                          #--------------------Universal settings
-                          defaultColDef = colDef(minWidth= 75,
-                                                 align="center",
-                                                 style = list(whiteSpace = "nowrap",
-                                                              fontSize=uni.font,
-                                                              align="center",
-                                                              fontFamily = "sans-serif")),
-                          #--------------------
-                          columns = list(
-                            #--------------------
-                            # Spark lines
-                            #-------------------
-                            phred_spark_raw = colDef(name = "Quality sparkline", width = 200, cell = function(value, index) {
-                              dataui::dui_sparkline(data = value[[1]],
-                                                    height = 25,
-                                                    min = min(unlist(isoQC.df$phred_spark_raw)),
-                                                    max = max(unlist(isoQC.df$phred_spark_raw)),
-                                                    margin = list( top= 2,
-                                                                   right= 5,
-                                                                   bottom= 2,
-                                                                   left= 5 ),
-                                                    components = list(
-                                                      dataui::dui_sparkbandline(band = list( from = list( x = obj@trim.start.pos[[index]] ),
-                                                                                             to = list( x = obj@trim.end.pos[[index]] ) ),
-                                                                                fill = "green",
-                                                                                fillOpacity=0.2 ), #, fillOpacity=0.3 #use if fill not banding "url(#band_pattern_misc)"
-                                                      dataui::dui_sparklineseries(strokeWidth = 0.5,
-                                                                                  stroke = "black")
-                                                    )
-                              )
-                            }
-                            ),
-                            date = colDef(name = "Date", width=75, style=list(whiteSpace = "nowrap", fontSize=uni.font, align="center", fontFamily = "sans-serif")),
-                            seqs_raw = colDef(name = "rawSeq",
-                                              style=list(whiteSpace = "nowrap", fontSize=uni.font, align="center", fontFamily = "sans-serif")),
-                            seqs_trim = colDef(name = "trimSeq",
-                                               style=list(whiteSpace = "nowrap", fontSize=uni.font, align="center", fontFamily = "sans-serif")),
-                            filename = colDef(minWidth= 125,
-                                              name ="Filename",
-                                              style = list(whiteSpace = "nowrap", fontSize=uni.font, align="center", fontFamily = "sans-serif")),
-                            decision = colDef(name="Decision", vAlign = "center",  minWidth=170,
-                                              style = function(value, index, decision){
-                                                if(isoQC.df$decision[[index]] == "Pass") {
-                                                  color.background <- grDevices::adjustcolor("#CCE6CC", alpha.f=1)
-                                                  color.text <- "black"
-                                                } else if(!isoQC.df$decision[[index]] == "Pass") {
-                                                  color.background <- grDevices::adjustcolor("#B20A2C", alpha.f=0.7)
-                                                  color.text <- "white" }
-                                                list(background = color.background, color = color.text,
-                                                     whiteSpace = "nowrap",
-                                                     fontSize=uni.font+6,
-                                                     align="center",
-                                                     fontFamily = "sans-serif")}),
-                            decision_col = colDef(show=FALSE),
-                            phred_raw = colDef(name = "rawQ",
-                                               minWidth= 75,
-                                               cell = gauge_chart(isoQC.df,
-                                                                  fill_color = c('#e5f5e0', '#a1d99b', '#31a354'),
-                                                                  opacity = 0.5,
-                                                                  number_fmt = scales::comma,
-                                                                  text_size = 12,
-                                                                  max_value = max(c(isoQC.df$phred_raw,isoQC.df$phred_trim)),
-                                                                  show_min_max = FALSE)),
-                            phred_trim = colDef(name = "trimQ",
-                                                minWidth= 75,
-                                                cell = gauge_chart(isoQC.df,
-                                                                   fill_color = c('#e5f5e0', '#a1d99b', '#31a354'),
-                                                                   opacity = 0.5,
-                                                                   number_fmt = scales::comma,
-                                                                   #bold_text = TRUE,
-                                                                   text_size = 12,
-                                                                   max_value = max(c(isoQC.df$phred_raw,isoQC.df$phred_trim)),
-                                                                   show_min_max = FALSE)),
-                            Ns_raw = colDef(name = "rawNs",
-                                            minWidth= 75,
-                                            cell = gauge_chart(isoQC.df,
-                                                               fill_color = c("white", "#B20A2C"),
-                                                               opacity = 0.5,
-                                                               number_fmt = scales::comma,
-                                                               text_size = 12,
-                                                               max_value = max(c(isoQC.df$Ns_raw,isoQC.df$Ns_trim)),
-                                                               show_min_max = FALSE)),
-                            Ns_trim = colDef(name = "trimNs",
-                                             minWidth= 75,
-                                             cell = gauge_chart(isoQC.df,
-                                                                fill_color = c("white", "#B20A2C"),
-                                                                opacity = 0.5,
-                                                                number_fmt = scales::comma,
-                                                                text_size = 12,
-                                                                max_value = max(c(isoQC.df$Ns_raw,isoQC.df$Ns_trim)),
-                                                                show_min_max = FALSE)),
-                            # Barplot widgets
-                            #-------------------
-                            length_raw = colDef(name = "rawLength",
-                                                minWidth=150,
-                                                cell = data_bars(isoQC.df,
-                                                                 text_position = "inside-base",
-                                                                 text_size = 12,
-                                                                 fill_color = c('#FFF2D9','#FFE1A6','#FFCB66','#FFB627'),
-                                                                 fill_gradient = TRUE,
-                                                                 background = 'transparent',
-                                                                 number_fmt = scales::comma_format(accuracy = 0.1),
-                                                                 round_edges = FALSE, align_bars="left")),
-                            length_trim = colDef(name = "trimLength",
-                                                 minWidth=150,
-                                                 cell = data_bars(isoQC.df,
-                                                                  text_position = "inside-base", #inside-end / outside-base / above
-                                                                  text_size = 12,
-                                                                  #fill_color="#6f86ab",
-                                                                  fill_color = c('#FFF2D9','#FFE1A6','#FFCB66','#FFB627'),
-                                                                  fill_gradient = TRUE,
-                                                                  background = 'transparent',
-                                                                  number_fmt = scales::comma_format(accuracy = 0.1),
-                                                                  round_edges = FALSE, align_bars="left")) )) %>% reactablefmtr::google_font(font_family = "Source Sans Pro") %>%
+                                     fullWidth=FALSE,
+                                     searchable = TRUE,
+                                     bordered = TRUE,
+                                     resizable =TRUE,
+                                     defaultPageSize=20,
+                                     pageSizeOptions = c(10, 25, 50, 100, 1000),
+                                     showPageSizeOptions = TRUE,
+                                     highlight = TRUE,
+                                     showSortable = TRUE,
+                                     compact=TRUE,
+                                     wrap = TRUE,
+                                     theme = reactableTheme(
+                                       headerStyle = list(
+                                         fontFamily = "sans-serif", fontWeight="bold", fontSize=uni.font,
+                                         "&:hover[aria-sort]" = list(background = "hsl(0, 0%, 96%)"),
+                                         "&[aria-sort='ascending'], &[aria-sort='descending']" = list(background = "hsl(0, 0%, 96%)")),
+                                       style = list(
+                                         fontFamily = "sans-serif", fontWeight="normal",
+                                         "&:hover[aria-sort]" = list(background = "hsl(0, 0%, 96%)"),
+                                         "&[aria-sort='ascending'], &[aria-sort='descending']" = list(background = "hsl(0, 0%, 96%)"))),
+                                     style = list(minWidth = 1400),
+                                     #--------------------Universal settings
+                                     defaultColDef = colDef(minWidth= 75,
+                                                            align="center",
+                                                            style = list(whiteSpace = "nowrap",
+                                                                         fontSize=uni.font,
+                                                                         align="center",
+                                                                         fontFamily = "sans-serif")),
+                                     #--------------------
+                                     columns = list(
+                                       #--------------------
+                                       # Spark lines
+                                       #-------------------
+                                       phred_spark_raw = colDef(name = "Quality sparkline", width = 200, cell = function(value, index) {
+                                         dataui::dui_sparkline(data = value[[1]],
+                                                               height = 25,
+                                                               min = min(unlist(isoQC.df$phred_spark_raw)),
+                                                               max = max(unlist(isoQC.df$phred_spark_raw)),
+                                                               margin = list( top= 2,
+                                                                              right= 5,
+                                                                              bottom= 2,
+                                                                              left= 5 ),
+                                                               components = list(
+                                                                 dataui::dui_sparkbandline(band = list( from = list( x = obj@trim.start.pos[[index]] ),
+                                                                                                        to = list( x = obj@trim.end.pos[[index]] ) ),
+                                                                                           fill = "green",
+                                                                                           fillOpacity=0.2 ), #, fillOpacity=0.3 #use if fill not banding "url(#band_pattern_misc)"
+                                                                 dataui::dui_sparklineseries(strokeWidth = 0.5,
+                                                                                             stroke = "black")
+                                                               )
+                                         )
+                                       }
+                                       ),
+                                       date = colDef(name = "Date", width=75, style=list(whiteSpace = "nowrap", fontSize=uni.font, align="center", fontFamily = "sans-serif")),
+                                       seqs_raw = colDef(name = "rawSeq",
+                                                         style=list(whiteSpace = "nowrap", fontSize=uni.font, align="center", fontFamily = "sans-serif")),
+                                       seqs_trim = colDef(name = "trimSeq",
+                                                          style=list(whiteSpace = "nowrap", fontSize=uni.font, align="center", fontFamily = "sans-serif")),
+                                       filename = colDef(minWidth= 125,
+                                                         name ="Filename",
+                                                         style = list(whiteSpace = "nowrap", fontSize=uni.font, align="center", fontFamily = "sans-serif")),
+                                       decision = colDef(name="Decision", vAlign = "center",  minWidth=170,
+                                                         style = function(value, index, decision){
+                                                           if(isoQC.df$decision[[index]] == "Pass") {
+                                                             color.background <- grDevices::adjustcolor("#CCE6CC", alpha.f=1)
+                                                             color.text <- "black"
+                                                           } else if(!isoQC.df$decision[[index]] == "Pass") {
+                                                             color.background <- grDevices::adjustcolor("#B20A2C", alpha.f=0.7)
+                                                             color.text <- "white" }
+                                                           list(background = color.background, color = color.text,
+                                                                whiteSpace = "nowrap",
+                                                                fontSize=uni.font+6,
+                                                                align="center",
+                                                                fontFamily = "sans-serif")}),
+                                       decision_col = colDef(show=FALSE),
+                                       phred_raw = colDef(name = "rawQ",
+                                                          minWidth= 75,
+                                                          cell = gauge_chart(isoQC.df,
+                                                                             fill_color = c('#e5f5e0', '#a1d99b', '#31a354'),
+                                                                             opacity = 0.5,
+                                                                             number_fmt = scales::comma,
+                                                                             text_size = 12,
+                                                                             max_value = max(c(isoQC.df$phred_raw,isoQC.df$phred_trim)),
+                                                                             show_min_max = FALSE)),
+                                       phred_trim = colDef(name = "trimQ",
+                                                           minWidth= 75,
+                                                           cell = gauge_chart(isoQC.df,
+                                                                              fill_color = c('#e5f5e0', '#a1d99b', '#31a354'),
+                                                                              opacity = 0.5,
+                                                                              number_fmt = scales::comma,
+                                                                              #bold_text = TRUE,
+                                                                              text_size = 12,
+                                                                              max_value = max(c(isoQC.df$phred_raw,isoQC.df$phred_trim)),
+                                                                              show_min_max = FALSE)),
+                                       Ns_raw = colDef(name = "rawNs",
+                                                       minWidth= 75,
+                                                       cell = gauge_chart(isoQC.df,
+                                                                          fill_color = c("white", "#B20A2C"),
+                                                                          opacity = 0.5,
+                                                                          number_fmt = scales::comma,
+                                                                          text_size = 12,
+                                                                          max_value = max(c(isoQC.df$Ns_raw,isoQC.df$Ns_trim)),
+                                                                          show_min_max = FALSE)),
+                                       Ns_trim = colDef(name = "trimNs",
+                                                        minWidth= 75,
+                                                        cell = gauge_chart(isoQC.df,
+                                                                           fill_color = c("white", "#B20A2C"),
+                                                                           opacity = 0.5,
+                                                                           number_fmt = scales::comma,
+                                                                           text_size = 12,
+                                                                           max_value = max(c(isoQC.df$Ns_raw,isoQC.df$Ns_trim)),
+                                                                           show_min_max = FALSE)),
+                                       # Barplot widgets
+                                       #-------------------
+                                       length_raw = colDef(name = "rawLength",
+                                                           minWidth=150,
+                                                           cell = data_bars(isoQC.df,
+                                                                            text_position = "inside-base",
+                                                                            text_size = 12,
+                                                                            fill_color = c('#FFF2D9','#FFE1A6','#FFCB66','#FFB627'),
+                                                                            fill_gradient = TRUE,
+                                                                            background = 'transparent',
+                                                                            number_fmt = scales::comma_format(accuracy = 0.1),
+                                                                            round_edges = FALSE, align_bars="left")),
+                                       length_trim = colDef(name = "trimLength",
+                                                            minWidth=150,
+                                                            cell = data_bars(isoQC.df,
+                                                                             text_position = "inside-base", #inside-end / outside-base / above
+                                                                             text_size = 12,
+                                                                             #fill_color="#6f86ab",
+                                                                             fill_color = c('#FFF2D9','#FFE1A6','#FFCB66','#FFB627'),
+                                                                             fill_gradient = TRUE,
+                                                                             background = 'transparent',
+                                                                             number_fmt = scales::comma_format(accuracy = 0.1),
+                                                                             round_edges = FALSE, align_bars="left")) )) %>% reactablefmtr::google_font(font_family = "Source Sans Pro") %>%
                   reactablefmtr::add_subtitle("isoQC output table", font_size = 24, font_style="normal", font_weight="bold", margin=c(20,0,0,0)) %>%
                   reactablefmtr::add_subtitle(paste("Total sequences:       ", nrow(isoQC.df), sep=""), font_size = 14, font_style="normal", font_weight="normal") %>%
                   reactablefmtr::add_subtitle(paste("Mean Phred quality before/after trimming:     ", round(mean(isoQC.df$phred_raw)), "\t|  ", round(mean(isoQC.df$phred_trim)), sep=""), font_size = 14, font_style="normal", font_weight="normal") %>%
@@ -804,7 +816,7 @@ setMethod("export_html", "isoQC",
                   reactablefmtr::add_subtitle(paste("Mean sequence length before/after trimming:   ", round(mean(isoQC.df$length_raw)), "\t|  ", round(mean(isoQC.df$length_trim)), sep=""), font_size = 14, font_style="normal", font_weight="normal", margin=c(0,0,0,0))
               )
             )
-
+            
             path <- obj@input
             output <- "isolateR_output/01_isoQC_results.html"
             fname_html <- file.path(path, output)
@@ -845,22 +857,22 @@ setMethod("export_html", "isoTAX",
             merged_input <- S4_to_dataframe(obj) %>%
               mutate(phred_spark_raw = strsplit(phred_spark_raw, '_')) %>%
               mutate(phred_spark_raw = lapply(.$phred_spark_raw, function(x) list(as.numeric(x)))) %>%
-              select(-input, -phylum_cutoff, -class_cutoff, -order_cutoff, -family_cutoff, -genus_cutoff, -species_cutoff)
+              select(-input, -phylum_threshold, -class_threshold, -order_threshold, -family_threshold, -genus_threshold, -species_threshold)
             path <- getwd()
             output="02_isoTAX_results.html"
-
+            
             #Set taxonomic rank cutoffs
-            phylum_cutoff <- obj@phylum_cutoff
-            class_cutoff <- obj@class_cutoff
-            order_cutoff <- obj@order_cutoff
-            family_cutoff <- obj@family_cutoff
-            genus_cutoff <- obj@genus_cutoff
-            species_cutoff <- obj@species_cutoff
-
-
+            phylum_threshold <- obj@phylum_threshold
+            class_threshold <- obj@class_threshold
+            order_threshold <- obj@order_threshold
+            family_threshold <- obj@family_threshold
+            genus_threshold <- obj@genus_threshold
+            species_threshold <- obj@species_threshold
+            
+            
             #Import S4 object
             uni.font <- 11
-
+            
             html_output <- crosstalk::bscols(widths = 12,
                                              reactable(merged_input,
                                                        fullWidth=FALSE,
@@ -956,10 +968,10 @@ setMethod("export_html", "isoTAX",
                                                                                headerVAlign = "top",
                                                                                minWidth=135,
                                                                                style = function(value, index, rank_species){
-                                                                                 if(merged_input$ID[[index]] > species_cutoff) {
+                                                                                 if(merged_input$ID[[index]] > species_threshold) {
                                                                                    color.background <- grDevices::adjustcolor("#CCE6CC", alpha.f=1)
                                                                                    color.text <- "black"
-                                                                                 } else if(merged_input$ID[[index]] <= species_cutoff){
+                                                                                 } else if(merged_input$ID[[index]] <= species_threshold){
                                                                                    color.background <- NA
                                                                                    color.text <- "black"
                                                                                  }
@@ -974,10 +986,10 @@ setMethod("export_html", "isoTAX",
                                                                              headerVAlign = "top",
                                                                              minWidth=75,
                                                                              style = function(value, index, rank_genus){
-                                                                               if(merged_input$ID[[index]] > genus_cutoff) {
+                                                                               if(merged_input$ID[[index]] > genus_threshold) {
                                                                                  color.background <- grDevices::adjustcolor("#CCE6CC", alpha.f=1)
                                                                                  color.text <- "black"
-                                                                               } else if(merged_input$ID[[index]] <= genus_cutoff){
+                                                                               } else if(merged_input$ID[[index]] <= genus_threshold){
                                                                                  color.background <- NA
                                                                                  color.text <- "black"
                                                                                }
@@ -992,10 +1004,10 @@ setMethod("export_html", "isoTAX",
                                                                               headerVAlign = "top",
                                                                               minWidth=75,
                                                                               style = function(value, index, rank_family){
-                                                                                if(merged_input$ID[[index]] > family_cutoff) {
+                                                                                if(merged_input$ID[[index]] > family_threshold) {
                                                                                   color.background <- grDevices::adjustcolor("#CCE6CC", alpha.f=1)
                                                                                   color.text <- "black"
-                                                                                } else if(merged_input$ID[[index]] <= family_cutoff){
+                                                                                } else if(merged_input$ID[[index]] <= family_threshold){
                                                                                   color.background <- NA
                                                                                   color.text <- "black"
                                                                                 }
@@ -1010,10 +1022,10 @@ setMethod("export_html", "isoTAX",
                                                                              headerVAlign = "top",
                                                                              minWidth=75,
                                                                              style = function(value, index, rank_order){
-                                                                               if(merged_input$ID[[index]] > order_cutoff) {
+                                                                               if(merged_input$ID[[index]] > order_threshold) {
                                                                                  color.background <- grDevices::adjustcolor("#CCE6CC", alpha.f=1)
                                                                                  color.text <- "black"
-                                                                               } else if(merged_input$ID[[index]] <= order_cutoff){
+                                                                               } else if(merged_input$ID[[index]] <= order_threshold){
                                                                                  color.background <- NA
                                                                                  color.text <- "black"
                                                                                }
@@ -1028,10 +1040,10 @@ setMethod("export_html", "isoTAX",
                                                                              headerVAlign = "top",
                                                                              minWidth=75,
                                                                              style = function(value, index, rank_class){
-                                                                               if(merged_input$ID[[index]] > class_cutoff) {
+                                                                               if(merged_input$ID[[index]] > class_threshold) {
                                                                                  color.background <- grDevices::adjustcolor("#CCE6CC", alpha.f=1)
                                                                                  color.text <- "black"
-                                                                               } else if(merged_input$ID[[index]] <= class_cutoff){
+                                                                               } else if(merged_input$ID[[index]] <= class_threshold){
                                                                                  color.background <- NA
                                                                                  color.text <- "black"
                                                                                }
@@ -1046,10 +1058,10 @@ setMethod("export_html", "isoTAX",
                                                                               headerVAlign = "top",
                                                                               minWidth=75,
                                                                               style = function(value, index, rank_phylum){
-                                                                                if(merged_input$ID[[index]] > phylum_cutoff) {
+                                                                                if(merged_input$ID[[index]] > phylum_threshold) {
                                                                                   color.background <- grDevices::adjustcolor("#CCE6CC", alpha.f=1)
                                                                                   color.text <- "black"
-                                                                                } else if(merged_input$ID[[index]] <= phylum_cutoff){
+                                                                                } else if(merged_input$ID[[index]] <= phylum_threshold){
                                                                                   color.background <- NA
                                                                                   color.text <- "black"
                                                                                 }
@@ -1134,21 +1146,21 @@ setMethod("export_html", "isoTAX",
                                                                                                round_edges = FALSE, align_bars="left")) )) %>%  reactablefmtr::google_font(font_family = "Source Sans Pro") %>%
                                                add_subtitle("isoTAX output table", font_size = 24, font_style="normal", font_weight="bold", margin=c(20,0,0,0)) %>%
                                                #add_subtitle(paste("Date generated: ", Sys.Date(), sep=""), font_size = 14, font_style="normal", font_weight="normal") %>%
-                                               add_subtitle(paste("No. sequences < Phylum cutoff  = ",length(obj@ID[obj@ID < obj@phylum_cutoff[1]]), sep=""), font_size = 14, font_style="normal", font_weight="normal") %>%
-                                               add_subtitle(paste("No. sequences < Class cutoff   = ",length(obj@ID[obj@ID < obj@class_cutoff[1]]), sep=""), font_size = 14, font_style="normal", font_weight="normal") %>%
-                                               add_subtitle(paste("No. sequences < Order cutoff   = ",length(obj@ID[obj@ID < obj@order_cutoff[1]]), sep=""), font_size = 14, font_style="normal", font_weight="normal") %>%
-                                               add_subtitle(paste("No. sequences < Family cutoff  = ",length(obj@ID[obj@ID < obj@family_cutoff[1]]), sep=""), font_size = 14, font_style="normal", font_weight="normal") %>%
-                                               add_subtitle(paste("No. sequences < Genus cutoff   = ",length(obj@ID[obj@ID < obj@genus_cutoff[1]]), sep=""), font_size = 14, font_style="normal", font_weight="normal") %>%
-                                               add_subtitle(paste("No. sequences < Species cutoff = ",length(obj@ID[obj@ID < obj@species_cutoff[1]]), sep=""), font_size = 14, font_style="normal", font_weight="normal", margin=c(0,0,0,0))
+                                               add_subtitle(paste("No. sequences < Phylum threshold  = ",length(obj@ID[obj@ID < obj@phylum_threshold[1]]), sep=""), font_size = 14, font_style="normal", font_weight="normal") %>%
+                                               add_subtitle(paste("No. sequences < Class threshold   = ",length(obj@ID[obj@ID < obj@class_threshold[1]]), sep=""), font_size = 14, font_style="normal", font_weight="normal") %>%
+                                               add_subtitle(paste("No. sequences < Order threshold   = ",length(obj@ID[obj@ID < obj@order_threshold[1]]), sep=""), font_size = 14, font_style="normal", font_weight="normal") %>%
+                                               add_subtitle(paste("No. sequences < Family threshold  = ",length(obj@ID[obj@ID < obj@family_threshold[1]]), sep=""), font_size = 14, font_style="normal", font_weight="normal") %>%
+                                               add_subtitle(paste("No. sequences < Genus threshold   = ",length(obj@ID[obj@ID < obj@genus_threshold[1]]), sep=""), font_size = 14, font_style="normal", font_weight="normal") %>%
+                                               add_subtitle(paste("No. sequences < Species threshold = ",length(obj@ID[obj@ID < obj@species_threshold[1]]), sep=""), font_size = 14, font_style="normal", font_weight="normal", margin=c(0,0,0,0))
             )
-
-
-              fname_html <- file.path(path, output)
-              htmltools::save_html(html_output, fname_html)
-              writeLines(gsub('<meta charset="utf-8"/>', '<meta charset="utf-8"/>\n<title>isoTAX</title>', readLines(fname_html)), fname_html)
-              pander::openFileInOS(fname_html)
-              return(html_output)
-            })
+            
+            
+            fname_html <- file.path(path, output)
+            htmltools::save_html(html_output, fname_html)
+            writeLines(gsub('<meta charset="utf-8"/>', '<meta charset="utf-8"/>\n<title>isoTAX</title>', readLines(fname_html)), fname_html)
+            pander::openFileInOS(fname_html)
+            return(html_output)
+          })
 
 #:::::::::::::::::::::::::::::::
 # MAKE HTML #3: LIB TABLE
@@ -1180,37 +1192,42 @@ setMethod("export_html", "isoTAX",
 
 
 setMethod("export_html", "isoLIB",
-          function(obj){
-
+          function(obj, method=NULL, group_cutoff=NULL){
+            
             html_input2 <- S4_to_dataframe(obj) %>%
-              mutate(phylum_col = ifelse(ID > phylum_cutoff, "#31a354", NA)) %>%
-              mutate(class_col = ifelse(ID > class_cutoff, "#31a354", NA)) %>%
-              mutate(order_col = ifelse(ID > order_cutoff, "#31a354", NA)) %>%
-              mutate(family_col = ifelse(ID > family_cutoff, "#31a354", NA)) %>%
-              mutate(genus_col = ifelse(ID > genus_cutoff, "#31a354", NA)) %>%
-              mutate(species_col = ifelse(ID > species_cutoff, "#31a354", NA))
-
+              mutate(phylum_col = ifelse(ID > phylum_threshold, "#31a354", NA)) %>%
+              mutate(class_col = ifelse(ID > class_threshold, "#31a354", NA)) %>%
+              mutate(order_col = ifelse(ID > order_threshold, "#31a354", NA)) %>%
+              mutate(family_col = ifelse(ID > family_threshold, "#31a354", NA)) %>%
+              mutate(genus_col = ifelse(ID > genus_threshold, "#31a354", NA)) %>%
+              mutate(species_col = ifelse(ID > species_threshold, "#31a354", NA)) %>%
+              dplyr::relocate(representative, .after=filename)
+            
+            if(!grepl("maximum_likelihood|closest_species|dark_mode", method)){ method <- "NA"}
+            if(method=="closest_species"){ method <- "NA"}
+            if(is.null(group_cutoff)){ group_cutoff <- "NA"}
+            
             html_input <- html_input2 %>% select(-input,
-                                                 -phylum_cutoff,
-                                                 -class_cutoff,
-                                                 -order_cutoff,
-                                                 -family_cutoff,
-                                                 -genus_cutoff,
-                                                 -species_cutoff,
+                                                 -phylum_threshold,
+                                                 -class_threshold,
+                                                 -order_threshold,
+                                                 -family_threshold,
+                                                 -genus_threshold,
+                                                 -species_threshold,
                                                  -phylum_col,
                                                  -class_col,
                                                  -order_col,
                                                  -family_col,
                                                  -genus_col,
                                                  -species_col)
-
+            
             uni.font <- 9
             set.spacing <- "&nbsp;&nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp;&nbsp;"
             path <- getwd()
             output <- "03_isoLIB_results.html"
-
-            data <- SharedData$new(html_input)
-
+            
+            data <- crosstalk::SharedData$new(html_input)
+            
             
             if(length(unique(html_input2$ID)) <2  | length(unique(html_input2$length_trim)) <2){
               
@@ -1219,7 +1236,7 @@ setMethod("export_html", "isoLIB",
                                                  #filter_checkbox("categories", "Categories", data, ~categories, inline = TRUE),
                                                  #crosstalk::filter_slider("length_trim", "Seq length", round=-1, ticks=FALSE, data, ~length_trim),
                                                  #crosstalk::filter_slider("ID", "% identity", data, round=2, ticks=FALSE, ~ID),
-                                                 crosstalk::filter_checkbox("ref_strain", "Ref strain", data, ~ref_strain, inline = FALSE),
+                                                 crosstalk::filter_checkbox("representative", "Representative", data, ~representative, inline = FALSE),
                                                  crosstalk::filter_checkbox("date", "Date Sequenced", data, ~date, inline = FALSE)
                                                ),
                                                htmltools::browsable(
@@ -1227,7 +1244,7 @@ setMethod("export_html", "isoLIB",
                                                    "Expand/collapse all",
                                                    onclick = "Reactable.toggleAllRowsExpanded('html_input')"
                                                  ),
-                                                 tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('html_input')"),
+                                                 shiny::tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('html_input')"),
                                                  #new_library_reactable <-
                                                  reactable(data,
                                                            fullWidth=FALSE,
@@ -1254,13 +1271,13 @@ setMethod("export_html", "isoLIB",
                                                                                                fontSize=uni.font,
                                                                                                align="center",
                                                                                                fontFamily = "sans-serif")),
-                                                           groupBy = "strain_group",
+                                                           groupBy = "sequence_group",
                                                            elementId = "html_input",
                                                            #colDef options
                                                            #---------------
                                                            columns = list(
-                                                             strain_group = colDef(name="Strain Group Representative", minWidth=140,
-                                                                                   grouped = JS("function(cellInfo) {
+                                                             sequence_group = colDef(name="Sequence Group", minWidth=140,
+                                                                                     grouped = JS("function(cellInfo) {
                                                                       if (cellInfo.subRows.length > 100) {
                                                                         return cellInfo.value + ' (' + cellInfo.subRows.length + ')'
                                                                       }
@@ -1274,6 +1291,10 @@ setMethod("export_html", "isoLIB",
                                                                                             fontSize=uni.font,
                                                                                             align="center",
                                                                                             fontFamily = "sans-serif")),
+                                                             
+                                                             representative = colDef(name = "Rep",
+                                                                                     minWidth=70,
+                                                                                     align="center"),
                                                              phred_trim = colDef(name = "Q",
                                                                                  minWidth= 35,
                                                                                  align="center",
@@ -1331,7 +1352,9 @@ setMethod("export_html", "isoLIB",
                                                                       vAlign = "center",
                                                                       headerVAlign = "top",
                                                                       minWidth= 50,
-                                                                      aggregate = "max",
+                                                                      aggregate = JS("function(values, rows){
+                                                             return values[0]
+                                                            }"),
                                                                       cell = color_tiles(data=html_input,
                                                                                          colors="black",
                                                                                          number_fmt = scales::label_number(accuracy = 0.1),
@@ -1415,20 +1438,17 @@ setMethod("export_html", "isoLIB",
                                                                                 aggregate = JS("function(values, rows){
                                                               return values[0]
                                                               }"),
-                                                              cell = color_tiles(html_input2, color_ref="species_col")),
-                                                          ref_strain = colDef(name = "Ref strain",
-                                                                              minWidth=70,
-                                                                              align="center")
+                                                              cell = color_tiles(html_input2, color_ref="species_col"))
                                                            )) %>% reactablefmtr::google_font(font_family = "Source Sans Pro") %>%
-                                                   #add_subtitle("#", font_size = 24, font_style="normal", font_weight="normal") %>%
-                                                   add_subtitle("isoLIB output table", font_size = 24, font_style="normal", font_weight="bold") %>%
-                                                   add_subtitle(paste("Date last updated: ", Sys.Date(), sep=""), font_size = 14, font_style="italic", font_weight="normal") %>%
+                                                   add_subtitle("isoLIB output table", font_size = 28, font_style="normal", font_weight="bold") %>%
+                                                   add_subtitle(paste('Method: "', method, '" | Group Cutoff: ', group_cutoff, sep=""), font_size = 12, font_style="normal", font_weight="normal") %>%
+                                                   add_subtitle(paste("Date last updated: ", Sys.Date(), sep=""), font_size = 12, font_style="normal", font_weight="normal") %>%
                                                    add_subtitle("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------", font_size = 14, font_style="normal", font_weight="normal") %>%
                                                    add_subtitle(paste("Total sequences: " ,length(obj@filename) , set.spacing,
-                                                                      "Total strain groups: ", length(obj@ref_strain[obj@ref_strain == "yes"]) , set.spacing,
+                                                                      "Total strain groups: ", length(obj@representative[obj@representative == "yes"]) , set.spacing,
                                                                       "Mean Phred quality: ", format(round(mean(obj@phred_trim), 0), 2),  set.spacing,
                                                                       "Mean no. Ns: ", format(round(mean(obj@Ns_trim), 2), 2),  set.spacing,
-                                                                      "Mean sequence length: ", round(mean(obj@length_trim), 0),  set.spacing,
+                                                                      "Mean length: ", round(mean(obj@length_trim), 0),  set.spacing,
                                                                       "No. unique phyla: ", round(length(unique(obj@rank_phylum)), 0),  set.spacing,
                                                                       "No. unique classes: ", round(length(unique(obj@rank_class)), 0),  set.spacing,
                                                                       "No. unique orders: ", round(length(unique(obj@rank_order)), 0),  set.spacing,
@@ -1440,69 +1460,74 @@ setMethod("export_html", "isoLIB",
                                                  ,
                                                  )))
             } else {html_output <- crosstalk::bscols(widths = c(1,10),
-                                               list(
-                                                 #filter_checkbox("categories", "Categories", data, ~categories, inline = TRUE),
-                                                 crosstalk::filter_slider("length_trim", "Seq length", round=-1, ticks=FALSE, data, ~length_trim),
-                                                 crosstalk::filter_slider("ID", "% identity", data, round=2, ticks=FALSE, ~ID),
-                                                 crosstalk::filter_checkbox("ref_strain", "Ref strain", data, ~ref_strain, inline = FALSE),
-                                                 crosstalk::filter_checkbox("date", "Date Sequenced", data, ~date, inline = FALSE)
-                                               ),
-                                               htmltools::browsable(
-                                                 shiny::tagList(tags$button(
-                                                   "Expand/collapse all",
-                                                   onclick = "Reactable.toggleAllRowsExpanded('html_input')"
-                                                 ),
-                                                 tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('html_input')"),
-                                                 #new_library_reactable <-
-                                                 reactable(data,
-                                                           fullWidth=FALSE,
-                                                           searchable = TRUE,
-                                                           bordered = TRUE,
-                                                           resizable =TRUE,
-                                                           pageSizeOptions = c(10, 20, 50, 100, 1000),
-                                                           showPageSizeOptions = TRUE,
-                                                           defaultPageSize=20,
-                                                           highlight = TRUE,
-                                                           showSortable = TRUE,
-                                                           compact=TRUE,
-                                                           style = list(minWidth = 1400),
-                                                           theme = reactableTheme(
-                                                             headerStyle = list(
-                                                               fontFamily = "sans-serif",
-                                                               fontWeight="bold",
-                                                               fontSize=uni.font+1,
-                                                               "&:hover[aria-sort]" = list(background = "hsl(0, 0%, 96%)"),
-                                                               "&[aria-sort='ascending'], &[aria-sort='descending']" = list(background = "hsl(0, 0%, 96%)"))),
-                                                           defaultColDef = colDef(minWidth= 75,
-                                                                                  vAlign = "center",
-                                                                                  style = list(whiteSpace = "nowrap",
-                                                                                               fontSize=uni.font,
-                                                                                               align="center",
-                                                                                               fontFamily = "sans-serif")),
-                                                           groupBy = "strain_group",
-                                                           elementId = "html_input",
-                                                           #colDef options
-                                                           #---------------
-                                                           columns = list(
-                                                             strain_group = colDef(name="Strain Group Representative", minWidth=140,
-                                                                                   grouped = JS("function(cellInfo) {
+                                                     list(
+                                                       #filter_checkbox("categories", "Categories", data, ~categories, inline = TRUE),
+                                                       crosstalk::filter_slider("length_trim", "Seq length", round=-1, ticks=FALSE, data, ~length_trim),
+                                                       crosstalk::filter_slider("ID", "% identity", data, round=2, ticks=FALSE, ~ID),
+                                                       crosstalk::filter_checkbox("representative", "Representative", data, ~representative, inline = FALSE),
+                                                       crosstalk::filter_checkbox("date", "Date Sequenced", data, ~date, inline = FALSE)
+                                                     ),
+                                                     
+                                                     htmltools::browsable(
+                                                       shiny::tagList(
+                                                         shiny::tags$button(
+                                                           "Expand/collapse all",
+                                                           onclick = "Reactable.toggleAllRowsExpanded('html_input')"
+                                                         ),
+                                                         shiny::tags$button("Download as CSV", onclick = "Reactable.downloadDataCSV('html_input')"),
+                                                         #new_library_reactable <-
+                                                         reactable(data,
+                                                                   fullWidth=FALSE,
+                                                                   searchable = TRUE,
+                                                                   bordered = TRUE,
+                                                                   resizable =TRUE,
+                                                                   pageSizeOptions = c(10, 20, 50, 100, 1000),
+                                                                   showPageSizeOptions = TRUE,
+                                                                   defaultPageSize=20,
+                                                                   highlight = TRUE,
+                                                                   showSortable = TRUE,
+                                                                   compact=TRUE,
+                                                                   style = list(minWidth = 1400),
+                                                                   theme = reactableTheme(
+                                                                     headerStyle = list(
+                                                                       fontFamily = "sans-serif",
+                                                                       fontWeight="bold",
+                                                                       fontSize=uni.font+1,
+                                                                       "&:hover[aria-sort]" = list(background = "hsl(0, 0%, 96%)"),
+                                                                       "&[aria-sort='ascending'], &[aria-sort='descending']" = list(background = "hsl(0, 0%, 96%)"))),
+                                                                   defaultColDef = colDef(minWidth= 75,
+                                                                                          vAlign = "center",
+                                                                                          style = list(whiteSpace = "nowrap",
+                                                                                                       fontSize=uni.font,
+                                                                                                       align="center",
+                                                                                                       fontFamily = "sans-serif")),
+                                                                   groupBy = "sequence_group",
+                                                                   elementId = "html_input",
+                                                                   #colDef options
+                                                                   #---------------
+                                                                   columns = list(
+                                                                     sequence_group = colDef(name="Sequence Group", minWidth=140,
+                                                                                             grouped = JS("function(cellInfo) {
                                                                       if (cellInfo.subRows.length > 100) {
                                                                         return cellInfo.value + ' (' + cellInfo.subRows.length + ')'
                                                                       }
                                                                       return cellInfo.value
                                                                     }")),
-                                                             #V10 = colDef(style = "white-space: nowrap;", aggregate = "unique"),
-                                                             filename = colDef(name = "Filename",
-                                                                               minWidth=120,
-                                                                               aggregate = "count",
-                                                                               style = list(whiteSpace = "nowrap",
-                                                                                            fontSize=uni.font,
-                                                                                            align="center",
-                                                                                            fontFamily = "sans-serif")),
-                                                             phred_trim = colDef(name = "Q",
-                                                                                 minWidth= 35,
-                                                                                 align="center",
-                                                                                 aggregate = JS("function(values, rows){
+                                                                    #V10 = colDef(style = "white-space: nowrap;", aggregate = "unique"),
+                                                                    filename = colDef(name = "Filename",
+                                                                                      minWidth=120,
+                                                                                      aggregate = "count",
+                                                                                      style = list(whiteSpace = "nowrap",
+                                                                                                   fontSize=uni.font,
+                                                                                                   align="center",
+                                                                                                   fontFamily = "sans-serif")),
+                                                                    representative = colDef(name = "Rep",
+                                                                                            minWidth=70,
+                                                                                            align="center"),
+                                                                    phred_trim = colDef(name = "Q",
+                                                                                        minWidth= 35,
+                                                                                        align="center",
+                                                                                        aggregate = JS("function(values, rows){
                                                                                return values[0]
                                                           }")),
                                                           Ns_trim = colDef(name = "Ns",
@@ -1556,7 +1581,9 @@ setMethod("export_html", "isoLIB",
                                                                       vAlign = "center",
                                                                       headerVAlign = "top",
                                                                       minWidth= 50,
-                                                                      aggregate = "max",
+                                                                      aggregate = JS("function(values, rows){
+                                                             return values[0]
+                                                            }"),
                                                                       cell = color_tiles(data=html_input,
                                                                                          colors="black",
                                                                                          number_fmt = scales::label_number(accuracy = 0.1),
@@ -1640,30 +1667,27 @@ setMethod("export_html", "isoLIB",
                                                                                 aggregate = JS("function(values, rows){
                                                               return values[0]
                                                               }"),
-                                                              cell = color_tiles(html_input2, color_ref="species_col")),
-                                                          ref_strain = colDef(name = "Ref strain",
-                                                                              minWidth=70,
-                                                                              align="center")
-                                                           )) %>% reactablefmtr::google_font(font_family = "Source Sans Pro") %>%
-                                                   #add_subtitle("#", font_size = 24, font_style="normal", font_weight="normal") %>%
-                                                   add_subtitle("isoLIB output table", font_size = 24, font_style="normal", font_weight="bold") %>%
-                                                   add_subtitle(paste("Date last updated: ", Sys.Date(), sep=""), font_size = 14, font_style="italic", font_weight="normal") %>%
-                                                   add_subtitle("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------", font_size = 14, font_style="normal", font_weight="normal") %>%
-                                                   add_subtitle(paste("Total sequences: " ,length(obj@filename) , set.spacing,
-                                                                      "Total strain groups: ", length(obj@ref_strain[obj@ref_strain == "yes"]) , set.spacing,
-                                                                      "Mean Phred quality: ", format(round(mean(obj@phred_trim), 0), 2),  set.spacing,
-                                                                      "Mean no. Ns: ", format(round(mean(obj@Ns_trim), 2), 2),  set.spacing,
-                                                                      "Mean sequence length: ", round(mean(obj@length_trim), 0),  set.spacing,
-                                                                      "No. unique phyla: ", round(length(unique(obj@rank_phylum)), 0),  set.spacing,
-                                                                      "No. unique classes: ", round(length(unique(obj@rank_class)), 0),  set.spacing,
-                                                                      "No. unique orders: ", round(length(unique(obj@rank_order)), 0),  set.spacing,
-                                                                      "No. unique families: ", round(length(unique(obj@rank_family)), 0),  set.spacing,
-                                                                      "No. unique genera: ", round(length(unique(obj@rank_genus)), 0),  set.spacing,
-                                                                      "No. unique species: ", round(length(unique(obj@rank_species)), 0),
-                                                                      sep=""), font_size = 14, font_style="normal", font_weight="normal", align="left") %>%
-                                                   add_subtitle("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------", font_size = 14, font_style="normal", font_weight="normal")
-                                                 ,
-                                                 )))
+                                                              cell = color_tiles(html_input2, color_ref="species_col"))
+                                                                   )) %>% reactablefmtr::google_font(font_family = "Source Sans Pro") %>%
+                                                           add_subtitle("isoLIB output table", font_size = 28, font_style="normal", font_weight="bold") %>%
+                                                           add_subtitle(paste('Method: "', method, '" | Group Cutoff: ', group_cutoff, sep=""), font_size = 12, font_style="normal", font_weight="normal") %>%
+                                                           add_subtitle(paste("Date last updated: ", Sys.Date(), sep=""), font_size = 12, font_style="normal", font_weight="normal") %>%
+                                                           add_subtitle("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------", font_size = 14, font_style="normal", font_weight="normal") %>%
+                                                           add_subtitle(paste("Total sequences: " ,length(obj@filename) , set.spacing,
+                                                                              "Total strain groups: ", length(obj@representative[obj@representative == "yes"]) , set.spacing,
+                                                                              "Mean Phred quality: ", format(round(mean(obj@phred_trim), 0), 2),  set.spacing,
+                                                                              "Mean no. Ns: ", format(round(mean(obj@Ns_trim), 2), 2),  set.spacing,
+                                                                              "Mean length: ", round(mean(obj@length_trim), 0),  set.spacing,
+                                                                              "No. unique phyla: ", round(length(unique(obj@rank_phylum)), 0),  set.spacing,
+                                                                              "No. unique classes: ", round(length(unique(obj@rank_class)), 0),  set.spacing,
+                                                                              "No. unique orders: ", round(length(unique(obj@rank_order)), 0),  set.spacing,
+                                                                              "No. unique families: ", round(length(unique(obj@rank_family)), 0),  set.spacing,
+                                                                              "No. unique genera: ", round(length(unique(obj@rank_genus)), 0),  set.spacing,
+                                                                              "No. unique species: ", round(length(unique(obj@rank_species)), 0),
+                                                                              sep=""), font_size = 14, font_style="normal", font_weight="normal", align="left") %>%
+                                                           add_subtitle("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------", font_size = 14, font_style="normal", font_weight="normal")
+                                                         ,
+                                                       )))
             }
             fname_html <- file.path(path, output)
             htmltools::save_html(html_output, fname_html)

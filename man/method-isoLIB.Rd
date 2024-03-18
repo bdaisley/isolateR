@@ -7,16 +7,19 @@
 \S4method{isoLIB}{missing}(
   input = NULL,
   old_lib_csv = NULL,
+  method = "dark_mode",
+  group_cutoff = 0.995,
+  keep_old_reps = TRUE,
   export_html = TRUE,
   export_csv = TRUE,
-  include_warnings = FALSE,
-  strain_group_cutoff = 0.995,
-  phylum_cutoff = 75,
-  class_cutoff = 78.5,
-  order_cutoff = 82,
-  family_cutoff = 86.5,
-  genus_cutoff = 96.5,
-  species_cutoff = 98.7
+  include_warnings = TRUE,
+  vsearch_path = NULL,
+  phylum_threshold = 75,
+  class_threshold = 78.5,
+  order_threshold = 82,
+  family_threshold = 86.5,
+  genus_threshold = 96.5,
+  species_threshold = 98.7
 )
 }
 \description{

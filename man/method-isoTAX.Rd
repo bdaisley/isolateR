@@ -11,13 +11,14 @@
   quick_search = TRUE,
   db = "16S",
   db_path = NULL,
+  vsearch_path = NULL,
   iddef = 2,
-  phylum_cutoff = 75,
-  class_cutoff = 78.5,
-  order_cutoff = 82,
-  family_cutoff = 86.5,
-  genus_cutoff = 96.5,
-  species_cutoff = 98.7
+  phylum_threshold = 75,
+  class_threshold = 78.5,
+  order_threshold = 82,
+  family_threshold = 86.5,
+  genus_threshold = 96.5,
+  species_threshold = 98.7
 )
 }
 \description{
