@@ -15,7 +15,7 @@
 get_vsearch <- function(os=NULL){
   message(cat(paste0("\n", "\033[97;", 40, "m","Detecting operating system...", "\033[0m")))
   
-  vsearch.path.dl <- file.path(system.file("", package="isolateR"), "vsearch")
+  vsearch.path.dl <- file.path(system.file(package="isolateR"), "vsearch")
   suppressWarnings(dir.create(vsearch.path.dl))
   vsearch_files <- stringr::str_subset(dir(vsearch.path.dl, full.names = FALSE), 'vsearch')
 
@@ -75,7 +75,9 @@ get_vsearch <- function(os=NULL){
     }
   } else{
     message(cat(paste0("\033[0;", 32, "m","VSEARCH already downloaded.", "\033[0m")))
-    vsearch.path <- file.path(vsearch.path.dl,"vsearch-2.23.0.exe")
+    if(os=="windows"){vsearch.path <- file.path(vsearch.path.dl,"vsearch-2.23.0.exe")}
+    if(os=="osx-mac"){vsearch.path <- file.path(vsearch.path.dl,"vsearch-2.23.0_macos")}
+    if(os=="linux"){vsearch.path <- file.path(vsearch.path.dl,"vsearch-2.23.0")}
   }
   return(vsearch.path)
 }

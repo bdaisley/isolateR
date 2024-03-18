@@ -94,7 +94,7 @@ isoLIB <- function(input=NULL,
   #:::::::::::::::::::::::::::
   
   path = new_lib_path
-  vsearch.path.dl <- file.path(system.file("", package="isolateR"), "vsearch")
+  vsearch.path.dl <- file.path(system.file(package="isolateR"), "vsearch")
   suppressWarnings(dir.create(vsearch.path.dl))
   vsearch_files <- stringr::str_subset(dir(vsearch.path.dl, full.names = FALSE), 'vsearch')
   
