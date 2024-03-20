@@ -145,16 +145,43 @@ sanger_consensus <- function(input=NULL,
   }) #end of collector.list function
 
   #Bind all overlapped sequences back together and add back in unpaired seqs
-  
-  collector.list.df <- bind_rows(collector.list) %>%
-      {tmp <<- .} %>%
-      filter(aln=="pass") %>% 
-      select(-aln) %>%
-      mutate(filename= paste(no_suffix, "_consensus.",stringr::str_split_fixed(.$filename[1], "[.]", 2)[,2], sep="")) %>%
-      rbind(., 
-            (paired.seqs %>% filter(grepl(paste(unique((tmp %>% filter(aln=="fail"))$no_suffix), sep="|"), no_suffix))),
-            unpaired.seqs) %>%
+  if(any((bind_rows(collector.list))$aln=="pass")){
+    if(length(paste(unique((bind_rows(collector.list) %>% filter(aln=="fail"))$no_suffix), sep="|"))==0){
+      collector.list.df <- bind_rows(collector.list) %>%
+        {tmp <<- .} %>%
+        filter(aln=="pass") %>%
+        mutate(seqs_raw=rep("xNA")) %>%
+        mutate(phred_raw=rep(0)) %>%
+        mutate(Ns_raw=rep(0)) %>%
+        mutate(length_raw=rep(0)) %>%
+        mutate(phred_spark_raw=rep(c("0_0_0"))) %>%
+        select(-aln) %>%
+        mutate(filename= paste(no_suffix, "_consensus.",stringr::str_split_fixed(.$filename[1], "[.]", 2)[,2], sep="")) %>%
+        rbind(., 
+              unpaired.seqs) %>%
+        select(-no_suffix, -row_counter)
+    } else {
+      collector.list.df <- bind_rows(collector.list) %>%
+        {tmp <<- .} %>%
+        filter(aln=="pass") %>%
+        mutate(seqs_raw=rep("xNA")) %>%
+        mutate(phred_raw=rep(0)) %>%
+        mutate(Ns_raw=rep(0)) %>%
+        mutate(length_raw=rep(0)) %>%
+        mutate(phred_spark_raw=rep("NA")) %>%
+        select(-aln) %>%
+        mutate(filename= paste(no_suffix, "_consensus.",stringr::str_split_fixed(.$filename[1], "[.]", 2)[,2], sep="")) %>%
+        rbind(., 
+              (paired.seqs %>% filter(grepl(paste(unique((tmp %>% filter(aln=="fail"))$no_suffix), sep="|"), no_suffix))),
+              unpaired.seqs) %>%
+        select(-no_suffix, -row_counter)
+    }
+  } else{
+    collector.list.df <- rbind(paired.seqs, 
+                               unpaired.seqs) %>% 
       select(-no_suffix, -row_counter)
+  }
+  
 
   #:::::::::::::::::::::::
   #---Export CSV files
