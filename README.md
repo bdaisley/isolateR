@@ -1,3 +1,5 @@
+<p align="center"><img src="https://github.com/bdaisley/isolateR/blob/main/man/figures/isolateR.png?raw=true"></p>
+
 ## isolateR: Automated processing of Sanger sequencing data, taxonomic profiling, and generation of microbial strain libraries
 
 <p align="center"><img src="https://github.com/bdaisley/isolateR/blob/main/man/figures/isolateR_overview.jpg?raw=true" width="1500"></p>
