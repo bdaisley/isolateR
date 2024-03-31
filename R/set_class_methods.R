@@ -238,7 +238,7 @@ setGeneric("isoTAX",  function(input=NULL,
                                export_html=TRUE,
                                export_csv=TRUE,
                                quick_search=TRUE,
-                               db="16S",
+                               db="16S_bac",
                                db_path=NULL,
                                vsearch_path=NULL,
                                iddef=2,
@@ -246,7 +246,7 @@ setGeneric("isoTAX",  function(input=NULL,
                                class_threshold = 78.5,
                                order_threshold = 82,
                                family_threshold = 86.5,
-                               genus_threshold = 96.5,
+                               genus_threshold = 94.5,
                                species_threshold = 98.7) standardGeneric("isoTAX"), signature=c("input"))
 
 
@@ -271,7 +271,7 @@ setGeneric("isoLIB",  function(input=NULL,
                                class_threshold=78.5,
                                order_threshold=82.0,
                                family_threshold=86.5,
-                               genus_threshold=96.5,
+                               genus_threshold=94.5,
                                species_threshold=98.7) standardGeneric("isoLIB"), signature=c("input"))
 
 
@@ -283,7 +283,14 @@ setGeneric("isoLIB",  function(input=NULL,
 
 #' @export
 #' @aliases export_html
-setGeneric("export_html", function(obj, method=NULL, group_cutoff=NULL) standardGeneric("export_html"))
+setGeneric("export_html", function(obj,
+                                   method=NULL, 
+                                   group_cutoff=NULL, 
+                                   min_phred_score=NULL,
+                                   min_length=NULL,
+                                   sliding_window_cutoff=NULL,
+                                   sliding_window_size = NULL,
+                                   quick_search=NULL, db=NULL) standardGeneric("export_html"))
 
 
 
@@ -369,7 +376,7 @@ setMethod("isoTAX", signature(input="missing"), function(input= NULL,
                                                          export_html=TRUE,
                                                          export_csv=TRUE,
                                                          quick_search=TRUE,
-                                                         db="16S",
+                                                         db="16S_bac",
                                                          db_path=NULL,
                                                          vsearch_path=NULL,
                                                          iddef=2,
@@ -377,7 +384,7 @@ setMethod("isoTAX", signature(input="missing"), function(input= NULL,
                                                          class_threshold = 78.5,
                                                          order_threshold = 82,
                                                          family_threshold = 86.5,
-                                                         genus_threshold = 96.5,
+                                                         genus_threshold = 94.5,
                                                          species_threshold = 98.7) isoTAX(input,
                                                                                        export_html,
                                                                                        export_csv,
@@ -418,7 +425,7 @@ setMethod("isoLIB", signature(input="missing"), function(input=NULL,
                                                          class_threshold=78.5,
                                                          order_threshold=82.0,
                                                          family_threshold=86.5,
-                                                         genus_threshold=96.5,
+                                                         genus_threshold=94.5,
                                                          species_threshold=98.7) isoLIB(input,
                                                                                      old_lib_csv,
                                                                                      method,
@@ -650,7 +657,16 @@ df_to_isoLIB <- function(df) {
 #:::::::::::::::::::::::::::::::
 
 setMethod("export_html", "isoQC",
-          function(obj) {
+          function(obj, min_phred_score=NULL, min_length=NULL, sliding_window_cutoff=NULL, sliding_window_size = NULL){
+            #Import checks
+            if(is.null(min_phred_score)){ message("The 'min_phred_score' parameter is blank. Setting to 1 to enable graphing.")
+              min_phred_score <- 1}
+            if(is.null(min_length)){ message("The 'min_length' parameter is blank. Setting to 1 to enable graphing.")
+              min_length <- 1}
+            if(is.null(sliding_window_cutoff)) {sliding_window_cutoff <- "Auto" }
+            if(is.null(sliding_window_size)) { message("The 'sliding_window_size' parameter is blank. Setting to 1 to enable graphing.")
+              sliding_window_size <- 1}
+            
             #Import S4 object
             isoQC.df <- S4_to_dataframe(obj) %>%
               mutate(phred_spark_raw = strsplit(phred_spark_raw, '_')) %>%
@@ -667,6 +683,83 @@ setMethod("export_html", "isoQC",
                      Ns_trim,
                      length_trim,
                      decision)
+            
+            suppressWarnings(isoQC.df.g <- rbind(isoQC.df %>% select(filename, phred_raw, Ns_raw, length_raw, decision) %>% mutate(group="raw") %>% `colnames<-`(c("filename", "phred", "Ns", "length", "decision", "group")),
+                                                 isoQC.df %>% select(filename, phred_trim, Ns_trim, length_trim, decision) %>% mutate(group="trim") %>% `colnames<-`(c("filename", "phred", "Ns", "length", "decision", "group"))) %>%
+                               mutate_at(vars(decision), funs(factor(., levels=c("Pass", "Fail")))))
+            
+            #-----------------------------------------------------------------------------------------------------------Summary plots
+            g.phred <- ggplot2::ggplot(isoQC.df.g, ggplot2::aes(x=group, y=phred, colour=decision)) +
+              ggplot2::geom_hline(yintercept = min_phred_score, linewidth=1.5, colour="red", alpha=0.2, linetype="solid") +
+              ggplot2::annotate(geom="text", vjust=1.75, size=3.3, x=0.7, y=min_phred_score, label=paste('min_phred_score="', min_phred_score, '"', sep=""), color=scales::alpha("red", 0.85)) +  
+              ggiraph::geom_boxplot_interactive(ggplot2::aes(fill=decision, color=decision, #data_id = group,
+                                                             tooltip = ggplot2::after_stat({
+                                                               paste0(
+                                                                 "Decision: ", .data$fill,
+                                                                 "\nQ1: ", prettyNum(.data$ymin),
+                                                                 "\nQ3: ", prettyNum(.data$ymax),
+                                                                 "\nmedian: ", prettyNum(.data$middle)
+                                                               )
+                                                             })), position = ggplot2::position_dodge(width = 0.8), outlier.shape = NA) +
+              ggiraph::geom_point_interactive(ggplot2::aes(group=decision, colour=decision, data_id = filename, tooltip=filename), position=ggplot2::position_jitterdodge(dodge.width = 0.8), size=0.7, alpha=0.5, hover_nearest = TRUE) +
+              ggplot2::scale_color_manual(values=c(Pass=scales::alpha("black", 0.7),Fail=scales::alpha("black", 0.7)), name="Decision") + 
+              ggplot2::scale_fill_manual(values=c(Pass=scales::alpha("#CCE6CC", 0.9), Fail=scales::alpha("#B20A2C", 0.5)  ), name="Decision") +
+              ggplot2::geom_vline(xintercept = c(1.5), linewidth=1, colour="black", linetype="dotted") +
+              ggplot2::scale_x_discrete(labels=c("raw"="Raw","trim"="Trimmed"))  +
+              ggplot2::ylab("Phred Quality Score") + 
+              ggplot2::theme(panel.background = ggplot2::element_blank(),
+                             panel.border = ggplot2::element_rect(color ="black", fill = NA, linewidth = 0.5, linetype = 1),
+                             panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank(),
+                             legend.title = ggplot2::element_text(size=16),legend.text = ggplot2::element_text(size=12),
+                             strip.background = ggplot2::element_blank(), strip.text.x = ggplot2::element_blank(),
+                             axis.title.x = ggplot2::element_blank(), axis.text.x=ggplot2::element_text(size=12), axis.ticks.x=ggplot2::element_blank(),
+                             axis.title.y = ggplot2::element_text(size=16), axis.text.y=ggplot2::element_text(size=12))
+            
+            g.length <- ggplot2::ggplot(isoQC.df.g, ggplot2::aes(x=group, y=length, colour=decision)) + 
+              ggplot2::geom_hline(yintercept = min_length, linewidth=1.5, colour="red", alpha=0.2, linetype="solid") +
+              ggplot2::annotate(geom="text", vjust=1.75, size=3.3, x=0.65, y=min_length, label=paste('min_length="', min_length, '"', sep=""), color=scales::alpha("red", 0.85)) +
+              ggiraph::geom_boxplot_interactive(ggplot2::aes(fill=decision, #data_id = group,
+                                                             tooltip = ggplot2::after_stat({
+                                                               paste0(
+                                                                 "Decision: ", .data$fill,
+                                                                 "\nQ1: ", prettyNum(.data$ymin),
+                                                                 "\nQ3: ", prettyNum(.data$ymax),
+                                                                 "\nmedian: ", prettyNum(.data$middle)
+                                                               )
+                                                             })), position = ggplot2::position_dodge(width = 0.8), outlier.shape = NA) +
+              ggiraph::geom_point_interactive(ggplot2::aes(group=decision, colour=decision, data_id = filename, tooltip=filename), position=ggplot2::position_jitterdodge(dodge.width = 0.8), size = 0.7, alpha=0.5, hover_nearest = TRUE) +
+              ggplot2::scale_color_manual(values=c(Pass=scales::alpha("black", 0.7),Fail=scales::alpha("black", 0.7)),  name="Decision") + 
+              ggplot2::scale_fill_manual(values=c(Pass=scales::alpha("#CCE6CC", 0.9), Fail=scales::alpha("#B20A2C", 0.5)  ), name="Decision") +
+              ggplot2::geom_vline(xintercept = c(1.5), linewidth=1, colour="black", linetype="dotted") +
+              ggplot2::scale_x_discrete(labels=c("raw"="Raw","trim"="Trimmed"))  +
+              ggplot2::ylab("Sequence length (nt)") + 
+              ggplot2::theme(panel.background = ggplot2::element_blank(),
+                             panel.border = ggplot2::element_rect(color ="black", fill = NA, linewidth = 0.5, linetype = 1),
+                             panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank(),
+                             legend.title = ggplot2::element_text(size=16),legend.text = ggplot2::element_text(size=12),
+                             strip.background = ggplot2::element_blank(), strip.text.x = ggplot2::element_blank(),
+                             axis.title.x = ggplot2::element_blank(), axis.text.x=ggplot2::element_text(size=12), axis.ticks.x=ggplot2::element_blank(),
+                             axis.title.y = ggplot2::element_text(size=16), axis.text.y=ggplot2::element_text(size=12))
+            
+            isoQC.plots1 <- cowplot::plot_grid(g.phred + ggplot2::theme(legend.position="none"),
+                                               NULL,
+                                               g.length + ggplot2::theme(legend.position="none"),
+                                               suppressWarnings(cowplot::get_legend(g.phred)), 
+                                               ncol=4, rel_widths=c(1,0.1,1,0.25))
+            
+            ggiraph::set_girafe_defaults(
+              opts_hover_inv = ggiraph::opts_hover_inv(css = "opacity:0.4;"), 
+              opts_hover = ggiraph::opts_hover(css = "fill:orange;stroke:orange;stroke-width:7;"),
+              #opts_zoom = ggiraph::opts_zoom(min = 1, max = 4),
+              opts_tooltip = ggiraph::opts_tooltip(css = "padding:3px;background-color:#333333;color:white;"),
+              opts_sizing = ggiraph::opts_sizing(rescale = FALSE),
+              opts_toolbar = ggiraph::opts_toolbar(saveaspng = TRUE, pngname="isoQC", delay_mouseout = 5000, position="topright", hidden=c("selection", "zoom"))
+            )
+            
+            isoQC.plots <- ggiraph::girafe(ggobj = isoQC.plots1, width_svg = 14.1, height_svg = 4.5)
+            
+            
+            #-----------------------------------------------------------------------------------------------------------
             
             #Set universal font size
             uni.font <- 11
@@ -809,11 +902,61 @@ setMethod("export_html", "isoQC",
                                                                              background = 'transparent',
                                                                              number_fmt = scales::comma_format(accuracy = 0.1),
                                                                              round_edges = FALSE, align_bars="left")) )) %>% reactablefmtr::google_font(font_family = "Source Sans Pro") %>%
-                  reactablefmtr::add_subtitle("isoQC output table", font_size = 24, font_style="normal", font_weight="bold", margin=c(20,0,0,0)) %>%
-                  reactablefmtr::add_subtitle(paste("Total sequences:       ", nrow(isoQC.df), sep=""), font_size = 14, font_style="normal", font_weight="normal") %>%
-                  reactablefmtr::add_subtitle(paste("Mean Phred quality before/after trimming:     ", round(mean(isoQC.df$phred_raw)), "\t|  ", round(mean(isoQC.df$phred_trim)), sep=""), font_size = 14, font_style="normal", font_weight="normal") %>%
-                  reactablefmtr::add_subtitle(paste("Mean number of Ns before/after trimming:      ", round(mean(isoQC.df$Ns_raw)), "\t|  ", round(mean(isoQC.df$Ns_trim)), sep=""), font_size = 14, font_style="normal", font_weight="normal") %>%
-                  reactablefmtr::add_subtitle(paste("Mean sequence length before/after trimming:   ", round(mean(isoQC.df$length_raw)), "\t|  ", round(mean(isoQC.df$length_trim)), sep=""), font_size = 14, font_style="normal", font_weight="normal", margin=c(0,0,0,0))
+                  htmlwidgets::prependContent(
+                    shiny::tags$div(
+                      shiny::tags$div(
+                        shiny::tags$div(
+                          "isoQC output table", 
+                          style = htmltools::css('font-size' = '24pt', 'font-weight' = 'bold',
+                                                 'text-align' = 'left', 'margin-bottom' = 0, 'padding-top' = '10px', 'padding-left' = '10px', 'vertical-align' = 'middle')),
+                        shiny::tags$div(paste("------------------------------------------------------------", sep=""), 
+                                        style = htmltools::css('font-size' = '14pt', 'font-weight' = 'normal', 'font-style' = 'normal', 'text-align' = 'left',
+                                                               'margin-bottom' = 0, 'padding-top' = '0px', 'padding-left' = '10px','vertical-align' = 'middle')),
+                        shiny::tags$div(paste('Project directory: "', unlist(strsplit(obj@input, '/'))[length(unlist(strsplit(obj@input, '/')))], '"', sep=""), 
+                                        style = htmltools::css('font-size' = '10pt', 'font-weight' = 'bold', 'font-style' = 'normal', 'text-align' = 'left',
+                                                               'margin-bottom' = 0, 'padding-top' = '0px', 'padding-left' = '10px','vertical-align' = 'middle')),
+                        shiny::tags$div(paste("Date last updated: ", Sys.Date(), sep=""), 
+                                        style = htmltools::css('font-size' = '10pt', 'font-weight' = 'normal', 'font-style' = 'normal', 'text-align' = 'left',
+                                                               'margin-bottom' = 0, 'padding-top' = '0px', 'padding-left' = '10px','vertical-align' = 'middle')),
+                        shiny::tags$div(paste("------------------------------------------------------------", sep=""), 
+                                        style = htmltools::css('font-size' = '14pt', 'font-weight' = 'normal', 'font-style' = 'normal', 'text-align' = 'left',
+                                                               'margin-bottom' = 0, 'padding-top' = '0px', 'padding-left' = '10px','vertical-align' = 'middle')),
+                        shiny::tags$div(paste("Settings:", sep=""), 
+                                        style = htmltools::css('font-size' = '10pt', 'font-weight' = 'bold', 'font-style' = 'normal', 'text-align' = 'left',
+                                                               'margin-bottom' = 0, 'padding-top' = '0px', 'padding-left' = '10px','vertical-align' = 'middle')),
+                        shiny::tags$div(paste("min_phred_score = '", min_phred_score,"'", sep=""),
+                                        style = htmltools::css('font-size' = '10pt', 'font-weight' = 'normal', 'font-style' = 'normal', 'text-align' = 'left',
+                                                               'margin-top' = 0, 'padding-top' = '0px', 'padding-left' = '10px','vertical-align' = 'middle')),
+                        shiny::tags$div(paste("min_length = '", min_length,"'", sep=""),
+                                        style = htmltools::css('font-size' = '10pt', 'font-weight' = 'normal', 'font-style' = 'normal', 'text-align' = 'left',
+                                                               'margin-bottom' = 0, 'padding-top' = '0px', 'padding-left' = '10px','vertical-align' = 'middle')),
+                        shiny::tags$div(paste("sliding_window_cutoff = '", sliding_window_cutoff,"'", sep=""), 
+                                        style = htmltools::css('font-size' = '10pt', 'font-weight' = 'normal', 'font-style' = 'normal', 'text-align' = 'left',
+                                                               'margin-bottom' = 0, 'padding-top' = '0px', 'padding-left' = '10px','vertical-align' = 'middle')),
+                        shiny::tags$div(paste("sliding_window_size = '", sliding_window_size,"'",sep=""), 
+                                        style = htmltools::css('font-size' = '10pt', 'font-weight' = 'normal', 'font-style' = 'normal', 'text-align' = 'left',
+                                                               'margin-bottom' = 0, 'padding-top' = '0px', 'padding-left' = '10px','vertical-align' = 'middle')),
+                        shiny::tags$div(paste("Results:", sep=""), 
+                                        style = htmltools::css('font-size' = '10pt', 'font-weight' = 'bold', 'font-style' = 'normal', 'text-align' = 'left',
+                                                               'margin-bottom' = 0, 'padding-top' = '10px', 'padding-left' = '10px','vertical-align' = 'middle')),
+                        shiny::tags$div(paste("Total sequences:       ", nrow(isoQC.df), sep=""), 
+                                        style = htmltools::css('font-size' = '10pt', 'font-weight' = 'normal', 'font-style' = 'normal', 'text-align' = 'left',
+                                                               'margin-bottom' = 0, 'padding-top' = '0px', 'padding-left' = '10px','vertical-align' = 'middle')),
+                        shiny::tags$div(paste("Mean Phred quality before/after trimming:     ", round(mean(isoQC.df$phred_raw)), "\t|  ", round(mean(isoQC.df$phred_trim)), sep=""),
+                                        style = htmltools::css('font-size' = '10pt', 'font-weight' = 'normal', 'font-style' = 'normal', 'text-align' = 'left',
+                                                               'margin-bottom' = 0, 'padding-top' = '0px', 'padding-left' = '10px','vertical-align' = 'middle')),
+                        shiny::tags$div(paste("Mean number of Ns before/after trimming:      ", round(mean(isoQC.df$Ns_raw)), "\t|  ", round(mean(isoQC.df$Ns_trim)), sep=""),
+                                        style = htmltools::css('font-size' = '10pt', 'font-weight' = 'normal', 'font-style' = 'normal', 'text-align' = 'left',
+                                                               'margin-bottom' = 0, 'padding-top' = '0px', 'padding-left' = '10px','vertical-align' = 'middle')),
+                        shiny::tags$div(paste("Mean sequence length before/after trimming:   ", round(mean(isoQC.df$length_raw)), "\t|  ", round(mean(isoQC.df$length_trim)), sep=""),
+                                        style = htmltools::css('font-size' = '10pt', 'font-weight' = 'normal', 'font-style' = 'normal', 'text-align' = 'left',
+                                                               'margin-bottom' = 0, 'padding-top' = '0px', 'padding-left' = '10px','vertical-align' = 'middle')),
+                        style = htmltools::css(width = '28%')),
+                      shiny::tags$div(isoQC.plots,
+                                      style = htmltools::css(width = '72%')),
+                      style = htmltools::css(
+                        width = '1400px',
+                        display = 'inline-flex')))
               )
             )
             
@@ -821,9 +964,9 @@ setMethod("export_html", "isoQC",
             output <- "isolateR_output/01_isoQC_results.html"
             fname_html <- file.path(path, output)
             suppressMessages(htmltools::save_html(html_output, fname_html))
-            writeLines(gsub('<meta charset="utf-8"/>', '<meta charset="utf-8"/>\n<title>isoQC</title>', readLines(fname_html)), fname_html)
+            writeLines(gsub('<meta charset="utf-8"/>', paste('<meta charset="utf-8"/>\n<title>isoQC > ', unlist(strsplit(obj@input, '/'))[length(unlist(strsplit(obj@input, '/')))],'</title>', sep=""), readLines(fname_html)), fname_html)
             pander::openFileInOS(fname_html)
-            return(html_output)
+            #return(html_output)
           })
 
 #:::::::::::::::::::::::::::::::
@@ -851,8 +994,15 @@ setMethod("export_html", "isoQC",
 #' @importFrom scales comma_format
 #' @importFrom scales label_number
 
+
 setMethod("export_html", "isoTAX",
-          function(obj){
+          function(obj, quick_search=NULL, db=NULL){
+            #Import checks
+            if(is.null(quick_search)){ message("The 'quick_search' parameter is blank. Setting to '' to enable graphing.")
+              quick_search <- ''}
+            if(is.null(db)){ message("The 'db' parameter is blank. Setting to '' to enable graphing.")
+              db <- ''}
+            
             #Import S4 object
             merged_input <- S4_to_dataframe(obj) %>%
               mutate(phred_spark_raw = strsplit(phred_spark_raw, '_')) %>%
@@ -868,7 +1018,136 @@ setMethod("export_html", "isoTAX",
             family_threshold <- obj@family_threshold
             genus_threshold <- obj@genus_threshold
             species_threshold <- obj@species_threshold
+            #-----------------------------------------------------------------------------------------------------------------Make sunplot
             
+            d1 <- data.frame(labels = gsub(".", "_", merged_input$filename, fixed=TRUE),
+                             parents = merged_input$rank_species) %>% mutate(ids = paste(labels, sep=""))
+            d2 <- data.frame(labels = stringr::str_split_fixed(unique(paste(merged_input$rank_species, merged_input$rank_genus, sep="___")), "___", 2)[,1],
+                             parents = stringr::str_split_fixed(unique(paste(merged_input$rank_species, merged_input$rank_genus, sep="___")), "___", 2)[,2]) %>% mutate(ids = paste(labels, sep=""))
+            d3 <- data.frame(labels = stringr::str_split_fixed(unique(paste(merged_input$rank_genus, merged_input$rank_family, sep="___")), "___", 2)[,1],
+                             parents = stringr::str_split_fixed(unique(paste(merged_input$rank_genus, merged_input$rank_family, sep="___")), "___", 2)[,2]) %>% mutate(ids = paste(labels, sep=""))
+            d4 <- data.frame(labels = stringr::str_split_fixed(unique(paste(merged_input$rank_family, merged_input$rank_order, sep="___")), "___", 2)[,1],
+                             parents = stringr::str_split_fixed(unique(paste(merged_input$rank_family, merged_input$rank_order, sep="___")), "___", 2)[,2]) %>% mutate(ids = paste(labels, sep=""))
+            d5 <- data.frame(labels = stringr::str_split_fixed(unique(paste(merged_input$rank_order, merged_input$rank_class, sep="___")), "___", 2)[,1],
+                             parents = stringr::str_split_fixed(unique(paste(merged_input$rank_order, merged_input$rank_class, sep="___")), "___", 2)[,2]) %>% mutate(ids = paste(labels, sep=""))
+            d6 <- data.frame(labels = stringr::str_split_fixed(unique(paste(merged_input$rank_class, merged_input$rank_phylum, sep="___")), "___", 2)[,1],
+                             parents = stringr::str_split_fixed(unique(paste(merged_input$rank_class, merged_input$rank_phylum, sep="___")), "___", 2)[,2]) %>% mutate(ids = paste(labels, sep=""))
+            
+            d2e <- data.frame(labels = unique(gsub(" ", "_", merged_input$rank_phylum)),parents = paste("Phlyum", sep="")) %>% mutate(ids = paste(labels, sep=""))
+            d1e <- data.frame(labels = c("Phlyum"), parents = c("")) %>% mutate(ids = paste(labels, sep=""))
+            sunplot <- rbind(d1e, d2e, d6, d5, d4, d3, d2, d1) %>% select(ids, labels, parents) %>% mutate(labels = gsub(" ", "<br>", labels))
+            
+            if(n_distinct(merged_input$rank_class) <10 ){
+              d2e <- data.frame(labels = unique(gsub(" ", "_", merged_input$rank_class)),parents = paste("Class", sep="")) %>% mutate(ids = paste(labels, sep=""))
+              d1e <- data.frame(labels = c("Class"), parents = c("")) %>% mutate(ids = paste(labels, sep=""))
+              sunplot <- rbind(d1e, d2e, d5, d4, d3, d2, d1) %>% select(ids, labels, parents) %>% mutate(labels = gsub(" ", "<br>", labels))
+            }
+            
+            if(n_distinct(merged_input$rank_order) <10 ){
+              d2e <- data.frame(labels = unique(gsub(" ", "_", merged_input$rank_order)),parents = paste("Order", sep="")) %>% mutate(ids = paste(labels, sep=""))
+              d1e <- data.frame(labels = c("Order"), parents = c("")) %>% mutate(ids = paste(labels, sep=""))
+              sunplot <- rbind(d1e, d2e, d4, d3, d2, d1) %>% select(ids, labels, parents) %>% mutate(labels = gsub(" ", "<br>", labels))
+            }
+            if(n_distinct(merged_input$rank_family) <10 ){
+              d2e <- data.frame(labels = unique(gsub(" ", "_", merged_input$rank_family)),parents = paste("Family", sep="")) %>% mutate(ids = paste(labels, sep=""))
+              d1e <- data.frame(labels = c("Family"), parents = c("")) %>% mutate(ids = paste(labels, sep=""))
+              sunplot <- rbind(d1e, d2e, d3, d2, d1) %>% select(ids, labels, parents) %>% mutate(labels = gsub(" ", "<br>", labels))
+            }
+            if(n_distinct(merged_input$rank_genus) <10 ){
+              d2e <- data.frame(labels = unique(gsub(" ", "_", merged_input$rank_genus)),parents = paste("Genus", sep="")) %>% mutate(ids = paste(labels, sep=""))
+              d1e <- data.frame(labels = c("Genus"), parents = c("")) %>% mutate(ids = paste(labels, sep=""))
+              sunplot <- rbind(d1e, d2e, d2, d1) %>% select(ids, labels, parents) %>% mutate(labels = gsub(" ", "<br>", labels))
+            }
+            
+            sunplot_small <- plotly::plot_ly(sunplot, ids = ~ids, labels = ~labels, parents = ~parents, type = 'sunburst', width=350, height=350) %>%
+              plotly::layout(margin = list( l = 5, r = 5, b = 10, t = 10, pad = 0),
+                             autosize = TRUE, 
+                             plot_bgcolor  = "rgba(255, 255, 255, 1)", 
+                             paper_bgcolor = "rgba(0, 0, 0, 0)") %>% 
+              plotly::config(displayModeBar = FALSE) 
+            
+            sunplot_large <- plotly::plot_ly(sunplot, ids = ~ids, labels = ~labels, parents = ~parents, type = 'sunburst', width=900, height=900) %>%
+              plotly::layout(margin = list( l = 20, r = 20, b = 20, t = 20, pad = 0),
+                             autosize = TRUE, 
+                             plot_bgcolor  = "rgba(255, 255, 255, 1)", 
+                             paper_bgcolor = "rgba(0, 0, 0, 0)") %>% 
+              plotly::config(displayModeBar = FALSE) 
+            
+            #-----------------------------------------------------------------------------------------------------------------Make other interactive plots
+            if(length(unique(merged_input$rank_genus)) > 7){
+              merged_input.g <- merged_input %>% group_by(rank_genus) %>% mutate(group_counts=n()) %>% ungroup() %>%
+                arrange(desc(group_counts)) %>% mutate(rank_genus = ifelse(!rank_genus %in% unique(rank_genus)[1:7], "Others", rank_genus)) %>%
+                arrange(desc(ID)) %>% mutate(group2 = ifelse(ID < species_threshold, "below", "above")) %>% mutate(bar_counts=rep(1)) %>%
+                arrange(desc(group_counts))
+              merged_input.g$rank_genus <- factor(merged_input.g$rank_genus, levels=c(unique(merged_input.g$rank_genus)))
+              merged_input.g$filename <- factor(merged_input.g$filename, levels=c(unique(merged_input.g$filename)))
+              #merged_input.g$ID <- factor(merged_input.g$ID, levels=c(unique(merged_input.g$ID)))
+            } else {
+              merged_input.g <- merged_input %>% group_by(rank_genus) %>% mutate(group_counts=n()) %>% ungroup() %>%
+                arrange(desc(group_counts)) %>%
+                arrange(desc(ID)) %>% mutate(group2 = ifelse(ID < species_threshold, "below", "above")) %>% mutate(bar_counts=rep(1)) %>%
+                arrange(desc(group_counts))
+              merged_input.g$rank_genus <- factor(merged_input.g$rank_genus, levels=c(unique(merged_input.g$rank_genus)))
+              merged_input.g$filename <- factor(merged_input.g$filename, levels=c(unique(merged_input.g$filename)))
+              #merged_input.g$ID <- factor(merged_input.g$ID, levels=c(unique(merged_input.g$ID)))
+            }
+            
+            g.scatter <- ggplot2::ggplot(merged_input.g, ggplot2::aes(x=ID , y=phred_trim, colour=ID)) + 
+              ggplot2::geom_smooth(method='lm', formula= y~x, colour=scales::alpha("grey15", 0.3), linewidth=1.75, fill="#CCE6CC", alpha=0.7) + # 9F71A8 #40A499 #CCE6CC
+              ggiraph::geom_point_interactive(ggplot2::aes(x=ID-0.005, y=phred_trim-1, group=ID, colour=ID, data_id = filename, tooltip=filename), 
+                                              position=ggplot2::position_jitter(width=0, height=1),size = 0.7, hover_nearest = TRUE, alpha=0.5, colour="black") +
+              #viridis::scale_colour_viridis(option="B", begin=0, end=0.8, direction=-1, alpha=0.5) +
+              ggplot2::ylab("Phred quality score") + ggplot2::xlab("% identity to closest match") +
+              ggplot2::theme(panel.background = ggplot2::element_blank(),
+                             panel.border = ggplot2::element_rect(color ="black", fill = NA, linewidth = 0.5, linetype = 1),
+                             panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank(),
+                             legend.title = ggplot2::element_text(size=16),legend.text = ggplot2::element_text(size=12),
+                             strip.background = ggplot2::element_blank(), strip.text.x = ggplot2::element_blank(),
+                             axis.ticks.x=ggplot2::element_blank(), axis.text.x=ggplot2::element_text(size=12), 
+                             axis.title.y = ggplot2::element_text(size=16), axis.text.y=ggplot2::element_text(size=12),
+                             axis.title.x= ggplot2::element_text(size=16)) + ggplot2::theme(legend.position="none")
+            
+            ggiraph::set_girafe_defaults(
+              opts_hover_inv = ggiraph::opts_hover_inv(css = "opacity:0.2;"), 
+              opts_hover = ggiraph::opts_hover(css = "stroke:orange;stroke-width:7;"),
+              opts_tooltip = ggiraph::opts_tooltip(css = "padding:3px;background-color:#333333;color:white;"),
+              opts_sizing = ggiraph::opts_sizing(rescale = FALSE),
+              opts_toolbar = ggiraph::opts_toolbar(saveaspng = TRUE, pngname="isoQC", delay_mouseout = 5000, position="bottomleft", hidden=c("selection", "zoom"))
+            )
+            
+            isoTAX.plots1 <- ggiraph::girafe(ggobj = g.scatter, width_svg = 3.5, height_svg = 4.75)
+            
+            g.id <- ggplot2::ggplot(merged_input.g, ggplot2::aes(x=rank_genus, y=bar_counts, fill=ID, colour=ID)) + 
+              ggplot2::scale_x_discrete(limits=rev) +
+              ggiraph::geom_bar_interactive(ggplot2::aes(fill=ID,
+                                                         data_id=reorder(filename, ID),
+                                                         tooltip = reorder(paste0(filename , "\n Closest type strain: ", closest_match, "\n % similarity: ", ID, "%"), ID)),
+                                            stat="identity", width=0.9, colour=scales::alpha("grey85", 0), hover_nearest = FALSE) +
+              #viridis::scale_fill_viridis(option="B", begin=0.2, direction=-1, alpha=0.6) +
+              ggplot2::scale_fill_gradient(low="grey30", high="#CCE6CC") + # (option="B", begin=0.2, direction=-1, alpha=0.6) +
+              ggplot2::scale_y_continuous(expand = c(0.02,0.02)) +
+              ggplot2::coord_flip() + 
+              ggplot2::ylab("Seqeunce counts per genus")+
+              ggplot2::theme(panel.background = ggplot2::element_blank(),
+                             panel.border = ggplot2::element_rect(color ="black", fill = NA, linewidth = 0.5, linetype = 1),
+                             panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank(),
+                             legend.title = ggplot2::element_text(size=16),legend.text = ggplot2::element_text(size=12),
+                             strip.background = ggplot2::element_blank(), strip.text.x = ggplot2::element_blank(),
+                             axis.ticks.x=ggplot2::element_blank(), axis.text.x=ggplot2::element_text(size=12), 
+                             axis.title.y = ggplot2::element_blank(), axis.text.y=ggplot2::element_text(size=12, margin=ggplot2::margin(t = 0, r = 5, b = 0, l = 0, unit = "pt")),
+                             axis.title.x= ggplot2::element_text(size=16))
+            
+            ggiraph::set_girafe_defaults(
+              opts_hover_inv = ggiraph::opts_hover_inv(css = "opacity:0.2;"), 
+              opts_hover = ggiraph::opts_hover(css = ''),
+              opts_tooltip = ggiraph::opts_tooltip(css = "padding:3px;background-color:#333333;color:white;"),
+              opts_sizing = ggiraph::opts_sizing(rescale = FALSE),
+              opts_toolbar = ggiraph::opts_toolbar(saveaspng = TRUE, pngname="isoQC", delay_mouseout = 5000, position="topright", hidden=c("selection", "zoom"))
+            )
+            
+            isoTAX.plots2 <- ggiraph::girafe(ggobj = g.id, width_svg = 9.5, height_svg = 4.75)
+            
+            #-----------------------------------------------------------------------------------------------------------------
             
             #Import S4 object
             uni.font <- 11
@@ -880,7 +1159,7 @@ setMethod("export_html", "isoTAX",
                                                        bordered = TRUE,
                                                        resizable =TRUE,
                                                        pageSizeOptions = c(10, 25, 50, 100, 1000),
-                                                       defaultPageSize=20,
+                                                       defaultPageSize=15,
                                                        showPageSizeOptions = TRUE,
                                                        highlight = TRUE,
                                                        showSortable = TRUE,
@@ -1144,23 +1423,80 @@ setMethod("export_html", "isoTAX",
                                                                                                background = 'transparent',
                                                                                                number_fmt = scales::comma_format(accuracy = 1),
                                                                                                round_edges = FALSE, align_bars="left")) )) %>%  reactablefmtr::google_font(font_family = "Source Sans Pro") %>%
-                                               add_subtitle("isoTAX output table", font_size = 24, font_style="normal", font_weight="bold", margin=c(20,0,0,0)) %>%
-                                               #add_subtitle(paste("Date generated: ", Sys.Date(), sep=""), font_size = 14, font_style="normal", font_weight="normal") %>%
-                                               add_subtitle(paste("No. sequences < Phylum threshold  = ",length(obj@ID[obj@ID < obj@phylum_threshold[1]]), sep=""), font_size = 14, font_style="normal", font_weight="normal") %>%
-                                               add_subtitle(paste("No. sequences < Class threshold   = ",length(obj@ID[obj@ID < obj@class_threshold[1]]), sep=""), font_size = 14, font_style="normal", font_weight="normal") %>%
-                                               add_subtitle(paste("No. sequences < Order threshold   = ",length(obj@ID[obj@ID < obj@order_threshold[1]]), sep=""), font_size = 14, font_style="normal", font_weight="normal") %>%
-                                               add_subtitle(paste("No. sequences < Family threshold  = ",length(obj@ID[obj@ID < obj@family_threshold[1]]), sep=""), font_size = 14, font_style="normal", font_weight="normal") %>%
-                                               add_subtitle(paste("No. sequences < Genus threshold   = ",length(obj@ID[obj@ID < obj@genus_threshold[1]]), sep=""), font_size = 14, font_style="normal", font_weight="normal") %>%
-                                               add_subtitle(paste("No. sequences < Species threshold = ",length(obj@ID[obj@ID < obj@species_threshold[1]]), sep=""), font_size = 14, font_style="normal", font_weight="normal", margin=c(0,0,0,0))
+                                               htmlwidgets::prependContent(
+                                                 shiny::tags$div(
+                                                   shiny::tags$div(
+                                                     shiny::tags$div(
+                                                       "isoTAX output table", 
+                                                       style = htmltools::css('font-size' = '24pt', 'font-weight' = 'bold',
+                                                                              'text-align' = 'left', 'margin-bottom' = 0, 'padding-top' = '10px', 'padding-left' = '10px', 'vertical-align' = 'middle')),
+                                                     shiny::tags$div(paste("---------------------------------------------------", sep=""), 
+                                                                     style = htmltools::css('font-size' = '14pt', 'font-weight' = 'normal', 'font-style' = 'normal', 'text-align' = 'left',
+                                                                                            'margin-bottom' = 0, 'padding-top' = '0px', 'padding-left' = '10px','vertical-align' = 'middle')),
+                                                     shiny::tags$div(paste('Project directory: "', unlist(strsplit(obj@input, '/'))[length(unlist(strsplit(obj@input, '/')))-1], '"', sep=""), 
+                                                                     style = htmltools::css('font-size' = '10pt', 'font-weight' = 'bold', 'font-style' = 'normal', 'text-align' = 'left',
+                                                                                            'margin-bottom' = 0, 'padding-top' = '0px', 'padding-left' = '10px','vertical-align' = 'middle')),
+                                                     shiny::tags$div(paste("Date last updated: ", Sys.Date(), sep=""), 
+                                                                     style = htmltools::css('font-size' = '10pt', 'font-weight' = 'normal', 'font-style' = 'normal', 'text-align' = 'left',
+                                                                                            'margin-bottom' = 0, 'padding-top' = '0px', 'padding-left' = '10px','vertical-align' = 'middle')),
+                                                     shiny::tags$div(paste("---------------------------------------------------", sep=""), 
+                                                                     style = htmltools::css('font-size' = '14pt', 'font-weight' = 'normal', 'font-style' = 'normal', 'text-align' = 'left',
+                                                                                            'margin-bottom' = 0, 'padding-top' = '0px', 'padding-left' = '10px','vertical-align' = 'middle')),
+                                                     shiny::tags$div(paste("Settings:", sep=""), 
+                                                                     style = htmltools::css('font-size' = '10pt', 'font-weight' = 'bold', 'font-style' = 'normal', 'text-align' = 'left',
+                                                                                            'margin-bottom' = 0, 'padding-top' = '0px', 'padding-left' = '10px','vertical-align' = 'middle')),
+                                                     shiny::tags$div(paste("quick_search = '", quick_search ,"'", sep=""),
+                                                                     style = htmltools::css('font-size' = '10pt', 'font-weight' = 'normal', 'font-style' = 'normal', 'text-align' = 'left',
+                                                                                            'margin-top' = 0, 'padding-top' = '0px', 'padding-left' = '10px','vertical-align' = 'middle')),
+                                                     shiny::tags$div(paste("db = '", db,"'", sep=""),
+                                                                     style = htmltools::css('font-size' = '10pt', 'font-weight' = 'normal', 'font-style' = 'normal', 'text-align' = 'left',
+                                                                                            'margin-bottom' = 0, 'padding-top' = '0px', 'padding-left' = '10px','vertical-align' = 'middle')),
+                                                     shiny::tags$div(paste("phylum_threshold = ", obj@phylum_threshold[1], sep=""),
+                                                                     style = htmltools::css('font-size' = '10pt', 'font-weight' = 'normal', 'font-style' = 'normal', 'text-align' = 'left',
+                                                                                            'margin-bottom' = 0, 'padding-top' = '0px', 'padding-left' = '10px','vertical-align' = 'middle')),
+                                                     shiny::tags$div(paste("class_threshold = ", obj@class_threshold[1], sep=""),
+                                                                     style = htmltools::css('font-size' = '10pt', 'font-weight' = 'normal', 'font-style' = 'normal', 'text-align' = 'left',
+                                                                                            'margin-bottom' = 0, 'padding-top' = '0px', 'padding-left' = '10px','vertical-align' = 'middle')),
+                                                     shiny::tags$div(paste("order_threshold = ",obj@order_threshold[1], sep=""),
+                                                                     style = htmltools::css('font-size' = '10pt', 'font-weight' = 'normal', 'font-style' = 'normal', 'text-align' = 'left',
+                                                                                            'margin-bottom' = 0, 'padding-top' = '0px', 'padding-left' = '10px','vertical-align' = 'middle')),
+                                                     shiny::tags$div(paste("family_threshold = ",obj@family_threshold[1], sep=""),
+                                                                     style = htmltools::css('font-size' = '10pt', 'font-weight' = 'normal', 'font-style' = 'normal', 'text-align' = 'left',
+                                                                                            'margin-bottom' = 0, 'padding-top' = '0px', 'padding-left' = '10px','vertical-align' = 'middle')),
+                                                     shiny::tags$div(paste("genus_threshold = ",obj@genus_threshold[1], sep=""),
+                                                                     style = htmltools::css('font-size' = '10pt', 'font-weight' = 'normal', 'font-style' = 'normal', 'text-align' = 'left',
+                                                                                            'margin-bottom' = 0, 'padding-top' = '0px', 'padding-left' = '10px','vertical-align' = 'middle')),
+                                                     shiny::tags$div(paste("species_threshold = ",obj@species_threshold[1], sep=""),
+                                                                     style = htmltools::css('font-size' = '10pt', 'font-weight' = 'normal', 'font-style' = 'normal', 'text-align' = 'left',
+                                                                                            'margin-bottom' = 0, 'padding-top' = '0px', 'padding-left' = '10px','vertical-align' = 'middle')),
+                                                     style = htmltools::css(width = '28%')),
+                                                   
+                                                   shiny::tags$div(
+                                                     shiny::tags$div(sunplot_small, style = htmltools::css(display='inline-flex', 'align' = 'left', 'margin-left' = '-22%',
+                                                                                                           width='15%', 'vertical-align' = 'bottom'))
+                                                   ),
+                                                   shiny::tags$div(
+                                                     shiny::tags$a(href = paste("file:///",file.path(path, "lib", "sb_large.html"), sep=""), "Full Size", target="_blank"),
+                                                     style = htmltools::css(display='inline-flex', width='10%', 'font-size' = '10pt', 'alpha' = '0.5', 'padding-top' = '15px','padding-left' = '10px',
+                                                                            'font-weight' = 'normal','margin-left' = '-10%', 'z-index' = '1')
+                                                   ),
+                                                   shiny::tags$div(isoTAX.plots1, style = htmltools::css(display='inline-flex', width='15%', 'margin-left' = '-4%', 'margin-bottom' = '-10%')), 
+                                                   shiny::tags$div(isoTAX.plots2, style = htmltools::css(display='inline-flex', width='20%', 'padding-left' = '50px', 'margin-bottom' = '-2%')),
+                                                   style = htmltools::css(
+                                                     width = '1400px',
+                                                     display = 'inline-flex')))
             )
             
-            
+            sunplot_large1 <- shiny::tags$div(sunplot_large, 'align'= "center", 'height' = '100vh', 'margin'='0') 
+            fname_html_sun <- file.path(path, "lib", "sb_large.html")
+            htmltools::save_html(sunplot_large1, fname_html_sun)
             fname_html <- file.path(path, output)
             htmltools::save_html(html_output, fname_html)
-            writeLines(gsub('<meta charset="utf-8"/>', '<meta charset="utf-8"/>\n<title>isoTAX</title>', readLines(fname_html)), fname_html)
+            writeLines(gsub('<meta charset="utf-8"/>', paste('<meta charset="utf-8"/>\n<title>isoTAX > ', unlist(strsplit(obj@input, '/'))[length(unlist(strsplit(obj@input, '/')))-1],'</title>', sep=""), readLines(fname_html)), fname_html)
             pander::openFileInOS(fname_html)
-            return(html_output)
+            #return(html_output)
           })
+
 
 #:::::::::::::::::::::::::::::::
 # MAKE HTML #3: LIB TABLE
@@ -1193,7 +1529,12 @@ setMethod("export_html", "isoTAX",
 
 setMethod("export_html", "isoLIB",
           function(obj, method=NULL, group_cutoff=NULL){
-            
+            #Import checks
+            if(is.null(method)){ message("The 'method' parameter is blank. Setting to 'NA' to enable graphing.")
+              method <- 'NA'}
+            if(is.null(group_cutoff)){ message("The 'group_cutoff' parameter is blank. Setting to 'NA' to enable graphing.")
+              group_cutoff <- 'NA'}
+
             html_input2 <- S4_to_dataframe(obj) %>%
               mutate(phylum_col = ifelse(ID > phylum_threshold, "#31a354", NA)) %>%
               mutate(class_col = ifelse(ID > class_threshold, "#31a354", NA)) %>%
@@ -1203,9 +1544,9 @@ setMethod("export_html", "isoLIB",
               mutate(species_col = ifelse(ID > species_threshold, "#31a354", NA)) %>%
               dplyr::relocate(representative, .after=filename)
             
-            if(!grepl("maximum_likelihood|closest_species|dark_mode", method)){ method <- "NA"}
-            if(method=="closest_species"){ method <- "NA"}
-            if(is.null(group_cutoff)){ group_cutoff <- "NA"}
+            #if(!grepl("maximum_likelihood|closest_species|dark_mode", method)){ method <- "NA"}
+            #if(method=="closest_species"){ method <- "NA"}
+            #if(is.null(group_cutoff)){ group_cutoff <- "NA"}
             
             html_input <- html_input2 %>% select(-input,
                                                  -phylum_threshold,
@@ -1219,7 +1560,7 @@ setMethod("export_html", "isoLIB",
                                                  -order_col,
                                                  -family_col,
                                                  -genus_col,
-                                                 -species_col)
+                                                 -species_col) %>% arrange(desc(representative))
             
             uni.font <- 9
             set.spacing <- "&nbsp;&nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp;&nbsp;"
@@ -1236,7 +1577,7 @@ setMethod("export_html", "isoLIB",
                                                  #filter_checkbox("categories", "Categories", data, ~categories, inline = TRUE),
                                                  #crosstalk::filter_slider("length_trim", "Seq length", round=-1, ticks=FALSE, data, ~length_trim),
                                                  #crosstalk::filter_slider("ID", "% identity", data, round=2, ticks=FALSE, ~ID),
-                                                 crosstalk::filter_checkbox("representative", "Representative", data, ~representative, inline = FALSE),
+                                                 crosstalk::filter_checkbox("representative", "Sequence Group Representative (Rep)", data, ~representative, inline = FALSE),
                                                  crosstalk::filter_checkbox("date", "Date Sequenced", data, ~date, inline = FALSE)
                                                ),
                                                htmltools::browsable(
@@ -1440,9 +1781,24 @@ setMethod("export_html", "isoLIB",
                                                               }"),
                                                               cell = color_tiles(html_input2, color_ref="species_col"))
                                                            )) %>% reactablefmtr::google_font(font_family = "Source Sans Pro") %>%
-                                                   add_subtitle("isoLIB output table", font_size = 28, font_style="normal", font_weight="bold") %>%
-                                                   add_subtitle(paste('Method: "', method, '" | Group Cutoff: ', group_cutoff, sep=""), font_size = 12, font_style="normal", font_weight="normal") %>%
-                                                   add_subtitle(paste("Date last updated: ", Sys.Date(), sep=""), font_size = 12, font_style="normal", font_weight="normal") %>%
+                                                   htmlwidgets::prependContent(
+                                                     shiny::tags$div(
+                                                       shiny::tags$div(
+                                                         shiny::tags$div(paste('Project directory: "', unlist(strsplit(obj@input, '/'))[length(unlist(strsplit(obj@input, '/')))-1], '"', sep=""), 
+                                                                         style = htmltools::css('font-size' = '12pt', 'font-weight' = 'bold', 'font-style' = 'normal', 'text-align' = 'left',
+                                                                                                'margin-bottom' = 0, 'padding-top' = '10px', 'padding-left' = '0px','vertical-align' = 'middle')),
+                                                         shiny::tags$div(paste("Date last updated: ", Sys.Date(), sep=""), 
+                                                                         style = htmltools::css('font-size' = '12pt', 'font-weight' = 'normal', 'font-style' = 'normal', 'text-align' = 'left',
+                                                                                                'margin-bottom' = 0, 'padding-top' = '0px', 'padding-left' = '0px','vertical-align' = 'middle')),
+                                                         shiny::tags$div(paste("method = '", method, "' | group_cutoff = '", group_cutoff, "'", sep=""),
+                                                                         style = htmltools::css('font-size' = '12pt', 'font-weight' = 'normal', 'font-style' = 'normal', 'text-align' = 'left',
+                                                                                                'margin-bottom' = 0, 'padding-top' = '0px', 'padding-left' = '0px','vertical-align' = 'middle'))),
+                                                       shiny::tags$div("isoLIB output table", 
+                                                                       style = htmltools::css('font-size' = '24pt', 'font-weight' = 'bold',
+                                                                                              'text-align' = 'left', 'margin-bottom' = 0, 'padding-top' = '10px', 'padding-left' = '28%', 'vertical-align' = 'middle')),
+                                                       style = htmltools::css(
+                                                         width = '1400px',
+                                                         display = 'flex'))) %>%
                                                    add_subtitle("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------", font_size = 14, font_style="normal", font_weight="normal") %>%
                                                    add_subtitle(paste("Total sequences: " ,length(obj@filename) , set.spacing,
                                                                       "Total strain groups: ", length(obj@representative[obj@representative == "yes"]) , set.spacing,
@@ -1462,9 +1818,9 @@ setMethod("export_html", "isoLIB",
             } else {html_output <- crosstalk::bscols(widths = c(1,10),
                                                      list(
                                                        #filter_checkbox("categories", "Categories", data, ~categories, inline = TRUE),
-                                                       crosstalk::filter_slider("length_trim", "Seq length", round=-1, ticks=FALSE, data, ~length_trim),
+                                                       crosstalk::filter_slider("length_trim", "Sequence length", round=-1, ticks=FALSE, data, ~length_trim),
                                                        crosstalk::filter_slider("ID", "% identity", data, round=2, ticks=FALSE, ~ID),
-                                                       crosstalk::filter_checkbox("representative", "Representative", data, ~representative, inline = FALSE),
+                                                       crosstalk::filter_checkbox("representative", "Sequence Group Representative (Rep)", data, ~representative, inline = FALSE),
                                                        crosstalk::filter_checkbox("date", "Date Sequenced", data, ~date, inline = FALSE)
                                                      ),
                                                      
@@ -1669,9 +2025,25 @@ setMethod("export_html", "isoLIB",
                                                               }"),
                                                               cell = color_tiles(html_input2, color_ref="species_col"))
                                                                    )) %>% reactablefmtr::google_font(font_family = "Source Sans Pro") %>%
-                                                           add_subtitle("isoLIB output table", font_size = 28, font_style="normal", font_weight="bold") %>%
-                                                           add_subtitle(paste('Method: "', method, '" | Group Cutoff: ', group_cutoff, sep=""), font_size = 12, font_style="normal", font_weight="normal") %>%
-                                                           add_subtitle(paste("Date last updated: ", Sys.Date(), sep=""), font_size = 12, font_style="normal", font_weight="normal") %>%
+                                                           
+                                                           htmlwidgets::prependContent(
+                                                               shiny::tags$div(
+                                                                 shiny::tags$div(
+                                                                   shiny::tags$div(paste('Project directory: "', unlist(strsplit(obj@input, '/'))[length(unlist(strsplit(obj@input, '/')))-1], '"', sep=""), 
+                                                                                   style = htmltools::css('font-size' = '12pt', 'font-weight' = 'bold', 'font-style' = 'normal', 'text-align' = 'left',
+                                                                                                          'margin-bottom' = 0, 'padding-top' = '10px', 'padding-left' = '0px','vertical-align' = 'middle')),
+                                                                   shiny::tags$div(paste("Date last updated: ", Sys.Date(), sep=""), 
+                                                                                   style = htmltools::css('font-size' = '12pt', 'font-weight' = 'normal', 'font-style' = 'normal', 'text-align' = 'left',
+                                                                                                          'margin-bottom' = 0, 'padding-top' = '0px', 'padding-left' = '0px','vertical-align' = 'middle')),
+                                                                   shiny::tags$div(paste("method = '", method, "' | group_cutoff = '", group_cutoff, "'", sep=""),
+                                                                                   style = htmltools::css('font-size' = '12pt', 'font-weight' = 'normal', 'font-style' = 'normal', 'text-align' = 'left',
+                                                                                                          'margin-bottom' = 0, 'padding-top' = '0px', 'padding-left' = '0px','vertical-align' = 'middle'))),
+                                                                 shiny::tags$div("isoLIB output table", 
+                                                                   style = htmltools::css('font-size' = '24pt', 'font-weight' = 'bold',
+                                                                                          'text-align' = 'left', 'margin-bottom' = 0, 'padding-top' = '10px', 'padding-left' = '28%', 'vertical-align' = 'middle')),
+                                                                 style = htmltools::css(
+                                                                   width = '1400px',
+                                                                   display = 'flex'))) %>%
                                                            add_subtitle("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------", font_size = 14, font_style="normal", font_weight="normal") %>%
                                                            add_subtitle(paste("Total sequences: " ,length(obj@filename) , set.spacing,
                                                                               "Total strain groups: ", length(obj@representative[obj@representative == "yes"]) , set.spacing,
@@ -1691,13 +2063,13 @@ setMethod("export_html", "isoLIB",
             }
             fname_html <- file.path(path, output)
             htmltools::save_html(html_output, fname_html)
-            writeLines(gsub('<meta charset="utf-8"/>', '<meta charset="utf-8"/>\n<title>isoLIB</title>', readLines(fname_html)), fname_html)
+            writeLines(gsub('<meta charset="utf-8"/>', paste('<meta charset="utf-8"/>\n<title>isoLIB > ', unlist(strsplit(obj@input, '/'))[length(unlist(strsplit(obj@input, '/')))-1],'</title>', sep=""), readLines(fname_html)), fname_html)
+            #writeLines(gsub('<meta charset="utf-8"/>', '<meta charset="utf-8"/>\n<title>isoLIB</title>', readLines(fname_html)), fname_html)
             writeLines(gsub('amp;', '', readLines(fname_html)), fname_html)
-            
             writeLines(gsub('">---', ';white-space:nowrap">---', readLines(fname_html)), fname_html)
             writeLines(gsub('">Total seq', ';white-space:nowrap">Total seq', readLines(fname_html)), fname_html)
             pander::openFileInOS(fname_html)
-            return(html_output)
+            #return(html_output)
           })
 
 

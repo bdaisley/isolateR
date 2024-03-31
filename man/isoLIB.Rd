@@ -18,7 +18,7 @@ isoLIB(
   class_threshold = 78.5,
   order_threshold = 82,
   family_threshold = 86.5,
-  genus_threshold = 96.5,
+  genus_threshold = 94.5,
   species_threshold = 98.7
 )
 }
@@ -67,7 +67,7 @@ Ignored if old_lib_csv=NULL.}
 \item{species_threshold}{Percent sequence similarity threshold for species rank demarcation}
 }
 \value{
-Returns an isoLIB class object. Default taxonomic cutoffs for phylum (75.0), class (78.5), order (82.0), family (86.5), genus (96.5), and species (98.7) demarcation are based on Yarza et al. 2014, Nature Reviews Microbiology (DOI:10.1038/nrmicro3330)
+Returns an isoLIB class object. Default taxonomic cutoffs for phylum (75.0), class (78.5), order (82.0), family (86.5), genus (94.5), and species (98.7) demarcation are based on Yarza et al. 2014, Nature Reviews Microbiology (DOI:10.1038/nrmicro3330)
 }
 \description{
 This function creates a strain library by grouping closely related strains of interest based on sequence similarity.

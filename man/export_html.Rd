@@ -7,9 +7,15 @@
 \alias{export_html-isoLIB}
 \title{Export HTML for isoQC > isoTAX > isoLIB class objects}
 \usage{
-\S4method{export_html}{isoQC}(obj)
+\S4method{export_html}{isoQC}(
+  obj,
+  min_phred_score = NULL,
+  min_length = NULL,
+  sliding_window_cutoff = NULL,
+  sliding_window_size = NULL
+)
 
-\S4method{export_html}{isoTAX}(obj)
+\S4method{export_html}{isoTAX}(obj, quick_search = NULL, db = NULL)
 
 \S4method{export_html}{isoLIB}(obj, method = NULL, group_cutoff = NULL)
 }

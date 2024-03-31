@@ -31,7 +31,7 @@
 #' @param genus_threshold Percent sequence similarity threshold for genus rank demarcation
 #' @param species_threshold Percent sequence similarity threshold for species rank demarcation
 #' @seealso \code{\link{isoTAX}}, \code{\link{isoLIB}}
-#' @return Returns an isoLIB class object. Default taxonomic cutoffs for phylum (75.0), class (78.5), order (82.0), family (86.5), genus (96.5), and species (98.7) demarcation are based on Yarza et al. 2014, Nature Reviews Microbiology (DOI:10.1038/nrmicro3330)
+#' @return Returns an isoLIB class object. Default taxonomic cutoffs for phylum (75.0), class (78.5), order (82.0), family (86.5), genus (94.5), and species (98.7) demarcation are based on Yarza et al. 2014, Nature Reviews Microbiology (DOI:10.1038/nrmicro3330)
 #' @importFrom utils download.file
 #' @importFrom utils untar
 #' @importFrom R.utils gunzip
@@ -67,7 +67,7 @@ isoLIB <- function(input=NULL,
                    class_threshold=78.5,
                    order_threshold=82.0,
                    family_threshold=86.5,
-                   genus_threshold=96.5,
+                   genus_threshold=94.5,
                    species_threshold=98.7){
   
   #Input checks------------------------------------------------------------
@@ -86,6 +86,8 @@ isoLIB <- function(input=NULL,
   new_lib <- stringr::str_replace_all(input, '\\\\', '/')
   new_lib_path <- paste(unlist(strsplit(new_lib, '/'))[1:(length(unlist(strsplit(new_lib, '/')))-1)],collapse="/")
   new_lib_file <- read.csv(new_lib) #, row.names = 1) removing row.names setting
+  if(nrow(new_lib_file) < 2) stop("Command terminated. isoLIB requires at least 2 sequences to generate a library.", call.=FALSE)
+  
   setwd(new_lib_path)
   
   #-------------------------------------------------
@@ -180,8 +182,8 @@ isoLIB <- function(input=NULL,
       mutate(sequence_group = sapply(1:length(.$sequence_group),function(x) stringr::str_sub(.$sequence_group[x], 6, nchar(.$sequence_group[x])))) %>%
       mutate(representative = ifelse(sequence_group == filename, "yes", "no")) %>%
       arrange(row_no) %>%
-      dplyr::select(sequence_group, date, filename, seqs_trim, phred_trim, Ns_trim, length_trim, closest_match, NCBI_acc, ID,
-                    rank_phylum, rank_class, rank_order, rank_family, rank_genus, rank_species, representative)
+      dplyr::select(sequence_group, date, filename, representative, seqs_trim, phred_trim, Ns_trim, length_trim, closest_match, NCBI_acc, ID,
+                    rank_phylum, rank_class, rank_order, rank_family, rank_genus, rank_species)
     
     #---Sanity check
     message(cat(paste0("\033[0;", 32, "m","A total of ", length(unique(merged.drep1$sequence_group)),
@@ -284,8 +286,8 @@ isoLIB <- function(input=NULL,
           mutate(sequence_group = sapply(1:length(.$sequence_group),function(x) stringr::str_sub(.$sequence_group[x], 6, nchar(.$sequence_group[x])))) %>%
           mutate(representative = ifelse(sequence_group == filename, "yes", "no")) %>%
           arrange(row_no) %>%
-          dplyr::select(sequence_group, date, filename, seqs_trim, phred_trim, Ns_trim, length_trim, closest_match, NCBI_acc, ID,
-                        rank_phylum, rank_class, rank_order, rank_family, rank_genus, rank_species, representative)
+          dplyr::select(sequence_group, date, filename, representative, seqs_trim, phred_trim, Ns_trim, length_trim, closest_match, NCBI_acc, ID,
+                        rank_phylum, rank_class, rank_order, rank_family, rank_genus, rank_species)
         message(cat(paste0("\033[0;", 32, "m","Re-assigning sequence group representatives for old + new libraries.", "\033[0m")))
         
       }
@@ -321,8 +323,8 @@ isoLIB <- function(input=NULL,
       mutate(sequence_group = sapply(1:length(.$sequence_group),function(x) stringr::str_sub(.$sequence_group[x], 6, nchar(.$sequence_group[x])))) %>%
       mutate(representative = ifelse(sequence_group == filename, "yes", "no")) %>%
       arrange(row_no) %>%
-      dplyr::select(sequence_group, date, filename, seqs_trim, phred_trim, Ns_trim, length_trim, closest_match, NCBI_acc, ID,
-                    rank_phylum, rank_class, rank_order, rank_family, rank_genus, rank_species, representative)
+      dplyr::select(sequence_group, date, filename, representative, seqs_trim, phred_trim, Ns_trim, length_trim, closest_match, NCBI_acc, ID,
+                    rank_phylum, rank_class, rank_order, rank_family, rank_genus, rank_species)
     
     #---Sanity check
     message(cat(paste0("\033[0;", 32, "m","A total of ", length(unique(merged.drep1$sequence_group)),
@@ -509,9 +511,9 @@ isoLIB <- function(input=NULL,
     
     #Subset only columns of interest------------------------------------------------------------------
     
-    merged.drep1 <- merged.drep %>% select(sequence_group, date, filename, seqs_trim, phred_trim, Ns_trim, length_trim,
+    merged.drep1 <- merged.drep %>% select(sequence_group, date, filename, representative, seqs_trim, phred_trim, Ns_trim, length_trim,
                                            closest_match, NCBI_acc, ID,
-                                           rank_phylum, rank_class, rank_order, rank_family, rank_genus, rank_species, representative)
+                                           rank_phylum, rank_class, rank_order, rank_family, rank_genus, rank_species)
     
     #---Sanity check
     message(cat(paste0("\033[0;", 32, "m","A total of ", length(unique(merged.drep$grouping)), 
@@ -639,9 +641,9 @@ isoLIB <- function(input=NULL,
         #Remove unique identifier characters
         mutate(sequence_group = sapply(1:length(.$sequence_group),function(x) stringr::str_sub(.$sequence_group[x], 6, nchar(.$sequence_group[x]))))
       
-      merged.drep2 <- combined_lib_file_regroup %>% select(sequence_group, date, filename, seqs_trim, phred_trim, Ns_trim, length_trim,
+      merged.drep2 <- combined_lib_file_regroup %>% select(sequence_group, date, filename, representative, seqs_trim, phred_trim, Ns_trim, length_trim,
                                                            closest_match, NCBI_acc, ID,
-                                                           rank_phylum, rank_class, rank_order, rank_family, rank_genus, rank_species, representative)
+                                                           rank_phylum, rank_class, rank_order, rank_family, rank_genus, rank_species)
       
       #---Sanity check
       old.match.comparisons <- cbind(combined_lib_file %>% filter(representative!="") %>% select(filename, sequence_group) %>% distinct(filename, .keep_all=TRUE) %>% {tmp <<- .},
@@ -724,9 +726,9 @@ isoLIB <- function(input=NULL,
   if(export_csv==TRUE){
     if(is.null(old_lib_csv)==TRUE){
       output_name <- "03_isoLIB_results.csv"
-      csv_output <- S4_to_dataframe(isolib.S4.1) %>% select(sequence_group, date, filename,  seqs_trim, phred_trim, Ns_trim, length_trim,
+      csv_output <- S4_to_dataframe(isolib.S4.1) %>% select(sequence_group, date, filename, representative, seqs_trim, phred_trim, Ns_trim, length_trim,
                                                             closest_match, NCBI_acc, ID,
-                                                            rank_phylum, rank_class, rank_order, rank_family, rank_genus, rank_species, representative)
+                                                            rank_phylum, rank_class, rank_order, rank_family, rank_genus, rank_species)
       write.csv(csv_output, file=paste(output_name, sep=""), row.names = FALSE)
       message(cat(paste0("\033[97;", 40, "m","CSV file exported:", "\033[0m",
                          "\033[0;", 32, "m", " ", file.path(path, output_name),"\033[0m",
@@ -734,9 +736,9 @@ isoLIB <- function(input=NULL,
     }
     if(is.null(old_lib_csv)==FALSE){
       output_name <- "03_isoLIB_results_merged.csv"
-      csv_output <- S4_to_dataframe(isolib.S4.2) %>% select(sequence_group, date, filename,  seqs_trim, phred_trim, Ns_trim, length_trim,
+      csv_output <- S4_to_dataframe(isolib.S4.2) %>% select(sequence_group, date, filename, representative, seqs_trim, phred_trim, Ns_trim, length_trim,
                                                             closest_match, NCBI_acc, ID,
-                                                            rank_phylum, rank_class, rank_order, rank_family, rank_genus, rank_species, representative)
+                                                            rank_phylum, rank_class, rank_order, rank_family, rank_genus, rank_species)
       write.csv(csv_output, file=paste(output_name, sep=""), row.names = FALSE)
       message(cat(paste0("\033[97;", 40, "m","CSV file exported:", "\033[0m",
                          "\033[0;", 32, "m", " ", file.path(path, output_name),"\033[0m",

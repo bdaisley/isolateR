@@ -9,7 +9,7 @@
   export_html = TRUE,
   export_csv = TRUE,
   quick_search = TRUE,
-  db = "16S",
+  db = "16S_bac",
   db_path = NULL,
   vsearch_path = NULL,
   iddef = 2,
@@ -17,7 +17,7 @@
   class_threshold = 78.5,
   order_threshold = 82,
   family_threshold = 86.5,
-  genus_threshold = 96.5,
+  genus_threshold = 94.5,
   species_threshold = 98.7
 )
 }

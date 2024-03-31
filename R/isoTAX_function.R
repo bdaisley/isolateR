@@ -9,7 +9,7 @@
 #' @param quick_search (Default=FALSE) Whether or not to perform a comprehensive database search (i.e. optimal global alignment).
 #' If TRUE, performs quick search equivalent to setting VSEARCH parameters "--maxaccepts 100 --maxrejects 100".
 #' If FALSE, performs comprehensive search equivalent to setting VSEARCH parameters "--maxaccepts 0 --maxrejects 0"
-#' @param db (Default="16S") Select database option(s) including "16S" (for searching against the NCBI Refseq targeted loci 16S rRNA database),
+#' @param db (Default="16S_bac") Select database option(s) including "16S" (for searching against the NCBI Refseq targeted loci 16S rRNA database),
 #' "ITS" (for searching against the NCBI Refseq targeted loci ITS  database. For combined databases in cases where input sequences are derived from
 #' bacteria and fungi, select "16S|ITS". Setting to anything other than db=NULL or db="custom" causes 'db.path' parameter to be ignored.
 #' @param db_path Path of FASTA-formatted database sequence file. Ignored if 'db' parameter is set to anything other than NULL or "custom".
@@ -27,7 +27,7 @@
 #' @param genus_threshold Percent sequence similarity threshold for genus rank demarcation
 #' @param species_threshold Percent sequence similarity threshold for species rank demarcation
 #' @seealso \code{\link{isoQC}}, \code{\link{isoLIB}}, \code{\link{search_db}}
-#' @return Returns taxonomic classification table of class isoTAX. Default taxonomic cutoffs for phylum (75.0), class (78.5), order (82.0), family (86.5), genus (96.5), and species (98.7) demarcation are based on Yarza et al. 2014, Nature Reviews Microbiology (DOI:10.1038/nrmicro3330)
+#' @return Returns taxonomic classification table of class isoTAX. Default taxonomic cutoffs for phylum (75.0), class (78.5), order (82.0), family (86.5), genus (94.5), and species (98.7) demarcation are based on Yarza et al. 2014, Nature Reviews Microbiology (DOI:10.1038/nrmicro3330)
 #' @importFrom stringr str_subset
 #' @importFrom stringr str_replace_all
 #' @importFrom stringr str_split_fixed
@@ -56,7 +56,7 @@ isoTAX <- function(input=NULL,
                    export_html=TRUE,
                    export_csv=TRUE,
                    quick_search=FALSE,
-                   db="16S",
+                   db="16S_bac",
                    db_path=NULL,
                    vsearch_path=NULL,
                    iddef=2,
@@ -64,7 +64,7 @@ isoTAX <- function(input=NULL,
                    class_threshold=78.5,
                    order_threshold=82.0,
                    family_threshold=86.5,
-                   genus_threshold=96.5,
+                   genus_threshold=94.5,
                    species_threshold=98.7
                    ){
 
@@ -109,7 +109,7 @@ isoTAX <- function(input=NULL,
                             iddef=iddef)
 
 
-  message(cat(paste0("\n", "\033[97;", 40, "m","Organizing results", "\033[0m", "\n")))
+  message(cat(paste0("\033[97;", 40, "m","Organizing results", "\033[0m")))
 
   #-------------------------------------------------
 
@@ -127,13 +127,13 @@ isoTAX <- function(input=NULL,
     mutate(closest_match = ifelse(length_trim < 20, "No_match", closest_match)) %>%
     mutate(ID = ifelse(length_trim < 20, 51, ID))
 
-  message(cat(paste0("\033[97;", 40, "m","Done.", "\033[0m")))
-
+  message(cat(paste0("\033[0;", 32, "m","Done.", "\033[0m")))
+  
   #-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
   if(db!="custom"){
   #------------------------------------------------- library(rentrez)
-  message(cat(paste0("\n", "\033[97;", 40, "m","Collecting higher level taxonomic rank information of closest species match", "\033[0m", "\n")))
-  message(cat(paste0("\033[97;", 40, "m","\n", "\033[0m")))
+  message(cat(paste0("\033[97;", 40, "m","Collecting higher level taxonomic rank information of closest species match", "\033[0m")))
+  #message(cat(paste0("\033[97;", 40, "m","\n", "\033[0m")))
 
   #:::::::::::::::::::::::::::::::::::::
   # Fetch NCBI metadata for sequences
@@ -162,11 +162,8 @@ isoTAX <- function(input=NULL,
     r_fetch <- stringr::str_replace_all(r_fetch, "INSDSeq_feature-table", "INSDSeq_feature_table")
     #Convert fetched XML file to dataframe format. In this case, the 'INSDSeq' node defines individual records within the XML tree
     fetch.list[[paste("acc", i, sep="_")]] <- lapply(i, function(x) xmlconvert::xml_to_df(text = r_fetch, records.tags = c("//INSDSeq"), check.datatypes=FALSE, check.names=TRUE))
-    svMisc::progress(i, length(fetch.ids))
+    #svMisc::progress(i, length(fetch.ids))
   }
-
-  message(cat(paste0("\n", "\033[97;", 40, "m","Done.", "\033[0m")))
-  #message(cat(paste0("\033[97;", 40, "m","Exporting csv file", "\033[0m")))
 
   #Add columns of interest to lookup table
   suppressWarnings(fetch.list.df <- dplyr::bind_rows(fetch.list, .id = "column_label") %>%
@@ -247,8 +244,8 @@ isoTAX <- function(input=NULL,
     )
   }
   
-  message(cat(paste0("\n", "\033[97;", 40, "m","Done.", "\033[0m")))
-
+  message(cat(paste0("\033[0;", 32, "m","Done.", "\033[0m")))
+  
   #::::::::::::::::::::::::
   #Make reactable output
   #::::::::::::::::::::::::
@@ -296,10 +293,10 @@ isoTAX <- function(input=NULL,
   #Export HTML file----------------------------------------------------------------------
   if(export_html == TRUE) {
     output_name <- "02_isoTAX_results.html"
-    export_html(isoTAX)
+    export_html(isoTAX, quick_search=quick_search, db=db)
     #merged.df3_react <- export_html2(out_df, path, output=output_name)
     message(cat(paste0("\033[97;", 40, "m","HTML results exported: ", "\033[0m",
-                       "\033[0;", 32, "m", " ", file.path(path, output_name),"\033[0m", "\n")))
+                       "\033[0;", 32, "m", " ", file.path(path, output_name),"\033[0m")))
   }
 
   #export CSV files----------------------------------------------------------------------

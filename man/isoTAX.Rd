@@ -9,7 +9,7 @@ isoTAX(
   export_html = TRUE,
   export_csv = TRUE,
   quick_search = TRUE,
-  db = "16S",
+  db = "16S_bac",
   db_path = NULL,
   vsearch_path = NULL,
   iddef = 2,
@@ -17,7 +17,7 @@ isoTAX(
   class_threshold = 78.5,
   order_threshold = 82,
   family_threshold = 86.5,
-  genus_threshold = 96.5,
+  genus_threshold = 94.5,
   species_threshold = 98.7
 )
 }
@@ -32,7 +32,7 @@ isoTAX(
 If TRUE, performs quick search equivalent to setting VSEARCH parameters "--maxaccepts 100 --maxrejects 100".
 If FALSE, performs comprehensive search equivalent to setting VSEARCH parameters "--maxaccepts 0 --maxrejects 0"}
 
-\item{db}{(Default="16S") Select database option(s) including "16S" (for searching against the NCBI Refseq targeted loci 16S rRNA database),
+\item{db}{(Default="16S_bac") Select database option(s) including "16S" (for searching against the NCBI Refseq targeted loci 16S rRNA database),
 "ITS" (for searching against the NCBI Refseq targeted loci ITS  database. For combined databases in cases where input sequences are derived from
 bacteria and fungi, select "16S|ITS". Setting to anything other than db=NULL or db="custom" causes 'db.path' parameter to be ignored.}
 
@@ -60,7 +60,7 @@ bacteria and fungi, select "16S|ITS". Setting to anything other than db=NULL or 
 \item{species_threshold}{Percent sequence similarity threshold for species rank demarcation}
 }
 \value{
-Returns taxonomic classification table of class isoTAX. Default taxonomic cutoffs for phylum (75.0), class (78.5), order (82.0), family (86.5), genus (96.5), and species (98.7) demarcation are based on Yarza et al. 2014, Nature Reviews Microbiology (DOI:10.1038/nrmicro3330)
+Returns taxonomic classification table of class isoTAX. Default taxonomic cutoffs for phylum (75.0), class (78.5), order (82.0), family (86.5), genus (94.5), and species (98.7) demarcation are based on Yarza et al. 2014, Nature Reviews Microbiology (DOI:10.1038/nrmicro3330)
 }
 \description{
 This function performs taxonomic classification steps by searching query Sanger sequences against specified database of interest. Takes CSV input files, extracts FASTA-formatted query sequences and performs global alignment against specified database of interest via Needleman-Wunsch algorithm by wrapping the --usearch_global command implemented in VSEARCH. Default taxonomic rank cutoffs for 16S rRNA gene sequences are based on Yarza et al. 2014, Nat Rev Microbiol.

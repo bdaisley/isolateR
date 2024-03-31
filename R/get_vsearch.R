@@ -13,7 +13,7 @@
 #' vsearch.path <- get_vsearch()
 
 get_vsearch <- function(os=NULL){
-  message(cat(paste0("\n", "\033[97;", 40, "m","Detecting operating system...", "\033[0m")))
+  message(cat(paste0("\033[97;", 40, "m","Detecting operating system...", "\033[0m")))
   
   vsearch.path.dl <- file.path(system.file(package="isolateR"), "vsearch")
   suppressWarnings(dir.create(vsearch.path.dl))

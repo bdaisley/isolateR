@@ -134,7 +134,7 @@ search_db <- function(query.path = NULL,
   # Search function
   #:::::::::::::::::::::
   message(cat(paste0("\033[97;", 40, "m","Searching query sequences against NCBI database", "\033[0m")))
-  message(cat(paste0("\033[0;", 32, "m","This step will take 2-3 minutes...", "\033[0m")))
+  message(cat(paste0("\033[0;", 32, "m","This may take several minutes...", "\033[0m")))
 
   suppressWarnings(dir.create(file.path(path, "temp_vsearch")))
   path <- file.path(path, "temp_vsearch")

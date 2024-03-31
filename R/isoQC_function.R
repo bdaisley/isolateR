@@ -110,7 +110,6 @@ isoQC <- function(input=NULL,
   rawlist <- list()
   trimlist <- list()
   checkseq <- c()
-  date.list <- c()
   length.list <- c()
   
   #set progress bar----------------------------------------------------------------
@@ -131,25 +130,30 @@ isoQC <- function(input=NULL,
   length.list.max <- max(length.list)
   
   for(i in 1:length(abif_files)){
+    fpath <- file.path(path, abif_files[i]) # remove below
     
     fpath <- file.path(path, abif_files[i])
+    fpath
     #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    # Basecalling steps
+    # Basecalling and quality trimming steps
     #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     abif.pre <- sangerseqR::read.abif(fpath)
     
+    #Set sliding window----------
     if(is.null(sliding_window_cutoff)){
-      sliding_window_cutoff.x <- max(unlist(abif.pre@data['PCON.1']))*0.66
+      sliding_window_cutoff.x <- ceiling(max(unlist(abif.pre@data['PCON.1']))*0.66)
     } else {
       sliding_window_cutoff.x <- sliding_window_cutoff
     }
     
+    #Set date----------
     if(!is.null(date)){
-      date.list <- c(date.list, date.formatted)
+      date.list <- date.formatted
     } else {
-      date.list <- c(date.list, get_sanger_date(file=abif.pre))
+      date.list <- get_sanger_date(file=abif.pre)
     }
     
+    #Trimming steps----------
     if(verbose==TRUE){message(cat(paste0("\033[97;", 40, "m","Trimming file: ", fpath, "\033[0m")))}
     
     if(verbose==FALSE){
@@ -160,7 +164,7 @@ isoQC <- function(input=NULL,
                                      geneticCode           = GENETIC_CODE,
                                      TrimmingMethod        = "M2",
                                      M1TrimmingCutoff      = NULL,
-                                     M2CutoffQualityScore  = round(sliding_window_cutoff.x),
+                                     M2CutoffQualityScore  = sliding_window_cutoff.x,
                                      M2SlidingWindowSize   = sliding_window_size,
                                      baseNumPerRow         = 100,
                                      heightPerRow          = 200,
@@ -173,7 +177,7 @@ isoQC <- function(input=NULL,
                                      geneticCode           = GENETIC_CODE,
                                      TrimmingMethod        = "M2",
                                      M1TrimmingCutoff      = NULL,
-                                     M2CutoffQualityScore  = round(sliding_window_cutoff.x),
+                                     M2CutoffQualityScore  = sliding_window_cutoff.x,
                                      M2SlidingWindowSize   = 1,
                                      baseNumPerRow         = 100,
                                      heightPerRow          = 200,
@@ -187,7 +191,7 @@ isoQC <- function(input=NULL,
                                    geneticCode           = GENETIC_CODE,
                                    TrimmingMethod        = "M2",
                                    M1TrimmingCutoff      = NULL,
-                                   M2CutoffQualityScore  = round(sliding_window_cutoff.x),
+                                   M2CutoffQualityScore  = sliding_window_cutoff.x,
                                    M2SlidingWindowSize   = sliding_window_size,
                                    baseNumPerRow         = 100,
                                    heightPerRow          = 200,
@@ -200,7 +204,7 @@ isoQC <- function(input=NULL,
                                    geneticCode           = GENETIC_CODE,
                                    TrimmingMethod        = "M2",
                                    M1TrimmingCutoff      = NULL,
-                                   M2CutoffQualityScore  = round(sliding_window_cutoff.x),
+                                   M2CutoffQualityScore  = sliding_window_cutoff.x,
                                    M2SlidingWindowSize   = 1,
                                    baseNumPerRow         = 100,
                                    heightPerRow          = 200,
@@ -208,90 +212,58 @@ isoQC <- function(input=NULL,
       }
     )}
     
-    #start=abif1@QualityReport@trimmedStartPos
-    abif1.start = NULL
-    abif1.start <- abif1@QualityReport@trimmedStartPos + 5
-    if(abif1.start >= abif1@QualityReport@rawSeqLength){abif1.start <- abif1@QualityReport@trimmedStartPos}
-    if(abif1.start >= abif1@QualityReport@trimmedFinishPos){abif1.start <- abif1@QualityReport@trimmedStartPos}
     
-    abif1.end <- nchar(paste(abif1@primarySeq))
-    abif2 <- DNAStringSet(abif1@primarySeq, start=abif1.start, end=abif1.end)
-    
-    if(verbose==TRUE){message(cat(paste0("\033[97;", 40, "m","Searching for reverse primer endpoint: ", fpath, "\033[0m")))}
-    
-    if(verbose==FALSE){
-      invisible(capture.output(capture.output(abif3 <- DECIPHER::TrimDNA(DNAStringSet(paste(abif2)),
-                                                                         leftPatterns="",
-                                                                         rightPatterns="AAAAAAAAAAAAAAAAAAAAAAAAA", #CTGCTGCCTYCCGTA
-                                                                         minWidth=1,
-                                                                         maxDistance = 0.2,
-                                                                         minOverlap = 15,
-                                                                         allowInternal=TRUE,
-                                                                         threshold = 1,
-                                                                         maxAverageError = 1,
-                                                                         maxAmbiguities = 0.5,
-                                                                         type="both"), type="message"), type="output"))
-    } else {
-      abif3 <- DECIPHER::TrimDNA(DNAStringSet(paste(abif2)),
-                                 leftPatterns="",
-                                 rightPatterns="AAAAAAAAAAAAAAAAAAAAAAAAA",
-                                 minWidth=1,
-                                 maxDistance = 0.2,
-                                 minOverlap = 15,
-                                 allowInternal=TRUE,
-                                 threshold = 1,
-                                 maxAverageError = 1,
-                                 maxAmbiguities = 0.5,
-                                 type="both")
-    }
     
     #This code chunk checks if trimmed sequence region looks okay before proceeding to next step
     #----------------------------------------------------------------------------------------------
-    #if(verbose==TRUE){message(cat(paste0("\033[97;", 40, "m","Removing anything beyond reverse primer: ", fpath, "\033[0m")))} #Not implemented yet, estimating 30mer primer length
-    abif3.end <- end(abif3[[1]]) - 30  #+ nchar("CTGCTGCCTYCCGTA")
-    if(abif3.end > width(abif3[[1]])){abif3.end <- width(abif3[[1]])}
-    if(width(abif3[[1]]) <= 300){abif3.end <- nchar(paste(abif2)) }
-    if(abif3.end > (abif1@QualityReport@trimmedFinishPos - abif1.start)){abif3.end <- (abif1@QualityReport@trimmedFinishPos - abif1.start)}
-    if(abif3.end > length.list.max){abif3.end <- length.list.max}
-    if(verbose==TRUE){message(cat(paste0("\033[97;", 40, "m","Trimming error check: 1 (Passed)", "\033[0m")))}
-    abif1.start.new <- abif1.start
-    if(abif1.start <= 50 & abif3.end >= 51){abif1.start.new <- 50}
-    abif <- DNAStringSet(abif1@primarySeq, start=abif1.start.new, end = (abif1.start + abif3.end -1))
-    if(verbose==TRUE){message(cat(paste0("\033[97;", 40, "m","Trimming error check: 2 (Passed)", "\033[0m")))}
-    abif.scores.xx <- abif1@QualityReport@qualityPhredScores[abif1.start.new:(abif1.start + abif3.end -1)]
-    if(verbose==TRUE){message(cat(paste0("\033[97;", 40, "m","Trimming error check: 3 (Passed)", "\033[0m")))}
-    abif.scores <- c(rep(0.1, abif1.start.new), abif.scores.xx, rep(0.1, length.list.max-(((abif1.start + abif3.end) -1))))
-    trim.start <- c(trim.start,abif1.start.new)
-    trim.end <- c(trim.end,(abif1.start + abif3.end -1))
-    rawseq <- as.character(paste(abif))
+    abif1.start = NULL
+    abif1.end = NULL
+    abif1.start <- abif1@QualityReport@trimmedStartPos
+    abif1.end <- abif1@QualityReport@trimmedFinishPos
+    #----------Position adjustments, trim both sides based on sliding window size
+    #if(abif1.start <= 50 & abif1.end >= 51){abif1.start <- 50}
+    if((abif1.end - sliding_window_cutoff.x) > abif1.start){abif1.end <- abif1.end - sliding_window_cutoff.x}
+    if(abif1.start + sliding_window_cutoff.x < abif1.end){abif1.start <- abif1.start + sliding_window_cutoff.x}
+    if(abif1.end > length.list.max){abif1.end <- length.list.max}
     
+    #----------Adjust Ns based on assumption that anything under Q=10 is unrealiable
+    seq.unlist <- unlist(strsplit(as.character(abif1@primarySeq), "(?<=[-A-Za-z])", perl=TRUE))
+    score.unlist <- unlist(abif1@QualityReport@qualityPhredScores)
+    seq.adj <- Biostrings::DNAString(paste(sapply(1:length(seq.unlist), function(x) ifelse(score.unlist[x] <= 10, "N", seq.unlist[x])), collapse=""))
+
+    #----------Sparklist adjustments
+    rawspark.adj <- abif1@QualityReport@qualityPhredScores
+    if(length(rawspark.adj) >= length.list.max){rawspark.adj <- rawspark.adj[1:length.list.max]}
+    if(length(rawspark.adj) < length.list.max){rawspark.adj <- c(rawspark.adj, rep(0.1, length.list.max-length(rawspark.adj)))}
+
+    #----------Trimmed sequences + Q scores
+    abif1.seqs.trimmed <- paste(substr(seq.adj, start=abif1.start, stop=abif1.end))
+    abif1.scores.trimmed <- abif1@QualityReport@qualityPhredScores[abif1.start:abif1.end]
+    
+    #----------Message outputs
     if(verbose==TRUE){message(cat(paste0("\033[97;", 40, "m","Saving seq info: ", fpath, "\033[0m")))}
-    
     if(verbose==TRUE){
       msg <- sprintf('Processing "%s"', abif_files[i])
       message(msg)
     }
-    
-    
+
     #:::::::::::::::::::::::::::::::
     # Save seq + quality scores
     #:::::::::::::::::::::::::::::::
-    rawspark.adj <- abif1@QualityReport@qualityPhredScores
-    if(length(abif1@QualityReport@qualityPhredScores) >= length.list.max){rawspark.adj <- rawspark.adj[1:length.list.max]}
-    rawsparklist[[i]] <- c(rawspark.adj, rep(0.1, length.list.max-length(rawspark.adj)))
-    trimsparklist[[i]] <- abif.scores
-    rawlist[[i]] <- paste(abif1@primarySeqRaw)
-    trimlist[[i]] <- paste(abif)
-    
+    rawsparklist[[i]] <- rawspark.adj
+    trimsparklist[[i]] <- abif1.scores.trimmed
+    rawlist[[i]] <- paste(seq.adj)
+    trimlist[[i]] <- abif1.seqs.trimmed
+
     # building trim check for export-------------------------------------------------
-    entry <- data.frame(date=date.list[i],
+    entry <- data.frame(date=date.list,
                         filename=abif_files[i],
-                        trim.start.pos = abif1.start.new,
-                        trim.end.pos = abif1.start + abif3.end -1,
+                        trim.start.pos = abif1.start,
+                        trim.end.pos = abif1.end,
                         #spark_data = list(sparklist[[i]]),
                         phred_spark_raw = rbind(list(rawsparklist[[i]])),
-                        phred_raw = round(mean(rawsparklist[[i]]), 2),
-                        phred_trim = round(mean(abif.scores.xx),2 ),
+                        phred_raw = round(mean(abif1@QualityReport@qualityPhredScores), 2),
+                        phred_trim = round(mean(abif1.scores.trimmed),2 ),
                         length_raw = nchar(rawlist[[i]]),
                         length_trim = nchar(trimlist[[i]]),
                         Ns_raw = stringr::str_count(rawlist[[i]], "[Nn]"),
@@ -304,8 +276,9 @@ isoQC <- function(input=NULL,
     checkseq <- rbind(checkseq, entry)
     if(verbose==FALSE){setTxtProgressBar(prog.bar.x, i)}
     Sys.sleep(0.01)
-  }
-  # end of file loop
+    
+  } # end of file loop
+  
   Sys.sleep(0.02)
   
   
@@ -339,7 +312,6 @@ isoQC <- function(input=NULL,
            Ns_raw,
            length_raw,
            phred_spark_raw,
-           #arrcol,
            seqs_trim,
            phred_trim,
            Ns_trim,
@@ -369,7 +341,7 @@ isoQC <- function(input=NULL,
   #export HTML file----------------------------------------------------------------------
   if(export_html == TRUE) {
     fname_html <- paste0(fname, ".html", sep="")
-    export_html(isoQC)
+    export_html(isoQC, min_phred_score=min_phred_score, min_length=min_length, sliding_window_cutoff=sliding_window_cutoff, sliding_window_size = sliding_window_size)
     message(cat(paste0("\033[97;", 40, "m","HTML results exported: ", "\033[0m",
                        "\033[0;", 32, "m", " ", file.path(path, "isolateR_output", unlist(strsplit(fname_html, '/'))[length(unlist(strsplit(fname_html, '/')))]),"\033[0m", "\n")))
   }
@@ -381,7 +353,7 @@ isoQC <- function(input=NULL,
     fname_csv_pass <- paste0(fname_pass, ".csv", sep="")
     if(isEmpty(isoQC.df.pass[1])){
       message(cat(paste0("\033[97;", 40, "m","CSV file with [PASS] sequences exported: ", "\033[0m",
-                         "\033[0;", 32, "m", " ", "No sequences failed, file not exported.","\033[0m")))
+                         "\033[0;", 31, "m", " ", "No sequences passed, file not exported.","\033[0m")))
     } else {
       write.csv(file=fname_csv_pass,isoQC.df.pass, row.names = FALSE)
       message(cat(paste0("\033[97;", 40, "m","CSV results exported: ", "\033[0m",
@@ -393,7 +365,7 @@ isoQC <- function(input=NULL,
     fname_csv_fail <- paste0(fname_fail, ".csv", sep="")
     if(isEmpty(isoQC.df.fail[1])){
       message(cat(paste0("\033[97;", 40, "m","CSV file with [FAIL] sequences exported: ", "\033[0m",
-                         "\033[0;", 32, "m", " ", "No sequences failed, file not exported.","\033[0m")))
+                         "\033[0;", 31, "m", " ", "No sequences failed, file not exported.","\033[0m")))
     } else {
       write.csv(file=fname_csv_fail,isoQC.df.fail, row.names = FALSE)
       message(cat(paste0("\033[97;", 40, "m","CSV results exported: ", "\033[0m",
@@ -401,7 +373,7 @@ isoQC <- function(input=NULL,
     }
   }
   
-  
+
   #export trimmed sequences in FASTA file-------------------------------------------------
   if(export_fasta == TRUE) {
     #PASS sequences
@@ -409,12 +381,12 @@ isoQC <- function(input=NULL,
     fname_fasta_pass <- paste0(fname_pass, ".fasta", sep="")
     if(isEmpty(isoQC.df.pass[1])){
       message(cat(paste0("\033[97;", 40, "m","FASTA file with [PASS] sequences exported: ", "\033[0m",
-                         "\033[0;", 32, "m", " ", "No sequences failed, file not exported.","\033[0m")))
+                         "\033[0;", 31, "m", " ", "No sequences passed, file not exported.","\033[0m")))
     } else {
       trimlist_pass <- as.list((unlist(trimlist))[which(!isoQC.df$filename %in% seq.warnings)])
       abif_files_pass <- abif_files[!abif_files %in% seq.warnings]
       seqinr::write.fasta(sequences=trimlist_pass, names=abif_files_pass, as.string=TRUE, nbchar = 1000,
-                  file.out=fname_fasta_pass)
+                          file.out=fname_fasta_pass)
       message(cat(paste0("\033[97;", 40, "m","FASTA file with [PASS] sequences exported: ", "\033[0m",
                          "\033[0;", 32, "m", " ", file.path(path, "isolateR_output", unlist(strsplit(fname_fasta_pass, '/'))[length(unlist(strsplit(fname_fasta_pass, '/')))]),"\033[0m")))
     }
@@ -423,12 +395,12 @@ isoQC <- function(input=NULL,
     fname_fasta_fail <- paste0(fname_fail, ".fasta", sep="")
     if(isEmpty(isoQC.df.fail[1])){
       message(cat(paste0("\033[97;", 40, "m","FASTA file with [FAIL] sequences exported: ", "\033[0m",
-                         "\033[0;", 32, "m", " ", "No sequences failed, file not exported.","\033[0m")))
+                         "\033[0;", 31, "m", " ", "No sequences failed, file not exported.","\033[0m")))
     } else {
       trimlist_fail <- as.list((unlist(trimlist))[which(isoQC.df$filename %in% seq.warnings)])
       abif_files_fail <- abif_files[abif_files %in% seq.warnings]
       seqinr::write.fasta(sequences=trimlist_fail, names=abif_files_fail, as.string=TRUE, nbchar = 1000,
-                  file.out=fname_fasta_fail)
+                          file.out=fname_fasta_fail)
       message(cat(paste0("\033[97;", 40, "m","FASTA file with [FAIL] sequences exported: ", "\033[0m",
                          "\033[0;", 32, "m", " ", file.path(path, "isolateR_output", unlist(strsplit(fname_fasta_fail, '/'))[length(unlist(strsplit(fname_fasta_fail, '/')))]),"\033[0m", "\n")))
     }
@@ -439,13 +411,13 @@ isoQC <- function(input=NULL,
     fname_fasta_revcomp_pass <- paste0(fname_pass, "_revcomp.fasta", sep="")
     if(isEmpty(isoQC.df.pass[1])){
       message(cat(paste0("\033[97;", 40, "m","FASTA (reverse complement) file with [PASS] sequences exported: ", "\033[0m",
-                         "\033[0;", 32, "m", " ", "No sequences failed, file not exported.","\033[0m")))
+                         "\033[0;", 31, "m", " ", "No sequences passed, file not exported.","\033[0m")))
     } else {
       trimlist_pass <- as.list(paste(Biostrings::reverseComplement(DNAStringSet((unlist(trimlist))[which(!isoQC.df$filename %in% seq.warnings)]))))
       abif_files_pass <- abif_files[!abif_files %in% seq.warnings]
       suppressWarnings({
         seqinr::write.fasta(sequences=trimlist_pass, names=abif_files_pass, as.string=TRUE, nbchar = 1000,
-                    file.out=fname_fasta_revcomp_pass)
+                            file.out=fname_fasta_revcomp_pass)
       })
       message(cat(paste0("\033[97;", 40, "m","FASTA (reverse complement) file with [PASS] sequences exported: ", "\033[0m",
                          "\033[0;", 32, "m", " ", file.path(path, "isolateR_output", unlist(strsplit(fname_fasta_revcomp_pass, '/'))[length(unlist(strsplit(fname_fasta_revcomp_pass, '/')))]),"\033[0m")))
@@ -455,13 +427,13 @@ isoQC <- function(input=NULL,
     fname_fasta_revcomp_fail <- paste0(fname_fail, "_revcomp.fasta", sep="")
     if(isEmpty(isoQC.df.fail[1])){
       message(cat(paste0("\033[97;", 40, "m","FASTA (reverse complement) file with [FAIL] sequences exported: ", "\033[0m",
-                         "\033[0;", 32, "m", " ", "No sequences failed, file not exported.","\033[0m")))
+                         "\033[0;", 31, "m", " ", "No sequences failed, file not exported.","\033[0m")))
     } else {
       trimlist_fail <- as.list(paste(Biostrings::reverseComplement(DNAStringSet((unlist(trimlist))[which(isoQC.df$filename %in% seq.warnings)]))))
       abif_files_fail <- abif_files[abif_files %in% seq.warnings]
       suppressWarnings({
         seqinr::write.fasta(sequences=trimlist_fail, names=abif_files_fail, as.string=TRUE, nbchar = 1000,
-                    file.out=fname_fasta_revcomp_fail)
+                            file.out=fname_fasta_revcomp_fail)
       })
       message(cat(paste0("\033[97;", 40, "m","FASTA (reverse complement) file with [FAIL] sequences exported: ", "\033[0m",
                          "\033[0;", 32, "m", " ", file.path(path, "isolateR_output", unlist(strsplit(fname_fasta_revcomp_fail, '/'))[length(unlist(strsplit(fname_fasta_revcomp_fail, '/')))]),"\033[0m")))

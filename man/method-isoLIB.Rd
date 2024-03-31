@@ -18,7 +18,7 @@
   class_threshold = 78.5,
   order_threshold = 82,
   family_threshold = 86.5,
-  genus_threshold = 96.5,
+  genus_threshold = 94.5,
   species_threshold = 98.7
 )
 }
