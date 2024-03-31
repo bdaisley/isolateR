@@ -1476,7 +1476,7 @@ setMethod("export_html", "isoTAX",
                                                                                                            width='15%', 'vertical-align' = 'bottom'))
                                                    ),
                                                    shiny::tags$div(
-                                                     shiny::tags$a(href = paste("file:///",file.path(path, "lib", "sb_large.html"), sep=""), "Full Size", target="_blank"),
+                                                     shiny::tags$a(href = gsub("////", "///", paste("file:///",file.path(path, "lib", "sb_large.html"), sep="")), "Full Size", target="_blank"),
                                                      style = htmltools::css(display='inline-flex', width='10%', 'font-size' = '10pt', 'alpha' = '0.5', 'padding-top' = '15px','padding-left' = '10px',
                                                                             'font-weight' = 'normal','margin-left' = '-10%', 'z-index' = '1')
                                                    ),
@@ -1486,7 +1486,7 @@ setMethod("export_html", "isoTAX",
                                                      width = '1400px',
                                                      display = 'inline-flex')))
             )
-            
+
             sunplot_large1 <- shiny::tags$div(sunplot_large, 'align'= "center", 'height' = '100vh', 'margin'='0') 
             fname_html_sun <- file.path(path, "lib", "sb_large.html")
             htmltools::save_html(sunplot_large1, fname_html_sun)
