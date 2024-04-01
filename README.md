@@ -2,7 +2,7 @@
 
 ## isolateR: Automated processing of Sanger sequencing data, taxonomic profiling, and generation of microbial strain libraries
 
-<p align="center"><img src="https://github.com/bdaisley/isolateR/blob/main/man/figures/isolateR_overview.jpg?raw=true" width="1500"></p>
+<p align="center"><img src="https://github.com/bdaisley/isolateR/blob/main/man/figures/isolateR_overview1.jpg?raw=true" width="1500"></p>
 
 ***Beta version - Use at your own risk***
 
@@ -86,7 +86,7 @@ The exported CSV files containing PASS/FAIL sequences based on quality threshold
 
 Descriptive statistics regarding QC steps implemented can be inspected via interactive HTML tables in the [reactable](https://github.com/glin/reactable) output (see below)
 isolateR_step1_output.gif
-<img src="https://github.com/bdaisley/isolateR/blob/main/man/figures/isolateR_step1_output.gif?raw=true" align="center" />
+<img src="https://github.com/bdaisley/isolateR/blob/main/man/figures/isolateR_step1_output1.gif?raw=true" align="center" />
 
 
 ### Step 2: <code>isoTAX</code> - Assign taxonomy
@@ -106,12 +106,12 @@ isoTAX.S4 <- isoTAX(input=fpath2,
                     export_csv=TRUE,
                     db="16S",
                     quick_search=TRUE,
-                    phylum_cutoff=75.0,
-                    class_cutoff=78.5,
-                    order_cutoff=82.0,
-                    family_cutoff=86.5,
-                    genus_cutoff=96.5,
-                    species_cutoff=98.7)
+                    phylum_threshold=75.0,
+                    class_threshold=78.5,
+                    order_threshold=82.0,
+                    family_threshold=86.5,
+                    genus_threshold=96.5,
+                    species_threshold=98.7)
 ```
 ```r			
 # Parameters:
@@ -121,16 +121,16 @@ isoTAX.S4 <- isoTAX(input=fpath2,
 # export_csv		Toggle (TRUE/FALSE). Default=TRUE export results in CSV table.
 # db			Database for taxonomic classification ("16S","18S","ITS", or "cpn60")
 # quick_search		Toggle (TRUE/FALSE) Default=FALSE performs comprehensive database search.
-# phylum_cutoff		Similarity cutoff for Phylum rank demarcation (0-1)
-# class_cutoff		Similarity cutoff for Class rank demarcation (0-1)
-# order_cutoff		Similarity cutoff for Order rank demarcation (0-1)
-# family_cutoff		Similarity cutoff for Family rank demarcation (0-1)
-# genus_cutoff		Similarity cutoff for Genus rank demarcation (0-1)
-# species_cutoff	Similarity cutoff for Species rank demarcation (0-1)
+# phylum_threshold	Similarity threshold for Phylum rank demarcation (0-100)
+# class_threshold	Similarity threshold for Class rank demarcation (0-100)
+# order_threshold	Similarity threshold for Order rank demarcation (0-100)
+# family_threshold	Similarity threshold for Family rank demarcation (0-100)
+# genus_threshold	Similarity threshold for Genus rank demarcation (0-100)
+# species_threshold	Similarity threshold for Species rank demarcation (0-100)
 
 ```
 
-
+<img src="https://github.com/bdaisley/isolateR/blob/main/man/figures/isolateR_step2_output1.gif?raw=true" align="center" />
 
 ### Step 3: <code>isoLIB</code> - Generate strain library
 
@@ -147,22 +147,22 @@ fpath3 <- file.path(fpath1, "isolateR_output/02_isoTAX_results.csv")
 
 isoLIB.S4 <- isoLIB(input=fpath3,
 		    old_lib_csv=NULL,
-		    include_warnings=FALSE,
-		    strain_group_cutoff=0.995)
+		    group_cutoff=0.995,
+                    include_warnings=FALSE)
 ```
 ```r
 # Parameters:
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # input				CSV file containing PASS sequences from isoTAX step
 # old_lib_csv			If adding to existing library, provide 'isoLIB' output (.CSV extension) from past run. 
+# group_cutoff			Similarity cutoff (0-1) for delineating strain groups. (1 = 100% identical/0.95=5.0% difference/etc.)
 # include_warnings		Toggle (TRUE/FALSE) Set to TRUE to keep sequences with warnings from 'isoTAX' step.
-# strain_group_cutoff		Similarity cutoff (0-1) for delineating strain groups. (1 = 100% identical/0.95=5.0% difference/etc.)
 ```
 
 
 Inspect data via CSV files and HTML interactive [reactable](https://github.com/glin/reactable) output (see below)
 
-<img src="https://github.com/bdaisley/isolateR/blob/main/man/figures/isolateR_step3_output.gif?raw=true" align="center" />
+<img src="https://github.com/bdaisley/isolateR/blob/main/man/figures/isolateR_step3_output1.gif?raw=true" align="center" />
 
 
 More examples on usage of functions to come...
