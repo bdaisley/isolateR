@@ -2,3 +2,4 @@
 ^\.Rproj\.user$
 man/figures/.
 examples/.
+benchmark/.
