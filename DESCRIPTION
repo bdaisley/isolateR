@@ -14,7 +14,7 @@ RoxygenNote: 7.2.3
 Suggests: knitr,rmarkdown
 VignetteBuilder: knitr
 biocViews:
-Imports: ape, BiocManager, crosstalk, dataui, ggtree, ggbeeswarm, ggiraph, plotly, htmltools, patchwork, LPSN, methods, msa, pander, R.utils, reactable, rentrez, sangeranalyseR, sangerseqR, scales, seqinr, shiny, stringr, svMisc, xmlconvert
+Imports: ape, BiocManager, crosstalk, cowplot, dataui, ggtree, ggbeeswarm, ggiraph, plotly, htmltools, patchwork, LPSN, methods, msa, pander, R.utils, reactable, rentrez, sangeranalyseR, sangerseqR, scales, seqinr, shiny, stringr, svMisc, xmlconvert
 Depends: Biostrings,dplyr,reactablefmtr
 Remotes: timelyportfolio/dataui, glin/reactable, thomasp85/patchwork
 Additional_repositories: http://R-Forge.R-project.org
