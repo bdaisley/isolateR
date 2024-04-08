@@ -75,10 +75,34 @@ isoTAX <- function(input=NULL,
   setwd(path)
 
     #:::::::::::::::::::::::::::::::::::::::::
-    #Filtering input file
+    #Filtering input file, catch duplicates
     #:::::::::::::::::::::::::::::::::::::::::
 
-    isoTAX.input <- read.csv(input)
+    raw.input <- read.csv(input)
+    
+    #Make unique strain names incase any duplicated-----------------------
+    
+    raw.input <- raw.input %>% arrange(desc(length_trim))
+    
+    #Check for duplicate names, and add _dup# for duplicates and remove spaces from filename
+    
+    raw.input <- raw.input %>%
+      mutate(filename = sub(" ", "_", filename)) %>%
+      mutate(filename = stringr::str_remove(filename,'_[:alpha:][:digit:][:digit:]\\.ab1$')) %>%
+      group_by(filename) %>%
+      mutate(dup_count = row_number()) %>%
+      mutate(filename = ifelse(dup_count > 1, paste(filename, "_dup", dup_count - 1, sep = ""), filename)) %>%
+      mutate(duplicated = dup_count > 1) %>%
+      select(-dup_count) %>%
+      ungroup()
+    
+    if(length((raw.input %>% filter(duplicated==TRUE))$filename) > 0){
+      message(cat(paste0("\033[0;", 31, "m", "Duplicated filenames detected: ", paste(unique((raw.input %>% filter(duplicated==TRUE))$filename), collapse="|"), "\033[0m")))
+      message(cat(paste0("\033[0;", 30, "m", "Renaming duplicates with suffix '_dup1','_dup2', '_dup3', etc.", "\033[0m")))
+      message(cat(paste0("\033[0;", 30, "m",  paste((raw.input %>% filter(duplicated==TRUE))$filename, collapse="\n"), "\033[0m")))
+    }
+    
+    isoTAX.input <- raw.input %>% select(-duplicated)
 
     #:::::::::::::::::::::::::::::::::::::::::
     #Stage paths for taxonomic classification
@@ -87,10 +111,18 @@ isoTAX <- function(input=NULL,
 
     #Stage query FASTA file
     query.fasta.path <- "02_isoTAX_query.fasta"
-    make_fasta(csv_file=input,
-               col_names= "filename",
-               col_seqs= "seqs_trim",
-               output=query.fasta.path)
+    df <- as.data.frame(isoTAX.input)
+    col_names <- "filename"
+    col_seqs <- "seqs_trim"
+    output <- query.fasta.path
+    
+    #removed call to make_fasta, running same script here so updated df from above is used as input
+    ss <- Biostrings::DNAStringSet(stats::setNames(df[,paste(col_seqs)], df[,paste(col_names)]))
+    ss <- Biostrings::DNAStringSet(c(df[,col_seqs]))
+    names(ss) <- paste(df[,col_names])
+    fasta.output <- file.path(paste(unlist(strsplit(input, '/'))[1:(length(unlist(strsplit(input, '/')))-1)], collapse="/"), output)
+    Biostrings::writeXStringSet(ss, fasta.output)
+    
 
     #Output - UC table
     uc.out <- "02_isoTAX_output.uc"
@@ -113,7 +145,7 @@ isoTAX <- function(input=NULL,
 
   #-------------------------------------------------
 
-  query.info <- read.csv(input)
+  query.info <- isoTAX.input
   query.info.list1 <- setNames(query.info$phred_trim, query.info$filename)
   query.info.list2 <- setNames(query.info$date, query.info$filename)
 
@@ -256,8 +288,7 @@ isoTAX <- function(input=NULL,
     mutate(rank_class=ifelse(rank_class=="","No_match",rank_class)) %>%
     mutate(rank_order=ifelse(rank_order=="","No_match",rank_order)) %>%
     mutate(rank_family=ifelse(rank_family=="","No_match",rank_family)) %>%
-    mutate(rank_genus=ifelse(rank_genus=="","No_match",rank_genus)) %>%
-    mutate(filename = stringr::str_remove(filename,'_[:alpha:][:digit:][:digit:]\\.ab1$'))
+    mutate(rank_genus=ifelse(rank_genus=="","No_match",rank_genus)) 
 
   seq.warnings2 <- c()
   seq.warnings2 <- (merged.df3 %>% filter(!warning ==""))$filename
