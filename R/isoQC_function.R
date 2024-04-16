@@ -97,8 +97,8 @@ isoQC <- function(input=NULL,
                             str_pad(str_split_fixed(date, "_", 3)[,3], 2, pad = "0"), sep="_")
     message(cat(paste0("\n", "\033[97;", 40, "m","Setting date (YY/MM/DD) as: ",date.formatted, "\033[0m", "\n")))
   }
-  
-  if(!is.null(min_length)){
+
+  if(is.null(min_length)){
     min_length <- 200
   }
   
