@@ -8,7 +8,7 @@
 #' @param export_csv (Default=TRUE) Output the results as a CSV file.
 #' @param export_fasta (Default=TRUE) Output the sequences in a FASTA file.
 #' @param export_fasta_revcomp (Default=FALSE) Output the sequences in reverse complement form in a fasta file. This is useful in cases where sequencing was done using the reverse primer and thus the orientation of input sequences needs reversing.
-#' @param verbose (Default=FALSE) Output progress while script is running.
+#' @param verbose (Default =FALSE) Output progress while script is running, FALSE for simplified progress, TRUE for file-by-file details
 #' @param files_manual (Default=NULL) For testing purposes only. Specify a list of files to run  as filenames without extensions, rather than the whole directory format. Primarily used for testing, use at your own risk.
 #' @param exclude (Default=NULL) For testing purposes only. Excludes files of interest from input directory.
 #' @param min_phred_score (Default=20) Do not accept trimmed sequences with a mean Phred score below this cutoff

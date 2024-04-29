@@ -8,10 +8,12 @@
 #' @param col_species Specify the column containing the binomial species names (e.g. "Akkermansia muciniphila")
 #' @param export_csv Toggle (TRUE/FALSE). Set TRUE to automatically write .CSV file of results to current directory. (Default=TRUE)
 #' @importFrom LPSN open_lpsn
+#' @importFrom LPSN retrieve
 #' @importFrom stringr str_squish
+#' @importFrom getPass getPass
 #' @return Returns a CSV saved in working directory
 
-valid_tax_check<- function(input = NULL, col_species = "species", export_csv=TRUE){
+valid_tax_check<- function(input = NULL, col_species = "rank_species", export_csv=TRUE){
   if(is.null(input)) stop('Input file not supplied. Please check the execution script preamble to make sure it is entered correctly', call.=FALSE)
 
   #read file in---------------------------------------------------------------------------------------------
@@ -21,8 +23,8 @@ valid_tax_check<- function(input = NULL, col_species = "species", export_csv=TRU
   message("To connect to the LPSN API an account a LPSN API account is required.")
   message("If you do not already possess one, please reigster here: https://api.lpsn.dsmz.de/")
   message("Please enter your LPSN API credentials")
-  uname <- readline(prompt="Enter username: ")
-  pword <- readline(prompt="Enter password: ")
+  uname <- getPass::getPass(msg="Enter LPSN API username: ")
+  pword <- getPass::getPass(msg="Enter LPSN API password: ")
 
   lpsn <- LPSN::open_lpsn(uname, pword)
   stopifnot(
@@ -39,14 +41,24 @@ valid_tax_check<- function(input = NULL, col_species = "species", export_csv=TRU
   #if user had genus unclassified as species marker it will remove that and only check genus ID
   checkdf$species <- gsub("_", " ", checkdf$species)
   checkdf$species <- gsub("unclassified", "", checkdf$species)
-  checkdf$species <- str_squish(checkdf$species)
+  checkdf$species <- stringr::str_squish(checkdf$species)
   checkdf$species <- gsub("[[:punct:]]", "", checkdf$species)
 
 
+  #set progress bar----------------------------------------------------------------
+  message(cat(paste0("\033[97;", 95, "m","...Searching LPSN with ", paste(nrow(inputdf)) ," inputs...", "\033[0m")))
+  prog.bar.x <- txtProgressBar(min = 0,      			       # Minimum value of the progress bar
+                               max = nrow(inputdf), # Maximum value of the progress bar
+                               style = 3,    			       # Progress bar style (also available style = 1 and style = 2)
+                               #width = 50,   			     # Progress bar width. Defaults to getOption("width")
+                               char = "=")
+  
   #for each species call to LPSN to retrieve info, if null not valid name----------------------------------
   for(i in 1:nrow(inputdf)){
+    setTxtProgressBar(prog.bar.x, i)
+    
     #use retrieve function to get information from full name
-    ret <- retrieve(lpsn, search = "flexible", full_name = checkdf[i,"species"])
+    ret <- LPSN::retrieve(lpsn, search = "flexible", full_name = checkdf[i,"species"])
 
     #if there were no results, set as non valid and move on
     if(length(ret) == 0){
@@ -57,7 +69,7 @@ valid_tax_check<- function(input = NULL, col_species = "species", export_csv=TRU
     #if there is a result, check if it is a synonym
     retdf <- as.data.frame(ret)
     if(retdf[1,"lpsn_taxonomic_status"] == "synonym"){
-      retsyn <- as.data.frame(retrieve(lpsn, search = "flexible", id = retdf[1,"lpsn_correct_name_id"]))
+      retsyn <- as.data.frame(LPSN::retrieve(lpsn, search = "flexible", id = retdf[1,"lpsn_correct_name_id"]))
       checkdf[i, "lpsnresult"] <- "Synonym"
       checkdf[i, "correctname"] <- retsyn[1,"full_name"]
       next
