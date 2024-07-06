@@ -18,8 +18,7 @@ isolateR aims to enhance microbial isolation workflows and support the identific
 
 ## Installation
 ```r
-# install.packages("devtools")
-devtools::install_github("bdaisley/isolateR")
+remotes::install_github("bdaisley/isolateR")
 ```
 
 ## Quick start
