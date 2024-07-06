@@ -141,7 +141,6 @@ isoTAX <- function(input=NULL,
                             vsearch_path= vsearch_path,
                             iddef=iddef,
                             keep_temp_files=export_blast_table)
-    export_blast_table=TRUE
     
     if(export_blast_table==TRUE){
       blast.table <- read.csv("temp_vsearch/02_isoTAX_output.b6o", sep="\t", header = FALSE)
