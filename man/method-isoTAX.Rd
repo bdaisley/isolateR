@@ -8,6 +8,7 @@
   input = NULL,
   export_html = TRUE,
   export_csv = TRUE,
+  export_blast_table = FALSE,
   quick_search = TRUE,
   db = "16S_bac",
   db_path = NULL,

@@ -10,6 +10,7 @@ isoALL(
   export_csv = TRUE,
   export_fasta = TRUE,
   export_fasta_revcomp = FALSE,
+  export_blast_table = FALSE,
   quick_search = FALSE,
   db = "16S",
   iddef = 2,

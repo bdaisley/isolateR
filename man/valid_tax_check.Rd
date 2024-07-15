@@ -4,7 +4,7 @@
 \alias{valid_tax_check}
 \title{Validate species name via API client of LPSN}
 \usage{
-valid_tax_check(input = NULL, col_species = "species", export_csv = TRUE)
+valid_tax_check(input = NULL, col_species = "rank_species", export_csv = TRUE)
 }
 \arguments{
 \item{input}{CSV file path. Expects full path if CSV file is not in the current working directory.}

@@ -31,7 +31,7 @@ isoQC(
 
 \item{export_fasta_revcomp}{(Default=FALSE) Output the sequences in reverse complement form in a fasta file. This is useful in cases where sequencing was done using the reverse primer and thus the orientation of input sequences needs reversing.}
 
-\item{verbose}{(Default=FALSE) Output progress while script is running.}
+\item{verbose}{(Default =FALSE) Output progress while script is running, FALSE for simplified progress, TRUE for file-by-file details}
 
 \item{exclude}{(Default=NULL) For testing purposes only. Excludes files of interest from input directory.}
 

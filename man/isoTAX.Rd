@@ -8,6 +8,7 @@ isoTAX(
   input = NULL,
   export_html = TRUE,
   export_csv = TRUE,
+  export_blast_table = FALSE,
   quick_search = TRUE,
   db = "16S_bac",
   db_path = NULL,
@@ -27,6 +28,8 @@ isoTAX(
 \item{export_html}{(Default=TRUE) Output the results as an HTML file}
 
 \item{export_csv}{(Default=TRUE) Output the results as a CSV file.}
+
+\item{export_blast_table}{(Default=FALSE) Output the results as a tab-separated BLAST-like hits table.}
 
 \item{quick_search}{(Default=FALSE) Whether or not to perform a comprehensive database search (i.e. optimal global alignment).
 If TRUE, performs quick search equivalent to setting VSEARCH parameters "--maxaccepts 100 --maxrejects 100".
