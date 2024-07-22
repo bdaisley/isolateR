@@ -87,12 +87,12 @@ isoTAX <- function(input=NULL,
   #:::::::::::::::::::::::::::::::::::::::::
   
   #Check if input is file (proceed) or directory (stop)
-  invisible(
+  suppressWarnings(invisible(
     capture.output(
       capture.output(
         file.check <- try(strsplit(readLines(input), "(?=.)", perl=TRUE)[[1]][1]), 
         type="message"), 
-      type="output"))
+      type="output")))
   
   if(is(file.check, 'try-error')) stop('Input requires a file, not a directory. Please specify either an isoQC output file or FASTA file to proceed.', call.=FALSE)
 
@@ -109,7 +109,7 @@ isoTAX <- function(input=NULL,
                         stringr::str_pad(stringr::str_split_fixed(fasta.date, "-", 3)[,3], 2, pad = "0"), sep="_")
     
     entry.fasta <- data.frame(date=fasta.date,
-                              filename=names(fasta.in),
+                              filename=gsub(" ", "_",names(fasta.in)),
                               seqs_raw = rep("NNN", length(fasta.in)),
                               phred_raw = rep(0, length(fasta.in)),
                               Ns_raw = rep(0, length(fasta.in)),

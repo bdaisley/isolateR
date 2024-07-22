@@ -694,7 +694,7 @@ setMethod("export_html", "isoQC",
             #-----------------------------------------------------------------------------------------------------------Summary plots
             g.phred <- ggplot2::ggplot(isoQC.df.g, ggplot2::aes(x=group, y=phred, colour=decision)) +
               ggplot2::geom_hline(yintercept = min_phred_score, linewidth=1.5, colour="red", alpha=0.2, linetype="solid") +
-              ggplot2::annotate(geom="text", vjust=1.75, size=3.3, x=0.7, y=min_phred_score, label=paste('min_phred_score="', min_phred_score, '"', sep=""), color=scales::alpha("red", 0.85)) +  
+              ggplot2::annotate(geom="text", vjust=1.75, size=2.7, x=0.74, y=min_phred_score, label=paste('min_phred_score="', min_phred_score, '"', sep=""), color=scales::alpha("red", 0.85)) +  
               ggiraph::geom_boxplot_interactive(ggplot2::aes(fill=decision, color=decision, #data_id = group,
                                                              tooltip = ggplot2::after_stat({
                                                                paste0(
@@ -713,14 +713,14 @@ setMethod("export_html", "isoQC",
               ggplot2::theme(panel.background = ggplot2::element_blank(),
                              panel.border = ggplot2::element_rect(color ="black", fill = NA, linewidth = 0.5, linetype = 1),
                              panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank(),
-                             legend.title = ggplot2::element_text(size=16),legend.text = ggplot2::element_text(size=12),
+                             legend.title = ggplot2::element_text(size=12),legend.text = ggplot2::element_text(size=9),
                              strip.background = ggplot2::element_blank(), strip.text.x = ggplot2::element_blank(),
-                             axis.title.x = ggplot2::element_blank(), axis.text.x=ggplot2::element_text(size=12), axis.ticks.x=ggplot2::element_blank(),
-                             axis.title.y = ggplot2::element_text(size=16), axis.text.y=ggplot2::element_text(size=12))
+                             axis.title.x = ggplot2::element_blank(), axis.text.x=ggplot2::element_text(size=9), axis.ticks.x=ggplot2::element_blank(),
+                             axis.title.y = ggplot2::element_text(size=12), axis.text.y=ggplot2::element_text(size=9))
             
             g.length <- ggplot2::ggplot(isoQC.df.g, ggplot2::aes(x=group, y=length, colour=decision)) + 
               ggplot2::geom_hline(yintercept = min_length, linewidth=1.5, colour="red", alpha=0.2, linetype="solid") +
-              ggplot2::annotate(geom="text", vjust=1.75, size=3.3, x=0.65, y=min_length, label=paste('min_length="', min_length, '"', sep=""), color=scales::alpha("red", 0.85)) +
+              ggplot2::annotate(geom="text", vjust=1.75, size=2.7, x=0.68, y=min_length, label=paste('min_length="', min_length, '"', sep=""), color=scales::alpha("red", 0.85)) +
               ggiraph::geom_boxplot_interactive(ggplot2::aes(fill=decision, #data_id = group,
                                                              tooltip = ggplot2::after_stat({
                                                                paste0(
@@ -739,10 +739,10 @@ setMethod("export_html", "isoQC",
               ggplot2::theme(panel.background = ggplot2::element_blank(),
                              panel.border = ggplot2::element_rect(color ="black", fill = NA, linewidth = 0.5, linetype = 1),
                              panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank(),
-                             legend.title = ggplot2::element_text(size=16),legend.text = ggplot2::element_text(size=12),
+                             legend.title = ggplot2::element_text(size=12),legend.text = ggplot2::element_text(size=9),
                              strip.background = ggplot2::element_blank(), strip.text.x = ggplot2::element_blank(),
-                             axis.title.x = ggplot2::element_blank(), axis.text.x=ggplot2::element_text(size=12), axis.ticks.x=ggplot2::element_blank(),
-                             axis.title.y = ggplot2::element_text(size=16), axis.text.y=ggplot2::element_text(size=12))
+                             axis.title.x = ggplot2::element_blank(), axis.text.x=ggplot2::element_text(size=9), axis.ticks.x=ggplot2::element_blank(),
+                             axis.title.y = ggplot2::element_text(size=12), axis.text.y=ggplot2::element_text(size=9))
             
             isoQC.plots1 <- cowplot::plot_grid(g.phred + ggplot2::theme(legend.position="none"),
                                                NULL,
@@ -759,7 +759,8 @@ setMethod("export_html", "isoQC",
               opts_toolbar = ggiraph::opts_toolbar(saveaspng = TRUE, pngname="isoQC", delay_mouseout = 5000, position="topright", hidden=c("selection", "zoom"))
             )
             
-            isoQC.plots <- ggiraph::girafe(ggobj = isoQC.plots1, width_svg = 14.1, height_svg = 4.5)
+            #isoQC.plots <- ggiraph::girafe(ggobj = isoQC.plots1, width_svg = 14.1, height_svg = 4.5)
+            isoQC.plots <- ggiraph::girafe(ggobj = isoQC.plots1, width_svg = 10.5, height_svg = 3.4)
             
             
             #-----------------------------------------------------------------------------------------------------------
@@ -1104,15 +1105,16 @@ setMethod("export_html", "isoTAX",
               ggiraph::geom_point_interactive(ggplot2::aes(x=ID-0.005, y=phred_trim-phred_trim_adjust, group=ID, colour=ID, data_id = filename, tooltip=filename), 
                                               position=ggplot2::position_jitter(width=0, height=phred_trim_adjust),size = 0.7, hover_nearest = TRUE, alpha=0.5, colour="black") +
               #viridis::scale_colour_viridis(option="B", begin=0, end=0.8, direction=-1, alpha=0.5) +
+              ggplot2::scale_y_continuous(expand = c(1,1)) +
               ggplot2::ylab("Phred quality score") + ggplot2::xlab("% identity to closest match") +
               ggplot2::theme(panel.background = ggplot2::element_blank(),
                              panel.border = ggplot2::element_rect(color ="black", fill = NA, linewidth = 0.5, linetype = 1),
                              panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank(),
-                             legend.title = ggplot2::element_text(size=16),legend.text = ggplot2::element_text(size=12),
+                             legend.title = ggplot2::element_text(size=12),legend.text = ggplot2::element_text(size=9),
                              strip.background = ggplot2::element_blank(), strip.text.x = ggplot2::element_blank(),
-                             axis.ticks.x=ggplot2::element_blank(), axis.text.x=ggplot2::element_text(size=12), 
-                             axis.title.y = ggplot2::element_text(size=16), axis.text.y=ggplot2::element_text(size=12),
-                             axis.title.x= ggplot2::element_text(size=16)) + ggplot2::theme(legend.position="none")
+                             axis.ticks.x=ggplot2::element_blank(), axis.text.x=ggplot2::element_text(size=9), 
+                             axis.title.y = ggplot2::element_text(size=12), axis.text.y=ggplot2::element_text(size=9),
+                             axis.title.x= ggplot2::element_text(size=12)) + ggplot2::theme(legend.position="none")
             
             ggiraph::set_girafe_defaults(
               opts_hover_inv = ggiraph::opts_hover_inv(css = "opacity:0.2;"), 
@@ -1122,7 +1124,8 @@ setMethod("export_html", "isoTAX",
               opts_toolbar = ggiraph::opts_toolbar(saveaspng = TRUE, pngname="isoQC", delay_mouseout = 5000, position="bottomleft", hidden=c("selection", "zoom"))
             )
             
-            isoTAX.plots1 <- ggiraph::girafe(ggobj = g.scatter, width_svg = 3.5, height_svg = 4.75)
+            #isoTAX.plots1 <- ggiraph::girafe(ggobj = g.scatter, width_svg = 3.5, height_svg = 4.75)
+            isoTAX.plots1 <- ggiraph::girafe(ggobj = g.scatter, width_svg = 2.6, height_svg = 3.6)
             
             g.id <- ggplot2::ggplot(merged_input.g, ggplot2::aes(x=rank_genus, y=bar_counts, fill=ID, colour=ID)) + 
               ggplot2::scale_x_discrete(limits=rev) +
@@ -1138,11 +1141,11 @@ setMethod("export_html", "isoTAX",
               ggplot2::theme(panel.background = ggplot2::element_blank(),
                              panel.border = ggplot2::element_rect(color ="black", fill = NA, linewidth = 0.5, linetype = 1),
                              panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank(),
-                             legend.title = ggplot2::element_text(size=16),legend.text = ggplot2::element_text(size=12),
+                             legend.title = ggplot2::element_text(size=12),legend.text = ggplot2::element_text(size=9),
                              strip.background = ggplot2::element_blank(), strip.text.x = ggplot2::element_blank(),
-                             axis.ticks.x=ggplot2::element_blank(), axis.text.x=ggplot2::element_text(size=12), 
-                             axis.title.y = ggplot2::element_blank(), axis.text.y=ggplot2::element_text(size=12, margin=ggplot2::margin(t = 0, r = 5, b = 0, l = 0, unit = "pt")),
-                             axis.title.x= ggplot2::element_text(size=16))
+                             axis.ticks.x=ggplot2::element_blank(), axis.text.x=ggplot2::element_text(size=9), 
+                             axis.title.y = ggplot2::element_blank(), axis.text.y=ggplot2::element_text(size=9, margin=ggplot2::margin(t = 0, r = 5, b = 0, l = 0, unit = "pt")),
+                             axis.title.x= ggplot2::element_text(size=12))
             
             ggiraph::set_girafe_defaults(
               opts_hover_inv = ggiraph::opts_hover_inv(css = "opacity:0.2;"), 
@@ -1152,7 +1155,8 @@ setMethod("export_html", "isoTAX",
               opts_toolbar = ggiraph::opts_toolbar(saveaspng = TRUE, pngname="isoQC", delay_mouseout = 5000, position="topright", hidden=c("selection", "zoom"))
             )
             
-            isoTAX.plots2 <- ggiraph::girafe(ggobj = g.id, width_svg = 9.5, height_svg = 4.75)
+            #isoTAX.plots2 <- ggiraph::girafe(ggobj = g.id, width_svg = 9.5, height_svg = 4.75)
+            isoTAX.plots2 <- ggiraph::girafe(ggobj = g.id, width_svg = 7.4, height_svg = 3.6)
             
             #-----------------------------------------------------------------------------------------------------------------
             
