@@ -1124,7 +1124,7 @@ setMethod("export_html", "isoTAX",
             )
             
             #isoTAX.plots1 <- ggiraph::girafe(ggobj = g.scatter, width_svg = 3.5, height_svg = 4.75)
-            isoTAX.plots1 <- ggiraph::girafe(ggobj = g.scatter, width_svg = 2.6, height_svg = 3.7)
+            isoTAX.plots1 <- ggiraph::girafe(ggobj = g.scatter, width_svg = 2.7, height_svg = 3.6)
             
             g.id <- ggplot2::ggplot(merged_input.g, ggplot2::aes(x=rank_genus, y=bar_counts, fill=ID, colour=ID)) + 
               ggplot2::scale_x_discrete(limits=rev) +
