@@ -482,12 +482,12 @@ setMethod("show", "isoTAX",
             cat(paste("isolateR library file overview:"), "\n")
             cat(paste("========================================================="), "\n")
             cat(paste("Total sequences                             = \t   ", length(object@date), sep=""), "\n")
-            cat(paste("Number of sequences under Phylum threshod   = \t   ", length(object@ID[object@ID < object@phylum_threshold[1]]), sep=""), "\n")
-            cat(paste("Number of sequences under Class threshod    = \t   ", length(object@ID[object@ID < object@class_threshold[1]]), sep=""), "\n")
-            cat(paste("Number of sequences under Order threshod    = \t   ", length(object@ID[object@ID < object@order_threshold[1]]), sep=""), "\n")
-            cat(paste("Number of sequences under Family threshod   = \t   ", length(object@ID[object@ID < object@family_threshold[1]]), sep=""), "\n")
-            cat(paste("Number of sequences under Genus threshod    = \t   ", length(object@ID[object@ID < object@genus_threshold[1]]), sep=""), "\n")
-            cat(paste("Number of sequences under Species threshod  = \t   ", length(object@ID[object@ID < object@species_threshold[1]]), sep=""), "\n")
+            cat(paste("Number of sequences under Phylum threshold   = \t   ", length(object@ID[object@ID < object@phylum_threshold[1]]), sep=""), "\n")
+            cat(paste("Number of sequences under Class threshold    = \t   ", length(object@ID[object@ID < object@class_threshold[1]]), sep=""), "\n")
+            cat(paste("Number of sequences under Order threshold    = \t   ", length(object@ID[object@ID < object@order_threshold[1]]), sep=""), "\n")
+            cat(paste("Number of sequences under Family threshold   = \t   ", length(object@ID[object@ID < object@family_threshold[1]]), sep=""), "\n")
+            cat(paste("Number of sequences under Genus threshold    = \t   ", length(object@ID[object@ID < object@genus_threshold[1]]), sep=""), "\n")
+            cat(paste("Number of sequences under Species threshold  = \t   ", length(object@ID[object@ID < object@species_threshold[1]]), sep=""), "\n")
           }
 )
 #-------------------------------
@@ -595,7 +595,6 @@ df_to_isoTAX <- function(df) {
 
 
 df_to_isoLIB <- function(df) {
-  
   isolib.S4 <- new("isoLIB", input=getwd())
   # Make phred scores into lists for sparkline formatting (V1=raw, V2=trim)
   isolib.S4@sequence_group <- df$sequence_group
