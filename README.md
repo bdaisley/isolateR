@@ -17,6 +17,8 @@ isolateR aims to enhance microbial isolation workflows and support the identific
   - <b>cpn60</b> (bacteria/archaea)
 
 ## Installation
+
+### Install via GitHub
 ```r
 #Install BiocManager if not already installed
 if (!requireNamespace("BiocManager", quietly = TRUE))
@@ -31,6 +33,10 @@ BiocManager::install(c("Biostrings", "msa", "sangeranalyseR", "sangerseqR"), upd
 
 #Install isolateR
 devtools::install_github("bdaisley/isolateR")
+```
+### Install via Conda
+```shell
+conda create --name isolateR bdaisley::r-isolater
 ```
 
 ## Quick start
