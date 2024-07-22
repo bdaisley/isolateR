@@ -47,9 +47,20 @@ isoQC <- function(input=NULL,
                   files_manual=NULL){
 
   
-  # Reading files--------------------------------------------------------------------
-  # Check input path
+  #Reading files--------------------------------------------------------------------
+  #Check input path
   if(is.null(input)) stop('Name of folder not supplied. Please check the execution script preamble to make sure it is entered correctly', call.=FALSE)
+  #Check input is directory and not file
+  invisible(
+    capture.output(
+      capture.output(
+        file.check <- try(strsplit(readLines(input), "(?=.)", perl=TRUE)[[1]][1]), 
+        type="message"), 
+      type="output"))
+  
+  if(is(file.check, 'try-error')==FALSE) stop('Input should be a folder, not a file. Please specifiy a folder containing .ab1 files.', call.=FALSE)
+  
+  
   if(!is.null(sliding_window_size)){
     if(sliding_window_size > 40){
       warning('"sliding_window_size" is set to above 40. It is recommended to set this parameter between 1-40 for best trimming results.')

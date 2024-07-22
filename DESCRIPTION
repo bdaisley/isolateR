@@ -1,20 +1,20 @@
 Package: isolateR
 Type: Package
 Title: Automated processing of Sanger sequencing data, taxonomic profiling, and generation of microbial strain libraries
-Version: 0.0.0.9003
+Version: 0.0.0.9004
 Date: 2023-11-20
-Author: Brendan Daisley, Sarah Vancuren, Dylan Brettingham, Jacob Wilde, Emma Allen-Vercoe.
+Author: Brendan Daisley, Sarah J Vancuren, Dylan J.L. Brettingham, Jacob Wilde, Simone Renwick, Christine V Macpherson, David A. Good, Alexander J. Botschner, Sandi Yen, Janet E. Hill, Matthew T. Sorbara, Emma Allen-Vercoe.
 Maintainer: Brendan Daisley <bdaisley@uoguelph.ca>
-Description: isolateR aims to enhance microbial isolation workflows and support the identification of novel taxa. It addresses the challenges of manual Sanger sequencing data processing and limitations of conventional BLAST searches, crucial for identifying microorganisms and creating strain libraries. The package offers a streamlined three-step process that automates quality trimming Sanger sequence files, taxonomic classification via global alignment against type strain databases, and efficient strain library creation based on customizable sequence similarity thresholds. It features interactive HTML output tables for easy data exploration and optional tools for generating phylogenetic trees to visualize microbial diversity.
+Description: isolateR aims to enhance microbial isolation workflows and support the identification of novel taxa. It addresses the challenges of manual Sanger sequencing data processing and limitations of conventional BLAST searches, crucial for identifying microorganisms and creating strain libraries. The package offers a streamlined three-step process that automates quality trimming Sanger sequence files, taxonomic classification via global alignment against type strain databases, and efficient strain library creation based on customizable sequence similarity thresholds. It features interactive HTML output tables for easy data exploration and optional tools for generating phylogenetic trees to visualize microbial diversity. Citation: Daisley et al. (2024). isolateR: an R package for generating microbial libraries from Sanger sequencing data. Bioinformatics 40(7):btae448. https://doi.org/10.1093/bioinformatics/btae448
 License: GPL (>= 2)
 Encoding: UTF-8
 LazyData: true
-Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.3
-Suggests: knitr,rmarkdown
-VignetteBuilder: knitr
+Depends: R (>= 4.0)
 biocViews:
-Imports: ape, BiocManager, crosstalk, cowplot, dataui, ggtree, ggbeeswarm, ggiraph, plotly, htmltools, patchwork, LPSN, methods, msa, pander, R.utils, reactable, rentrez, sangeranalyseR, sangerseqR, scales, seqinr, shiny, stringr, svMisc, xmlconvert, getPass
-Depends: Biostrings,dplyr,reactablefmtr
+Imports: ape, BiocManager, Biostrings, crosstalk, cowplot, dataui, dplyr, ggtree, ggbeeswarm, ggiraph, IRanges, plotly, htmltools, patchwork, LPSN, methods, msa, pander, R.utils, reactable, reactablefmtr, rentrez, S4Vectors, sangeranalyseR, sangerseqR, scales, seqinr, shiny, stringr, svMisc, xmlconvert, getPass
 Remotes: timelyportfolio/dataui, glin/reactable, thomasp85/patchwork
-Additional_repositories: http://R-Forge.R-project.org
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Suggests: knitr, rmarkdown
+VignetteBuilder: knitr
+Additional_repositories: http://R-Forge.R-project.org https://bioconductor.org/packages/3.18/bioc

@@ -238,7 +238,7 @@ setGeneric("isoTAX",  function(input=NULL,
                                export_html=TRUE,
                                export_csv=TRUE,
                                export_blast_table=FALSE,
-                               quick_search=TRUE,
+                               quick_search=FALSE,
                                db="16S_bac",
                                db_path=NULL,
                                vsearch_path=NULL,
@@ -377,7 +377,7 @@ setMethod("isoTAX", signature(input="missing"), function(input= NULL,
                                                          export_html=TRUE,
                                                          export_csv=TRUE,
                                                          export_blast_table=FALSE,
-                                                         quick_search=TRUE,
+                                                         quick_search=FALSE,
                                                          db="16S_bac",
                                                          db_path=NULL,
                                                          vsearch_path=NULL,
@@ -1095,10 +1095,14 @@ setMethod("export_html", "isoTAX",
               #merged_input.g$ID <- factor(merged_input.g$ID, levels=c(unique(merged_input.g$ID)))
             }
             
+            qual.range <- max(merged_input.g$phred_trim) - min(merged_input.g$phred_trim)
+            if(qual.range == 0){phred_trim_adjust <- 0}
+            if(qual.range != 0){phred_trim_adjust <- qual.range*0.01} #Jitter points by 1% of range
+            
             g.scatter <- ggplot2::ggplot(merged_input.g, ggplot2::aes(x=ID , y=phred_trim, colour=ID)) + 
               ggplot2::geom_smooth(method='lm', formula= y~x, colour=scales::alpha("grey15", 0.3), linewidth=1.75, fill="#CCE6CC", alpha=0.7) + # 9F71A8 #40A499 #CCE6CC
-              ggiraph::geom_point_interactive(ggplot2::aes(x=ID-0.005, y=phred_trim-1, group=ID, colour=ID, data_id = filename, tooltip=filename), 
-                                              position=ggplot2::position_jitter(width=0, height=1),size = 0.7, hover_nearest = TRUE, alpha=0.5, colour="black") +
+              ggiraph::geom_point_interactive(ggplot2::aes(x=ID-0.005, y=phred_trim-phred_trim_adjust, group=ID, colour=ID, data_id = filename, tooltip=filename), 
+                                              position=ggplot2::position_jitter(width=0, height=phred_trim_adjust),size = 0.7, hover_nearest = TRUE, alpha=0.5, colour="black") +
               #viridis::scale_colour_viridis(option="B", begin=0, end=0.8, direction=-1, alpha=0.5) +
               ggplot2::ylab("Phred quality score") + ggplot2::xlab("% identity to closest match") +
               ggplot2::theme(panel.background = ggplot2::element_blank(),
@@ -1539,12 +1543,12 @@ setMethod("export_html", "isoLIB",
               group_cutoff <- 'NA'}
 
             html_input2 <- S4_to_dataframe(obj) %>%
-              mutate(phylum_col = ifelse(ID > phylum_threshold, "#31a354", NA)) %>%
-              mutate(class_col = ifelse(ID > class_threshold, "#31a354", NA)) %>%
-              mutate(order_col = ifelse(ID > order_threshold, "#31a354", NA)) %>%
-              mutate(family_col = ifelse(ID > family_threshold, "#31a354", NA)) %>%
-              mutate(genus_col = ifelse(ID > genus_threshold, "#31a354", NA)) %>%
-              mutate(species_col = ifelse(ID > species_threshold, "#31a354", NA)) %>%
+              mutate(phylum_col = ifelse(ID > phylum_threshold, "#31a354", "#FFFFFF00")) %>%
+              mutate(class_col = ifelse(ID > class_threshold, "#31a354", "#FFFFFF00")) %>%
+              mutate(order_col = ifelse(ID > order_threshold, "#31a354", "#FFFFFF00")) %>%
+              mutate(family_col = ifelse(ID > family_threshold, "#31a354", "#FFFFFF00")) %>%
+              mutate(genus_col = ifelse(ID > genus_threshold, "#31a354", "#FFFFFF00")) %>%
+              mutate(species_col = ifelse(ID > species_threshold, "#31a354", "#FFFFFF00")) %>%
               dplyr::relocate(representative, .after=filename)
             
             #if(!grepl("maximum_likelihood|closest_species|dark_mode", method)){ method <- "NA"}

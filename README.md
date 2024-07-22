@@ -18,7 +18,19 @@ isolateR aims to enhance microbial isolation workflows and support the identific
 
 ## Installation
 ```r
-remotes::install_github("bdaisley/isolateR")
+#Install BiocManager if not already installed
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+
+#Install devtools if not already installed
+if (!requireNamespace("devtools", quietly = TRUE))
+  install.packages("devtools")
+  
+#Install the required Bioconductor dependencies
+BiocManager::install(c("Biostrings", "msa", "sangeranalyseR", "sangerseqR"), update=FALSE)
+
+#Install isolateR
+devtools::install_github("bdaisley/isolateR")
 ```
 
 ## Quick start

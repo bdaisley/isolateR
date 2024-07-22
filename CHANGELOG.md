@@ -1,0 +1,7 @@
+## Update: 2024-07-21
+- Added feature to <code>isoTAX</code> function to allow input of FASTA format files (relevant to addressing Issue #9). 
+  - FASTA file type is automatically detected if first character of file is ">". 
+  - File extension (.fasta/.fa/.fna) does not impact processing.
+  - Can handle single- or multi-line FASTA format. 
+  - If input is a FASTA file, the sequence(s) will be converted and saved as an isoQC-formatted output file in the current working directory ("isolateR_output/01_isoQC_mock_table.csv"). Sequence date, name, length, and number of ambiguous bases (Ns) will be calculated from the input file and used to populate the relevant columns. Phred quality scores (phred_trim) will be set to the maximum value (60) and the remaining columns will be populated with mock data to allow compatibility with the isoTAX function. The main purpose of this output file is for flexibility and to allow users to edit/modify the sequence metadata before continuing with subsequent steps.
+-Fixed error with <code>isoLIB</code> function not producing an HTML output file when only one group exists due to all sequences in a given run being identical or very similar in terms of pairwise nucleotide identity.
