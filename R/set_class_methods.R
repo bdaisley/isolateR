@@ -997,7 +997,6 @@ setMethod("export_html", "isoQC",
 #' @importFrom scales comma_format
 #' @importFrom scales label_number
 
-
 setMethod("export_html", "isoTAX",
           function(obj, quick_search=NULL, db=NULL){
             #Import checks
@@ -1106,7 +1105,8 @@ setMethod("export_html", "isoTAX",
               #viridis::scale_colour_viridis(option="B", begin=0, end=0.8, direction=-1, alpha=0.5) +
               ggplot2::scale_y_continuous(expand = c(1,1)) +
               ggplot2::ylab("Phred quality score") + ggplot2::xlab("% identity to closest match") +
-              ggplot2::theme(panel.background = ggplot2::element_blank(),
+              ggplot2::theme(plot.background = ggplot2::element_blank(),
+                             panel.background = ggplot2::element_blank(),
                              panel.border = ggplot2::element_rect(color ="black", fill = NA, linewidth = 0.5, linetype = 1),
                              panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank(),
                              legend.title = ggplot2::element_text(size=12),legend.text = ggplot2::element_text(size=9),
@@ -1137,7 +1137,8 @@ setMethod("export_html", "isoTAX",
               ggplot2::scale_y_continuous(expand = c(0.02,0.02)) +
               ggplot2::coord_flip() + 
               ggplot2::ylab("Seqeunce counts per genus")+
-              ggplot2::theme(panel.background = ggplot2::element_blank(),
+              ggplot2::theme(plot.background = ggplot2::element_blank(),
+                             panel.background = ggplot2::element_blank(),
                              panel.border = ggplot2::element_rect(color ="black", fill = NA, linewidth = 0.5, linetype = 1),
                              panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank(),
                              legend.title = ggplot2::element_text(size=12),legend.text = ggplot2::element_text(size=9),
@@ -1490,13 +1491,13 @@ setMethod("export_html", "isoTAX",
                                                      style = htmltools::css(display='inline-flex', width='10%', 'font-size' = '10pt', 'alpha' = '0.5', 'padding-top' = '15px','padding-left' = '10px',
                                                                             'font-weight' = 'normal','margin-left' = '-10%', 'z-index' = '1')
                                                    ),
-                                                   shiny::tags$div(isoTAX.plots1, style = htmltools::css(display='inline-flex', width='15%', 'margin-left' = '-4%', 'margin-bottom' = '-10%')), 
-                                                   shiny::tags$div(isoTAX.plots2, style = htmltools::css(display='inline-flex', width='20%', 'padding-left' = '50px', 'margin-bottom' = '-2%')),
+                                                   shiny::tags$div(isoTAX.plots1, style = htmltools::css(display='inline-flex', width='15%', 'margin-left' = '-4%', 'margin-bottom' = '-10%', 'z-index' = '3')), 
+                                                   shiny::tags$div(isoTAX.plots2, style = htmltools::css(display='inline-flex', width='20%', 'padding-left' = '50px', 'margin-bottom' = '-2%', 'z-index' = '2')),
                                                    style = htmltools::css(
                                                      width = '1400px',
                                                      display = 'inline-flex')))
             )
-
+            
             sunplot_large1 <- shiny::tags$div(sunplot_large, 'align'= "center", 'height' = '100vh', 'margin'='0') 
             fname_html_sun <- file.path(path, "lib", "sb_large.html")
             htmltools::save_html(sunplot_large1, fname_html_sun)
@@ -1506,7 +1507,6 @@ setMethod("export_html", "isoTAX",
             pander::openFileInOS(fname_html)
             #return(html_output)
           })
-
 
 #:::::::::::::::::::::::::::::::
 # MAKE HTML #3: LIB TABLE
