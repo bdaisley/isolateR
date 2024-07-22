@@ -1,4 +1,4 @@
-## Update: 2024-07-21
+## Update: 2024-07-21 (isolateR 1.0.0)
 - Added feature to <code>isoTAX</code> function to allow input of FASTA format files (relevant to addressing Issue #9). 
   - FASTA file type is automatically detected if first character of file is ">". 
   - File extension (.fasta/.fa/.fna) does not impact processing.
