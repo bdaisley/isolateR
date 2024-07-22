@@ -1109,11 +1109,11 @@ setMethod("export_html", "isoTAX",
                              panel.background = ggplot2::element_blank(),
                              panel.border = ggplot2::element_rect(color ="black", fill = NA, linewidth = 0.5, linetype = 1),
                              panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank(),
-                             legend.title = ggplot2::element_text(size=12),legend.text = ggplot2::element_text(size=9),
+                             legend.title = ggplot2::element_text(size=11),legend.text = ggplot2::element_text(size=9),
                              strip.background = ggplot2::element_blank(), strip.text.x = ggplot2::element_blank(),
                              axis.ticks.x=ggplot2::element_blank(), axis.text.x=ggplot2::element_text(size=9), 
-                             axis.title.y = ggplot2::element_text(size=12), axis.text.y=ggplot2::element_text(size=9),
-                             axis.title.x= ggplot2::element_text(size=12)) + ggplot2::theme(legend.position="none")
+                             axis.title.y = ggplot2::element_text(size=11), axis.text.y=ggplot2::element_text(size=9),
+                             axis.title.x= ggplot2::element_text(size=11)) + ggplot2::theme(legend.position="none")
             
             ggiraph::set_girafe_defaults(
               opts_hover_inv = ggiraph::opts_hover_inv(css = "opacity:0.2;"), 
@@ -1124,7 +1124,7 @@ setMethod("export_html", "isoTAX",
             )
             
             #isoTAX.plots1 <- ggiraph::girafe(ggobj = g.scatter, width_svg = 3.5, height_svg = 4.75)
-            isoTAX.plots1 <- ggiraph::girafe(ggobj = g.scatter, width_svg = 2.6, height_svg = 3.6)
+            isoTAX.plots1 <- ggiraph::girafe(ggobj = g.scatter, width_svg = 2.6, height_svg = 3.7)
             
             g.id <- ggplot2::ggplot(merged_input.g, ggplot2::aes(x=rank_genus, y=bar_counts, fill=ID, colour=ID)) + 
               ggplot2::scale_x_discrete(limits=rev) +
@@ -1141,11 +1141,11 @@ setMethod("export_html", "isoTAX",
                              panel.background = ggplot2::element_blank(),
                              panel.border = ggplot2::element_rect(color ="black", fill = NA, linewidth = 0.5, linetype = 1),
                              panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank(),
-                             legend.title = ggplot2::element_text(size=12),legend.text = ggplot2::element_text(size=9),
+                             legend.title = ggplot2::element_text(size=11),legend.text = ggplot2::element_text(size=9),
                              strip.background = ggplot2::element_blank(), strip.text.x = ggplot2::element_blank(),
                              axis.ticks.x=ggplot2::element_blank(), axis.text.x=ggplot2::element_text(size=9), 
                              axis.title.y = ggplot2::element_blank(), axis.text.y=ggplot2::element_text(size=9, margin=ggplot2::margin(t = 0, r = 5, b = 0, l = 0, unit = "pt")),
-                             axis.title.x= ggplot2::element_text(size=12))
+                             axis.title.x= ggplot2::element_text(size=11))
             
             ggiraph::set_girafe_defaults(
               opts_hover_inv = ggiraph::opts_hover_inv(css = "opacity:0.2;"), 
