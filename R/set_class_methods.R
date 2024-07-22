@@ -482,12 +482,12 @@ setMethod("show", "isoTAX",
             cat(paste("isolateR library file overview:"), "\n")
             cat(paste("========================================================="), "\n")
             cat(paste("Total sequences                             = \t   ", length(object@date), sep=""), "\n")
-            cat(paste("Number of sequences under Phylum threshod   = \t   ", length(isoTAX.S4@ID[isoTAX.S4@ID < isoTAX.S4@phylum_threshold[1]]), sep=""), "\n")
-            cat(paste("Number of sequences under Class threshod    = \t   ", length(isoTAX.S4@ID[isoTAX.S4@ID < isoTAX.S4@class_threshold[1]]), sep=""), "\n")
-            cat(paste("Number of sequences under Order threshod    = \t   ", length(isoTAX.S4@ID[isoTAX.S4@ID < isoTAX.S4@order_threshold[1]]), sep=""), "\n")
-            cat(paste("Number of sequences under Family threshod   = \t   ", length(isoTAX.S4@ID[isoTAX.S4@ID < isoTAX.S4@family_threshold[1]]), sep=""), "\n")
-            cat(paste("Number of sequences under Genus threshod    = \t   ", length(isoTAX.S4@ID[isoTAX.S4@ID < isoTAX.S4@genus_threshold[1]]), sep=""), "\n")
-            cat(paste("Number of sequences under Species threshod  = \t   ", length(isoTAX.S4@ID[isoTAX.S4@ID < isoTAX.S4@species_threshold[1]]), sep=""), "\n")
+            cat(paste("Number of sequences under Phylum threshod   = \t   ", length(object@ID[object@ID < object@phylum_threshold[1]]), sep=""), "\n")
+            cat(paste("Number of sequences under Class threshod    = \t   ", length(object@ID[object@ID < object@class_threshold[1]]), sep=""), "\n")
+            cat(paste("Number of sequences under Order threshod    = \t   ", length(object@ID[object@ID < object@order_threshold[1]]), sep=""), "\n")
+            cat(paste("Number of sequences under Family threshod   = \t   ", length(object@ID[object@ID < object@family_threshold[1]]), sep=""), "\n")
+            cat(paste("Number of sequences under Genus threshod    = \t   ", length(object@ID[object@ID < object@genus_threshold[1]]), sep=""), "\n")
+            cat(paste("Number of sequences under Species threshod  = \t   ", length(object@ID[object@ID < object@species_threshold[1]]), sep=""), "\n")
           }
 )
 #-------------------------------
