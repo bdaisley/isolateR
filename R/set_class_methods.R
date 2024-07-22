@@ -482,12 +482,12 @@ setMethod("show", "isoTAX",
             cat(paste("isolateR library file overview:"), "\n")
             cat(paste("========================================================="), "\n")
             cat(paste("Total sequences                             = \t   ", length(object@date), sep=""), "\n")
-            cat(paste("Number of sequences under Phylum threshold   = \t   ", length(object@ID[object@ID < object@phylum_threshold[1]]), sep=""), "\n")
-            cat(paste("Number of sequences under Class threshold    = \t   ", length(object@ID[object@ID < object@class_threshold[1]]), sep=""), "\n")
-            cat(paste("Number of sequences under Order threshold    = \t   ", length(object@ID[object@ID < object@order_threshold[1]]), sep=""), "\n")
-            cat(paste("Number of sequences under Family threshold   = \t   ", length(object@ID[object@ID < object@family_threshold[1]]), sep=""), "\n")
-            cat(paste("Number of sequences under Genus threshold    = \t   ", length(object@ID[object@ID < object@genus_threshold[1]]), sep=""), "\n")
-            cat(paste("Number of sequences under Species threshold  = \t   ", length(object@ID[object@ID < object@species_threshold[1]]), sep=""), "\n")
+            cat(paste("Number of sequences below Phylum threshold   = \t   ", length(object@ID[object@ID < object@phylum_threshold[1]]), sep=""), "\n")
+            cat(paste("Number of sequences below Class threshold    = \t   ", length(object@ID[object@ID < object@class_threshold[1]]), sep=""), "\n")
+            cat(paste("Number of sequences below Order threshold    = \t   ", length(object@ID[object@ID < object@order_threshold[1]]), sep=""), "\n")
+            cat(paste("Number of sequences below Family threshold   = \t   ", length(object@ID[object@ID < object@family_threshold[1]]), sep=""), "\n")
+            cat(paste("Number of sequences below Genus threshold    = \t   ", length(object@ID[object@ID < object@genus_threshold[1]]), sep=""), "\n")
+            cat(paste("Number of sequences below Species threshold  = \t   ", length(object@ID[object@ID < object@species_threshold[1]]), sep=""), "\n")
           }
 )
 #-------------------------------
