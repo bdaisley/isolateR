@@ -101,9 +101,9 @@ isoTAX <- function(input=NULL,
     message(cat(paste0("\033[47;", 32, "m","FASTA formatted file detected as input. Converting...", "\033[0m")))
     message(cat(paste0("\033[47;", 32, "m","Note: Phred quality values will be set to the maximum (60) when using FASTA files as input.", "\033[0m")))
     
-    fasta.in <- readBStringSet(fasta.file)
+    fasta.in <- Biostrings::readBStringSet(input)
     
-    fasta.date <- stringr::str_split_fixed((file.info(fasta.file))$ctime, " ", 2)[,1]
+    fasta.date <- stringr::str_split_fixed((file.info(input))$ctime, " ", 2)[,1]
     fasta.date <- paste(stringr::str_pad(stringr::str_split_fixed(fasta.date, "-", 3)[,1], 2, pad = "0"),
                         stringr::str_pad(stringr::str_split_fixed(fasta.date, "-", 3)[,2], 2, pad = "0"),
                         stringr::str_pad(stringr::str_split_fixed(fasta.date, "-", 3)[,3], 2, pad = "0"), sep="_")
