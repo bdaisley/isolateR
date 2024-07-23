@@ -4,8 +4,6 @@
 
 <p align="center"><img src="https://github.com/bdaisley/isolateR/blob/main/man/figures/isolateR_overview1.jpg?raw=true" width="1500"></p>
 
-***Beta version - Use at your own risk***
-
 isolateR aims to enhance microbial isolation workflows and support the identification of novel taxa. It addresses the challenges of manual Sanger sequencing data processing and limitations of conventional BLAST searches, crucial for identifying microorganisms and creating strain libraries. The package offers a streamlined three-step process that automates quality trimming Sanger sequence files, taxonomic classification via global alignment against type strain databases, and efficient strain library creation based on customizable sequence similarity thresholds. It features interactive HTML output tables for easy data exploration and optional tools for generating phylogenetic trees to visualize microbial diversity.
 
 
