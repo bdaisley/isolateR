@@ -4,7 +4,9 @@
 
 <p align="center"><img src="https://github.com/bdaisley/isolateR/blob/main/man/figures/isolateR_overview1.jpg?raw=true" width="1500"></p>
 
-isolateR aims to enhance microbial isolation workflows and support the identification of novel taxa. It addresses the challenges of manual Sanger sequencing data processing and limitations of conventional BLAST searches, crucial for identifying microorganisms and creating strain libraries. The package offers a streamlined three-step process that automates quality trimming Sanger sequence files, taxonomic classification via global alignment against type strain databases, and efficient strain library creation based on customizable sequence similarity thresholds. It features interactive HTML output tables for easy data exploration and optional tools for generating phylogenetic trees to visualize microbial diversity.
+<b>Update July 2024:</b> isolateR is now published in [Bioinformatics](https://academic.oup.com/bioinformatics/article/40/7/btae448/7712426)!
+
+isolateR aims to enhance microbial isolation workflows and support the identification of novel taxa. It addresses the challenges of manual Sanger sequencing data processing and limitations of conventional BLAST searches, crucial for identifying microorganisms and creating strain libraries. The package offers a streamlined three-step process that automates quality trimming Sanger sequence files, taxonomic classification via global alignment against type strain databases, and efficient strain library creation based on customizable sequence similarity thresholds. It features interactive HTML output tables for easy data exploration and optional tools for generating phylogenetic trees to visualize microbial diversity. 
 
 
 - The expected input is Sanger sequence <code>.ab1</code> files containing taxonomic marker sequences.
@@ -181,4 +183,10 @@ Inspect data via CSV files and HTML interactive [reactable](https://github.com/g
 
 
 More examples on usage of functions to come...
+
+
+## Citation
+
+Daisley B., Vancuren S.J., Brettingham D.J.L., Wilde J., Renwick S., Macpherson C., Good D.A., Botschner A.J., Yen S., Hill J.E., Sorbara M.T., Allen-Vercone E. (2024). isolateR: an R package for generating microbial libraries from Sanger sequencing data. Bioinformatics 40(7):btae448. (https://doi.org/10.1093/bioinformatics/btae448)
+
 
