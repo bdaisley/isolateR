@@ -24,7 +24,7 @@
 
 
 sanger_consensus <- function(input=NULL,
-                             suffix="_F.ab1|_R.ab1"){
+                             suffix="_F.ab1|_R.ab1", ...){
   
   #::::::::::::::::::
   #---Reading files
@@ -43,6 +43,9 @@ sanger_consensus <- function(input=NULL,
   if(length(unique(paired.seqs$no_suffix)) == 0 ) stop("There were 0 groups found based on common part of filename. Try adjusting 'suffix' parameter.")
   
   message("Detected ", length(unique(paired.seqs$no_suffix)), " unique group(s) with suffix provided.")
+  group.list <- as.data.frame(t(sapply(unique(paired.seqs$no_suffix), function(x){grep(x, paired.seqs$filename,value = TRUE)})))
+  group.list.x <- as.data.frame(apply(group.list, 1, function(x) paste0(x, collapse = " | ")))
+  message(paste(c("Group", "-----", rep(1:nrow(group.list.x))), "\t", c("Individual filenames","--------------------", group.list.x[,1]), '\n', sep=" "))
   
   if(length(unique(unpaired.seqs$no_suffix)) != 0){message("Warning: ", length(unique(unpaired.seqs$no_suffix)), " files had no matching pair after trimming suffix.",
                                                            " The file(s) will be skipped during alignment steps but will still be included in final output.")}
@@ -51,7 +54,7 @@ sanger_consensus <- function(input=NULL,
   #---Align seqs
   #::::::::::::::::::
   seq.groupings <- unique(paired.seqs$no_suffix)
-  
+
   collector.list <- lapply(1:length(seq.groupings), function(i){
     #Filter df to get only group of interest
     paired.seqs.filt <- paired.seqs %>% filter(no_suffix == seq.groupings[i]) # ************change back to i
@@ -60,7 +63,7 @@ sanger_consensus <- function(input=NULL,
     seqs <- Biostrings::DNAStringSet(paired.seqs.filt$seqs_trim)
     seqs.rc <- reverseComplement(seqs)
     seqs.qual <- lapply(1:nrow(paired.seqs.filt), function(x) rep(paired.seqs.filt$phred_trim[x], paired.seqs.filt$length_trim[x]))
-    seqs.qual.rc <- rev(seqs.qual)
+    seqs.qual.rc <- seqs.qual
     
     init.seq <- seqs[1]
     init.qual <- seqs.qual[[1]]
@@ -68,29 +71,49 @@ sanger_consensus <- function(input=NULL,
     #---------------
     while(length(seqs) > 0){
       #Evaluate input sequences as is
-      eval.1 <-unlist(lapply(seqs, function(x){Biostrings::pairwiseAlignment(pattern=x, subject=init.seq, type = "overlap", substitutionMatrix = NULL, scoreOnly=TRUE)}))
+      eval.1 <-unlist(lapply(seqs, function(x){pwalign::pairwiseAlignment(pattern=x, subject=init.seq, type = "local", substitutionMatrix = NULL, scoreOnly=TRUE)}))
       #Evaluate reverse complement of input sequences
-      eval.2 <-unlist(lapply(seqs.rc, function(x){Biostrings::pairwiseAlignment(pattern=x, subject=init.seq, type = "overlap", substitutionMatrix = NULL, scoreOnly=TRUE)}))
+      eval.2 <-unlist(lapply(seqs.rc, function(x){pwalign::pairwiseAlignment(pattern=x, subject=init.seq, type = "local", substitutionMatrix = NULL, scoreOnly=TRUE)}))
       #Get best matching seq based on alignment score
       best.match.index <- ifelse(max(eval.1) > max(eval.2), which.max(eval.1), which.max(eval.2))
       best.match.score <- ifelse(max(eval.1) > max(eval.2), eval.1[which.max(eval.1)], eval.2[which.max(eval.2)])
       best.match <- ifelse(max(eval.1) > max(eval.2), seqs[which.max(eval.1)], seqs.rc[which.max(eval.2)])
       best.match.qual <- ifelse(max(eval.1) > max(eval.2), seqs.qual[[which.max(eval.1)]], seqs.qual.rc[[which.max(eval.2)]])
+
+      
+      #ALIGN OVERLAPPING SEQUENCES-----------------------------
+      seq_aligned <- pwalign::pairwiseAlignment(pattern = init.seq, subject = best.match, 
+                                                   type = "local", substitutionMatrix = NULL, 
+                                                   scoreOnly = FALSE)
+      combined_sequence1 <- paste0(Biostrings::substr(init.seq, 1, (start(pattern(seq_aligned))-1)),
+                                   pattern(seq_aligned),
+                                   Biostrings::substr(best.match, end(subject(seq_aligned)) + 1, width(best.match)))
+      
+      combined_sequence2 <- paste0(Biostrings::substr(init.seq, 1, (start(pattern(seq_aligned))-1)),
+                                   subject(seq_aligned),
+                                   Biostrings::substr(best.match, end(subject(seq_aligned)) + 1, width(best.match)))
+      
+      eval.3 <- DNAStringSet(c(combined_sequence1, combined_sequence2))
+      
+      if(nchar(gsub("-","", subject(seq_aligned))) <=10 | nchar(gsub("-","", pattern(seq_aligned))) <=10){
+        best.match.score = 0
+      }
       
       #DECIPHER functions------------
-      eval.3 <- DECIPHER::AlignSeqs(DNAStringSet(c(init.seq, best.match, gsub("-", "", alignedPattern(Biostrings::pairwiseAlignment(pattern=best.match,subject=init.seq,type = "overlap", substitutionMatrix = NULL))))), verbose=FALSE)
+      #eval.3 <- DECIPHER::AlignSeqs(DNAStringSet(c(init.seq, best.match, gsub("-", "", alignedPattern(pwalign::pairwiseAlignment(pattern=best.match,subject=init.seq,type = "overlap", substitutionMatrix = NULL))))), verbose=FALSE)
       
       #---Debugging: Check alignment
-      if(best.match.score < 20) message("***Alignment failed for ", unique(paired.seqs.filt$no_suffix),": Alignment score (", round(best.match.score, 2) ,
-                                        ") less than 20 for at least one pair of sequences. This could be due to very short overlaps, or poor sequence quality. ",
-                                        "Manual inspection of isoQC output is recommended. Try changing isoQC parameters 'sliding_window_cutoff' and 'sliding_window_size'")
+      if(best.match.score <= alignment_score) message("***Alignment failed for ", unique(paired.seqs.filt$no_suffix),": Alignment score (", round(best.match.score, 2) ,
+                                        ") less than ", alignment_score, " for at least one pair of sequences. This could be due to very short overlaps, or poor sequence quality. ",
+                                        "Manual inspection of isoQC output is recommended. Try changing isoQC parameters 'sliding_window_cutoff' and 'sliding_window_size'.\n",
+                                        "Note: A minimum of ***10bp overlap*** is needed between paired sequences.\n")
 
       #DECIPHER::BrowseSeqs(eval.3)
       #-----------------------------
       #Get consensus seq
-      seqs.aln.con <- DECIPHER::ConsensusSequence(eval.3, threshold = 0.05, ambiguity = TRUE)
+      seqs.aln.con <- DECIPHER::ConsensusSequence(eval.3[1:2], threshold = 0.05, ambiguity = TRUE)
       #Combine query seqs + consensus side-by-side in dataframe
-      seqs.aln.con.manual <- as.data.frame(rbind(c(unlist(as.character(eval.3)),
+      seqs.aln.con.manual <- as.data.frame(rbind(c(unlist(as.character(eval.3[1:2])),
                                                    as.character(seqs.aln.con))))
       #Split sequences into individual nucleotides
       seqs.aln.con.manual.l <- lapply(1:ncol(seqs.aln.con.manual), function(x){
@@ -98,11 +121,13 @@ sanger_consensus <- function(input=NULL,
         unlist.out <- unlist(strsplit(unlist.out1, "(?<=[\\+])", perl=TRUE))
         return(unlist.out)})
       
+      if(best.match.score != 0){
       #Bind rows of list
-      seqs.aln.con.manual <- suppressMessages(bind_cols(seqs.aln.con.manual.l)) %>% `colnames<-`(c("seq1","seq2", "seq3", "auto")) %>% 
+      seqs.aln.con.manual <- suppressMessages(bind_cols(seqs.aln.con.manual.l)) %>% `colnames<-`(c("seq1","seq2", "auto")) %>% 
         mutate(qual_1=rep(unique(init.qual))) %>% mutate(qual_2=rep(unique(best.match.qual))) %>%
         mutate(consensus_seq = ifelse((seq1 == "-" | seq2 == "-"), auto, ifelse(qual_1 > qual_2, seq1, seq2))) %>%
         mutate(consensus_seq = ifelse(consensus_seq=="+", ifelse(qual_1 > qual_2, seq1, seq2), consensus_seq)) %>%
+        mutate(consensus_seq = ifelse(consensus_seq=="N", ifelse(seq1=="N", seq2, seq1), consensus_seq)) %>%
         filter(consensus_seq!="-")
       
       #Update index references
@@ -114,8 +139,14 @@ sanger_consensus <- function(input=NULL,
       seqs.qual <- seqs.qual[-best.match.index]
       seqs.qual.rc <- seqs.qual.rc[-best.match.index]
       #seqs.qual.rc2 <- sapply(seqs.qual.rc, base::toString)
+      }
       
-      if(best.match.score <20){
+      if(best.match.score == 0){
+        seqs <- NULL
+        failed.aln <- c(failed.aln, unique(paired.seqs.filt$no_suffix))
+      }
+      
+      if(best.match.score <= alignment_score){
         seqs <- NULL
         failed.aln <- c(failed.aln, unique(paired.seqs.filt$no_suffix))
         }
@@ -146,7 +177,7 @@ sanger_consensus <- function(input=NULL,
 
   #Bind all overlapped sequences back together and add back in unpaired seqs
   if(any((bind_rows(collector.list))$aln=="pass")){
-    if(length(paste(unique((bind_rows(collector.list) %>% filter(aln=="fail"))$no_suffix), sep="|"))==0){
+    if(length(unique((bind_rows(collector.list) %>% filter(aln=="fail"))$no_suffix))==0){
       collector.list.df <- bind_rows(collector.list) %>%
         {tmp <<- .} %>%
         filter(aln=="pass") %>%
@@ -168,11 +199,11 @@ sanger_consensus <- function(input=NULL,
         mutate(phred_raw=rep(0)) %>%
         mutate(Ns_raw=rep(0)) %>%
         mutate(length_raw=rep(0)) %>%
-        mutate(phred_spark_raw=rep("NA")) %>%
+        mutate(phred_spark_raw=rep("0_0_0")) %>%
         select(-aln) %>%
         mutate(filename= paste(no_suffix, "_consensus.",stringr::str_split_fixed(.$filename[1], "[.]", 2)[,2], sep="")) %>%
         rbind(., 
-              (paired.seqs %>% filter(grepl(paste(unique((tmp %>% filter(aln=="fail"))$no_suffix), sep="|"), no_suffix))),
+              (paired.seqs %>% filter(grepl(paste(unique((tmp %>% filter(aln=="fail"))$no_suffix), collapse="|"), no_suffix))),
               unpaired.seqs) %>%
         select(-no_suffix, -row_counter)
     }
@@ -182,16 +213,25 @@ sanger_consensus <- function(input=NULL,
       select(-no_suffix, -row_counter)
   }
   
-
+  
   #:::::::::::::::::::::::
   #---Export CSV files
   #:::::::::::::::::::::::
-  csv.out.path <- paste(stringr::str_split_fixed(input, "[.]csv", 2)[,1], "_consensus.csv", sep="")
-  write.csv(collector.list.df, csv.out.path, row.names = FALSE)
   
-  message(cat(paste0("\033[97;", 40, "m","CSV file with merged sequences exported:", "\033[0m",
-                     "\033[0;", 32, "m", " ", csv.out.path,"\033[0m",
-                     "\033[0;", 31, "m", "  <--- Input for Step 2: 'isoTAX'","\033[0m")))
+  csv.out.path <- paste(stringr::str_split_fixed(input, "[.]csv", 2)[,1], "_consensus.csv", sep="")
+  
+  invisible(capture.output(capture.output(csv.catch <- try(write.csv(collector.list.df, csv.out.path, row.names = FALSE)), type="message"), type="output"))
+  if(is(csv.catch, 'try-error')){
+    if(gsub("[^A-Za-z0-9]", "", stringr::str_split_fixed(csv.catch[1], " ", 8)[,8]) == "cannotopentheconnection"){
+      stop("Cannot write CSV file, try closing file: ", csv.out.path)
+    } else{
+      stop("Cannot write CSV file.")
+    }
+  } else {
+    message(cat(paste0("\033[97;", 40, "m","CSV file with merged sequences exported:", "\033[0m",
+                       "\033[0;", 32, "m", " ", csv.out.path,"\033[0m",
+                       "\033[0;", 31, "m", "  <--- Input for Step 2: 'isoTAX'","\033[0m")))
+  }
   
   #:::::::::::::::::::::::::::::::::::::::::::
   #---Return data as isoQC class object in R

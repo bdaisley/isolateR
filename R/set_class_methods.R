@@ -1061,19 +1061,19 @@ setMethod("export_html", "isoTAX",
               sunplot <- rbind(d1e, d2e, d2, d1) %>% select(ids, labels, parents) %>% mutate(labels = gsub(" ", "<br>", labels))
             }
             
-            sunplot_small <- plotly::plot_ly(sunplot, ids = ~ids, labels = ~labels, parents = ~parents, type = 'sunburst', width=350, height=350) %>%
+            suppressWarnings(sunplot_small <- plotly::plot_ly(sunplot, ids = ~ids, labels = ~labels, parents = ~parents, type = 'sunburst', width=350, height=350) %>%
               plotly::layout(margin = list( l = 5, r = 5, b = 10, t = 10, pad = 0),
                              autosize = TRUE, 
                              plot_bgcolor  = "rgba(255, 255, 255, 1)", 
                              paper_bgcolor = "rgba(0, 0, 0, 0)") %>% 
-              plotly::config(displayModeBar = FALSE) 
+              plotly::config(displayModeBar = FALSE))
             
-            sunplot_large <- plotly::plot_ly(sunplot, ids = ~ids, labels = ~labels, parents = ~parents, type = 'sunburst', width=900, height=900) %>%
+            suppressWarnings(sunplot_large <- plotly::plot_ly(sunplot, ids = ~ids, labels = ~labels, parents = ~parents, type = 'sunburst', width=900, height=900) %>%
               plotly::layout(margin = list( l = 20, r = 20, b = 20, t = 20, pad = 0),
                              autosize = TRUE, 
                              plot_bgcolor  = "rgba(255, 255, 255, 1)", 
                              paper_bgcolor = "rgba(0, 0, 0, 0)") %>% 
-              plotly::config(displayModeBar = FALSE) 
+              plotly::config(displayModeBar = FALSE))
             
             #-----------------------------------------------------------------------------------------------------------------Make other interactive plots
             if(length(unique(merged_input$rank_genus)) > 7){
@@ -1124,7 +1124,7 @@ setMethod("export_html", "isoTAX",
             )
             
             #isoTAX.plots1 <- ggiraph::girafe(ggobj = g.scatter, width_svg = 3.5, height_svg = 4.75)
-            isoTAX.plots1 <- ggiraph::girafe(ggobj = g.scatter, width_svg = 2.7, height_svg = 3.6)
+            suppressWarnings(isoTAX.plots1 <- ggiraph::girafe(ggobj = g.scatter, width_svg = 2.7, height_svg = 3.6))
             
             g.id <- ggplot2::ggplot(merged_input.g, ggplot2::aes(x=rank_genus, y=bar_counts, fill=ID, colour=ID)) + 
               ggplot2::scale_x_discrete(limits=rev) +
@@ -1156,7 +1156,7 @@ setMethod("export_html", "isoTAX",
             )
             
             #isoTAX.plots2 <- ggiraph::girafe(ggobj = g.id, width_svg = 9.5, height_svg = 4.75)
-            isoTAX.plots2 <- ggiraph::girafe(ggobj = g.id, width_svg = 7.4, height_svg = 3.6)
+            suppressWarnings(isoTAX.plots2 <- ggiraph::girafe(ggobj = g.id, width_svg = 7.4, height_svg = 3.6))
             
             #-----------------------------------------------------------------------------------------------------------------
             
