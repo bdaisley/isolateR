@@ -11,7 +11,7 @@ License: GPL (>= 2)
 Encoding: UTF-8
 LazyData: true
 biocViews:
-Imports: ape, BiocManager, Biostrings, crosstalk, cowplot, dataui, dplyr, getPass, ggtree, ggbeeswarm, ggiraph, IRanges, plotly, htmltools, patchwork, pwalign, LPSN, methods, msa, pander, R.utils, reactable, reactablefmtr, rentrez, S4Vectors, sangeranalyseR, sangerseqR, scales, seqinr, shiny, stringr, svMisc, xmlconvert
+Imports: ape, BiocManager, Biostrings, crosstalk, cowplot, dataui, dplyr, getPass, ggtree, ggbeeswarm, ggiraph, IRanges, plotly, htmltools, patchwork, LPSN, methods, msa, pander, R.utils, reactable, reactablefmtr, rentrez, S4Vectors, sangeranalyseR, sangerseqR, scales, seqinr, shiny, stringr, svMisc, xmlconvert
 Depends: R (>= 4.0), Biostrings, dplyr
 Remotes: timelyportfolio/dataui, glin/reactable, thomasp85/patchwork
 Roxygen: list(markdown = TRUE)

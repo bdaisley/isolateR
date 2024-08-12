@@ -91,9 +91,9 @@ sanger_assembly <- function(input=NULL,
     #---------------
     while(length(seqs) > 0){
       #Evaluate input sequences as is
-      eval.1 <-unlist(lapply(seqs, function(x){pwalign::pairwiseAlignment(pattern=x, subject=init.seq, type = "local", substitutionMatrix = NULL, scoreOnly=TRUE)}))
+      suppressWarnings(eval.1 <-unlist(lapply(seqs, function(x){Biostrings::pairwiseAlignment(pattern=x, subject=init.seq, type = "local", substitutionMatrix = NULL, scoreOnly=TRUE)})))
       #Evaluate reverse complement of input sequences
-      eval.2 <-unlist(lapply(seqs.rc, function(x){pwalign::pairwiseAlignment(pattern=x, subject=init.seq, type = "local", substitutionMatrix = NULL, scoreOnly=TRUE)}))
+      suppressWarnings(eval.2 <-unlist(lapply(seqs.rc, function(x){Biostrings::pairwiseAlignment(pattern=x, subject=init.seq, type = "local", substitutionMatrix = NULL, scoreOnly=TRUE)})))
       #Get best matching seq based on alignment score
       best.match.index <- ifelse(max(eval.1) > max(eval.2), which.max(eval.1), which.max(eval.2))
       best.match.score <- ifelse(max(eval.1) > max(eval.2), eval.1[which.max(eval.1)], eval.2[which.max(eval.2)])
@@ -102,9 +102,9 @@ sanger_assembly <- function(input=NULL,
 
       
       #ALIGN OVERLAPPING SEQUENCES-----------------------------
-      seq_aligned <- pwalign::pairwiseAlignment(pattern = init.seq, subject = best.match, 
+      suppressWarnings(seq_aligned <- Biostrings::pairwiseAlignment(pattern = init.seq, subject = best.match, 
                                                    type = "local", substitutionMatrix = NULL, 
-                                                   scoreOnly = FALSE)
+                                                   scoreOnly = FALSE))
       combined_sequence1 <- paste0(Biostrings::substr(init.seq, 1, (start(pattern(seq_aligned))-1)),
                                    pattern(seq_aligned),
                                    Biostrings::substr(best.match, end(subject(seq_aligned)) + 1, width(best.match)))
