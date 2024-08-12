@@ -36,7 +36,7 @@ devtools::install_github("bdaisley/isolateR")
 ```
 ### Install via Conda
 ```shell
-conda create --name isolateR r-isolater=1.0.0-0 -c bdaisley -c conda-forge -c bioconda
+conda create --name isolateR r-isolater=1.0.1-0 -c bdaisley -c conda-forge -c bioconda
 ```
 
 ## Quick start
