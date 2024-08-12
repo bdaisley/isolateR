@@ -1,4 +1,4 @@
-#' @name sanger_consensus
+#' @name sanger_assembly
 #' @title Overlap multiple paired Sanger sequences in batch.
 #' @description This function loads in the CSV results table from isoQC and merges related sequences based on user input. Original file 
 #' names before isoQC step need to have a common prefix and differentiating suffixes. (e.g. SAMPLE_01_F.ab1, SAMPLE_01_R.ab1). After
@@ -6,7 +6,7 @@
 #' scores are reassigned in the final output table in a basic way by taking the mean of both input sequences.
 #'
 #' Note: This function is designed to be used after the isoQC step and before the isoTAX step.
-#' @rdname sanger_consensus
+#' @rdname sanger_assembly
 #' @export
 #' @param input Path of CSV output file from isoQC step.
 #' @param suffix Regex-friendly suffix for denoting filename groupings. Default="_F.ab1|_R.ab1" for the common scenario of Sanger sequencing a marker gene in forward and reverse. 
@@ -20,11 +20,31 @@
 #' @importFrom stringr str_replace_all
 #' @importFrom stringr str_split_fixed
 #' @importFrom stringr str_remove
+#' @examples
+#' #Load package
+#' library(isolateR)
+#' 
+#' #Step 1: Set path to directory containing paired .ab1 files
+#' fpath <- system.file("extdata/abif_examples/drosophila_paired", package="isolateR")
+#' 
+#' #Step 2: Run isoQC function to trim poor quality regions (Phred score <20) before assembly
+#' isoQC.S4 <- isoQC(input=fpath, sliding_window_cutoff = 20)
+#' 
+#' #Step 3: Assemble paired sequences
+#' sanger_assembly(input = file.path(fpath,"isolateR_output", "01_isoQC_trimmed_sequences_PASS.csv"),
+#'                 suffix = "_F.ab1|_R.ab1")
+#'                 
+#' #Detected 3 unique group(s) with suffix provided.
+#' #Group    Individual filenames 
+#' #-----    -------------------- 
+#' # 1       DRO-1-isolate_F.ab1 | DRO-1-isolate_R.ab1 
+#' # 2       DRO-2-isolate_F.ab1 | DRO-2-isolate_R.ab1 
+#' # 3       DRO-3-isolate_F.ab1 | DRO-3-isolate_R.ab1
 #' 
 
 
-sanger_consensus <- function(input=NULL,
-                             suffix="_F.ab1|_R.ab1", ...){
+sanger_assembly <- function(input=NULL,
+                            suffix="_F.ab1|_R.ab1"){
   
   #::::::::::::::::::
   #---Reading files
@@ -99,16 +119,13 @@ sanger_consensus <- function(input=NULL,
         best.match.score = 0
       }
       
-      #DECIPHER functions------------
-      #eval.3 <- DECIPHER::AlignSeqs(DNAStringSet(c(init.seq, best.match, gsub("-", "", alignedPattern(pwalign::pairwiseAlignment(pattern=best.match,subject=init.seq,type = "overlap", substitutionMatrix = NULL))))), verbose=FALSE)
-      
       #---Debugging: Check alignment
+      alignment_score=0.0001
       if(best.match.score <= alignment_score) message("***Alignment failed for ", unique(paired.seqs.filt$no_suffix),": Alignment score (", round(best.match.score, 2) ,
                                         ") less than ", alignment_score, " for at least one pair of sequences. This could be due to very short overlaps, or poor sequence quality. ",
                                         "Manual inspection of isoQC output is recommended. Try changing isoQC parameters 'sliding_window_cutoff' and 'sliding_window_size'.\n",
                                         "Note: A minimum of ***10bp overlap*** is needed between paired sequences.\n")
 
-      #DECIPHER::BrowseSeqs(eval.3)
       #-----------------------------
       #Get consensus seq
       seqs.aln.con <- DECIPHER::ConsensusSequence(eval.3[1:2], threshold = 0.05, ambiguity = TRUE)
@@ -138,7 +155,6 @@ sanger_consensus <- function(input=NULL,
       seqs.rc <- seqs.rc[-best.match.index]
       seqs.qual <- seqs.qual[-best.match.index]
       seqs.qual.rc <- seqs.qual.rc[-best.match.index]
-      #seqs.qual.rc2 <- sapply(seqs.qual.rc, base::toString)
       }
       
       if(best.match.score == 0){
