@@ -617,12 +617,24 @@ isoLIB <- function(input=NULL,
       # Regrouping - Iteration 2
       #::::::::::::::::::::::::::::
       #-----------------------------------------------------------------------------
+      if(keep_old_reps==TRUE){
       drep.results3.x <- drep.results3 %>% 
-        #filter(!(filename %in% ref.index.new)) %>%
         filter(V10 %in% unique(paste(match.index2))) %>% #Filtering so that matches in V10 represent only the ref strains  
-        #arrange(V10) %>% #V10 is match column, sorting from oldest to newest added sequences
+        arrange(desc(as.numeric(V4))) %>% #V4 is % similarity between query and match, sorting from highest to lowest
+        distinct(filename, .keep_all=TRUE) %>% 
+        mutate(ref_check1=dplyr::recode(!!!ref.index, filename)) %>%
+        mutate(ref_check2=dplyr::recode(!!!ref.index, V10)) %>% 
+        mutate(ref_check3= ifelse(ref_check1=="yes" & ref_check2!="yes", filename, "")) %>%
+        group_by(V10) %>% 
+        mutate(ref_check4 = ifelse(any(ref_check3!=""), (ref_check3[ref_check3!=""])[1], V10)) %>%
+        ungroup() %>%
+        mutate(V10=ref_check4) %>% dplyr::select(!matches("ref_check"))
+      } else {
+      drep.results3.x <- drep.results3 %>% 
+        filter(V10 %in% unique(paste(match.index2))) %>% #Filtering so that matches in V10 represent only the ref strains  
         arrange(desc(as.numeric(V4))) %>% #V4 is % similarity between query and match, sorting from highest to lowest
         distinct(filename, .keep_all=TRUE)
+      }
       
       unlink(file.path(temp_combined_fasta)) #Remove temp FASTA
       unlink(file.path(temp_combined_drep))  #Remove temp DREP
