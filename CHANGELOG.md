@@ -1,10 +1,10 @@
 ## Update: 2024-08-11 (isolateR 1.0.1)
--Updated <code>sanger_consensus</code> function to allow assembly of paired Sanger sequences
+- Updated <code>sanger_consensus</code> function to allow assembly of paired Sanger sequences
   - This function loads in the CSV results table from isoQC and merges related sequences based on user input. 
   - Original file names before isoQC step need to have a common prefix and differentiating suffixes. (e.g. SAMPLE_01_F.ab1, SAMPLE_01_R.ab1).
   - After aligning paired sequences, the consensus sequence is extracted and priority is given to the read with higher quality. Phred quality scores are reassigned in the final output table in a basic way by taking the mean of both input sequences.
   - Note: This function is designed to be used after the isoQC step and before the isoTAX step.
--Fixed warning issue during isoTAX step caused by  usage of <code>girafe</code> function from ggiraph package.
+- Fixed warning issue during isoTAX step caused by  usage of <code>girafe</code> function from ggiraph package.
 
 
 ## Update: 2024-07-21 (isolateR 1.0.0)
