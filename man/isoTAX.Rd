@@ -9,7 +9,7 @@ isoTAX(
   export_html = TRUE,
   export_csv = TRUE,
   export_blast_table = FALSE,
-  quick_search = TRUE,
+  quick_search = FALSE,
   db = "16S_bac",
   db_path = NULL,
   vsearch_path = NULL,
@@ -23,7 +23,13 @@ isoTAX(
 )
 }
 \arguments{
-\item{input}{Path of CSV output file from isoQC step.}
+\item{input}{Path of either 1) CSV output file from isoQC step, or 2) a FASTA formatted file.
+If input is a FASTA file, the sequence(s) will be converted and saved as an isoQC-formatted output file in the current
+working directory ("isolateR_output/01_isoQC_mock_table.csv"). Sequence date, name, length, and number of ambiguous bases (Ns)
+will be calculated from the input file and used to populate the relevant columns. Phred quality scores (phred_trim) will be
+set to the maximum value (60) and the remaining columns will be populated with mock data to allow compatibility with
+the isoTAX function. The main purpose of this output file is for flexibility and to allow users to edit/modify the sequence
+metadata before continuing with subsequent steps.}
 
 \item{export_html}{(Default=TRUE) Output the results as an HTML file}
 
