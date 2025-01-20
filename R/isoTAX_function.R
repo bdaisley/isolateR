@@ -283,12 +283,12 @@ isoTAX <- function(input=NULL,
                        mutate(taxonomy = gsub(";[A-Za-z]+deae;", ";", taxonomy, perl=TRUE)) %>% #Remove subclass rank
                        mutate(taxonomy = gsub("ales;[A-Za-z]+neae;", "ales;", taxonomy, perl=TRUE)) %>% #Remove suborder ranks
                        mutate(taxonomy = gsub("aceae;[A-Za-z]+eae;", "aceae;", taxonomy, perl=TRUE)) %>% #Remove tribe ranks
-                       mutate(rank_domain = stringr::str_split_fixed(.$taxonomy, ";", 6)[,1]) %>%
-                       mutate(rank_phylum = stringr::str_split_fixed(.$taxonomy, ";", 6)[,2]) %>%
-                       mutate(rank_class = stringr::str_split_fixed(.$taxonomy, ";", 6)[,3]) %>%
-                       mutate(rank_order = stringr::str_split_fixed(.$taxonomy, ";", 6)[,4]) %>%
-                       mutate(rank_family = stringr::str_split_fixed(.$taxonomy, ";", 6)[,5]) %>%
-                       mutate(rank_genus = stringr::str_split_fixed(.$taxonomy, ";", 6)[,6]) %>%
+                       mutate(rank_domain = stringr::str_split_fixed(.$taxonomy, ";", 7)[,1]) %>%
+                       mutate(rank_phylum = stringr::str_split_fixed(.$taxonomy, ";", 7)[,3]) %>%
+                       mutate(rank_class = stringr::str_split_fixed(.$taxonomy, ";", 7)[,4]) %>%
+                       mutate(rank_order = stringr::str_split_fixed(.$taxonomy, ";", 7)[,5]) %>%
+                       mutate(rank_family = stringr::str_split_fixed(.$taxonomy, ";", 7)[,6]) %>%
+                       mutate(rank_genus = stringr::str_split_fixed(.$taxonomy, ";", 7)[,7]) %>%
                        mutate(rank_species = gsub("'", "", species)) %>% #Replace instances where single quotations are in species name
                        mutate(genus_tmp = stringr::str_split_fixed(rank_species, " ", 2)[,1]) %>% #Fixing instances where genus is in wrong spot
                        mutate(genus_tmp = gsub("\\[|\\]", "", genus_tmp)) %>% #Fixing instances where genus is in wrong spot
@@ -320,12 +320,12 @@ isoTAX <- function(input=NULL,
       mutate(closest_match = dplyr::recode(NCBI_acc, !!!lookup.list2)) %>%
       mutate(taxonomy = dplyr::recode(NCBI_acc, !!!lookup.list)) %>%
       mutate(taxonomy = gsub(" ", "", .$taxonomy)) %>%
-      mutate(rank_domain = stringr::str_split_fixed(.$taxonomy, ";", 6)[,1]) %>%
-      mutate(rank_phylum = stringr::str_split_fixed(.$taxonomy, ";", 6)[,2]) %>%
-      mutate(rank_class = stringr::str_split_fixed(.$taxonomy, ";", 6)[,3]) %>%
-      mutate(rank_order = stringr::str_split_fixed(.$taxonomy, ";", 6)[,4]) %>%
-      mutate(rank_family = stringr::str_split_fixed(.$taxonomy, ";", 6)[,5]) %>%
-      mutate(rank_genus = stringr::str_split_fixed(.$taxonomy, ";", 6)[,6]) %>%
+      mutate(rank_domain = stringr::str_split_fixed(.$taxonomy, ";", 7)[,1]) %>%
+      mutate(rank_phylum = stringr::str_split_fixed(.$taxonomy, ";", 7)[,2]) %>%
+      mutate(rank_class = stringr::str_split_fixed(.$taxonomy, ";", 7)[,3]) %>%
+      mutate(rank_order = stringr::str_split_fixed(.$taxonomy, ";", 7)[,4]) %>%
+      mutate(rank_family = stringr::str_split_fixed(.$taxonomy, ";", 7)[,5]) %>%
+      mutate(rank_genus = stringr::str_split_fixed(.$taxonomy, ";", 7)[,6]) %>%
       mutate(rank_species = dplyr::recode(NCBI_acc, !!!lookup.list3)) %>%
       mutate(warning = ifelse(decision =="Fail" | decision =="Pass" & ID <90 & phred_trim <40, "Poor alignment", ""))
   }
