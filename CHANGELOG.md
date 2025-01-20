@@ -1,3 +1,11 @@
+## Update: 2025-01-20 (isolateR 1.0.2)
+- Updated <code>isoALL</code> function to allow input of custom databases (e.g. isoALL(.., db_path=/path/to/databases, ...)
+  - This was alreayd available using the isoTAX function but was not implemented through isoALL.
+  - The path should be a FASTA-formatted database sequence file. Ignored if 'db' parameter is set to anything other than NULL or "custom".
+  - Expects a semicolon (;) delimited FASTA header as follows: Accession_no;d__Domain;p__Phylum;c__Class; o__Order;f__Family;g__Genus;s__Species. See <code>get_db</code> function documentation for examples and details on automatically generating custom databaes for offline use or within an HPC cluster environment.
+- Fixed an issue causing the Phylum-level taxonomy to be shifted (e.g. the new Kingdom "Bacillati" incorrectly labelled as phylum in place of "Bacillota"). This issue arised from the recent subdivision of the domain Bacteria into the kingdoms Bacillati, Fusobacteriati, Pseudomonadati and Thermotogati. See [Göker and Oren (2024, International Journal of Systematic and Evolutionary Microbiology)](https://doi.org/10.1099/ijsem.0.006242) for more details (DOI:10.1099/ijsem.0.006242).
+  - The isoTAX and isoALL functions have both been updated to return the correct phylum names.
+
 ## Update: 2024-08-11 (isolateR 1.0.1)
 - Updated <code>sanger_assembly</code> function (aka "sanger_consensus" prior to v1.0.1) to allow assembly of paired Sanger sequences
   - This function loads in the CSV results table from isoQC and merges related sequences based on user input. 

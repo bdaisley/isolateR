@@ -27,6 +27,9 @@
 #' @param db (Default="16S") Select database option(s) including "16S" (for searching against the NCBI Refseq targeted loci 16S rRNA database),
 #' "ITS" (for searching against the NCBI Refseq targeted loci ITS  database. For combined databases in cases where input sequences are dervied from
 #' bacteria and fungi, select "16S|ITS".
+#' @param db_path Path of FASTA-formatted database sequence file. Ignored if 'db' parameter is set to anything other than NULL or "custom".
+#' Expects a semicolon (;) delimited FASTA header as follows: Accession_no;d__Domain;p__Phylum;c__Class; o__Order;f__Family;g__Genus;s__Species.
+#' See \code{\link{get_db}} function for examples and details on automatically generating custom databaes for offline use or within an HPC cluster environment.
 #' @param iddef Set pairwise identity definition as per VSEARCH definitions (Default=2, and is recommended for highest taxonomic accuracy)
 #' (0) CD-HIT definition: (matching columns) / (shortest sequence length).
 #' (1) Edit distance: (matching columns) / (alignment length).
@@ -72,6 +75,7 @@ isoALL <- function(input=NULL,
                    export_blast_table=FALSE,
                    quick_search=FALSE,
                    db="16S",
+                   db_path=NULL,
                    iddef=2,
                    phylum_threshold=75.0,
                    class_threshold=78.5,
@@ -127,6 +131,7 @@ isoALL <- function(input=NULL,
                           export_blast_table=FALSE,
                           quick_search=quick_search,
                           db=db,
+                          db_path,
                           iddef=iddef,
                           phylum_threshold=phylum_threshold,
                           class_threshold=class_threshold,

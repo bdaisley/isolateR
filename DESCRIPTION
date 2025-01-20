@@ -1,8 +1,8 @@
 Package: isolateR
 Type: Package
 Title: Automated processing of Sanger sequencing data, taxonomic profiling, and generation of microbial strain libraries
-Version: 1.0.1
-Date: 2024-08-11
+Version: 1.0.2
+Date: 2025-01-20
 Author: Brendan Daisley, Sarah J Vancuren, Dylan J.L. Brettingham, Jacob Wilde, Simone Renwick, Christine V Macpherson, David A. Good, Alexander J. Botschner, Sandi Yen, Janet E. Hill, Matthew T. Sorbara, Emma Allen-Vercoe.
 Maintainer: Brendan Daisley <bdaisley@uoguelph.ca>
 Description: isolateR aims to enhance microbial isolation workflows and support the identification of novel taxa. It addresses the challenges of manual Sanger sequencing data processing and limitations of conventional BLAST searches, crucial for identifying microorganisms and creating strain libraries. The package offers a streamlined three-step process that automates quality trimming Sanger sequence files, taxonomic classification via global alignment against type strain databases, and efficient strain library creation based on customizable sequence similarity thresholds. It features interactive HTML output tables for easy data exploration and optional tools for generating phylogenetic trees to visualize microbial diversity. 
