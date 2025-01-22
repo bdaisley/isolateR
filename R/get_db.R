@@ -13,7 +13,7 @@
 #' db.path <- get_db(db="16S", force_update=FALSE)
 
 get_db <- function(db="16S_bac", force_update=FALSE, add_taxonomy=FALSE){
-
+  
   #Check inputs----------------------------------------------------------------------------------------------------------------
   if(!grepl("^16S$|^16S_bac$|^16S_arc$|^18S_fun$|^cpn60$|^ITS$", db)) stop('Database entry incorrect. Please choose one of: "16S_bac", "16S_arc", "18S_fun", "cpn60", "ITS"')
   if(grepl("^16S$", db)) message('Note: Use of db="16S" defaults to the Targeted Loci Bacteria 16S rRNA database (db="16S_bac"). Please use db="16_arc" for Archaea.')
@@ -116,7 +116,7 @@ get_db <- function(db="16S_bac", force_update=FALSE, add_taxonomy=FALSE){
       unlink(file.path(db.path, paste(db, ".fna.gz", sep="")),recursive=TRUE)
     }
   }
-
+  
   db.fasta.path <- file.path(db.path, paste(db, ".fna", sep=""))
   
   #Add taxonomy---------------------------------------------------------------------------------------
@@ -177,12 +177,12 @@ get_db <- function(db="16S_bac", force_update=FALSE, add_taxonomy=FALSE){
                            mutate(taxonomy = gsub(";[A-Za-z]+deae;", ";", taxonomy, perl=TRUE)) %>% #Remove subclass rank
                            mutate(taxonomy = gsub("ales;[A-Za-z]+neae;", "ales;", taxonomy, perl=TRUE)) %>% #Remove suborder ranks
                            mutate(taxonomy = gsub("aceae;[A-Za-z]+eae;", "aceae;", taxonomy, perl=TRUE)) %>% #Remove tribe ranks
-                           mutate(rank_domain = stringr::str_split_fixed(.$taxonomy, ";", 6)[,1]) %>%
-                           mutate(rank_phylum = stringr::str_split_fixed(.$taxonomy, ";", 6)[,2]) %>%
-                           mutate(rank_class = stringr::str_split_fixed(.$taxonomy, ";", 6)[,3]) %>%
-                           mutate(rank_order = stringr::str_split_fixed(.$taxonomy, ";", 6)[,4]) %>%
-                           mutate(rank_family = stringr::str_split_fixed(.$taxonomy, ";", 6)[,5]) %>%
-                           mutate(rank_genus = stringr::str_split_fixed(.$taxonomy, ";", 6)[,6]) %>%
+                           mutate(rank_domain = stringr::str_split_fixed(.$taxonomy, ";", 7)[,1]) %>%
+                           mutate(rank_phylum = stringr::str_split_fixed(.$taxonomy, ";", 7)[,3]) %>%
+                           mutate(rank_class = stringr::str_split_fixed(.$taxonomy, ";", 7)[,4]) %>%
+                           mutate(rank_order = stringr::str_split_fixed(.$taxonomy, ";", 7)[,5]) %>%
+                           mutate(rank_family = stringr::str_split_fixed(.$taxonomy, ";", 7)[,6]) %>%
+                           mutate(rank_genus = stringr::str_split_fixed(.$taxonomy, ";", 7)[,7]) %>%
                            mutate(rank_species = gsub("'", "", species)) %>% #Replace instances where single quotations are in species name
                            mutate(genus_tmp = stringr::str_split_fixed(rank_species, " ", 2)[,1]) %>% #Fixing instances where genus is in wrong spot
                            mutate(genus_tmp = gsub("\\[|\\]", "", genus_tmp)) %>% #Fixing instances where genus is in wrong spot
@@ -200,7 +200,7 @@ get_db <- function(db="16S_bac", force_update=FALSE, add_taxonomy=FALSE){
                            mutate(species = gsub(" ", "_", species)) %>% #Replace spaces in species name
                            mutate_at(vars(rank_class, rank_order, rank_family), funs(ifelse(. == "", "NA", .))) #Replace unknown ranks with "NA"
         )
-
+        
         #Add taxonomy to fasta header for database sequences
         names(db.fasta) <- paste(fetch.list.df.mer.x$INSDSeq_accession_version,
                                  ";d__", fetch.list.df.mer.x$rank_domain, 
@@ -276,12 +276,12 @@ get_db <- function(db="16S_bac", force_update=FALSE, add_taxonomy=FALSE){
                          mutate(taxonomy = gsub(";[A-Za-z]+deae;", ";", taxonomy, perl=TRUE)) %>% #Remove subclass rank
                          mutate(taxonomy = gsub("ales;[A-Za-z]+neae;", "ales;", taxonomy, perl=TRUE)) %>% #Remove suborder ranks
                          mutate(taxonomy = gsub("aceae;[A-Za-z]+eae;", "aceae;", taxonomy, perl=TRUE)) %>% #Remove tribe ranks
-                         mutate(rank_domain = stringr::str_split_fixed(.$taxonomy, ";", 6)[,1]) %>%
-                         mutate(rank_phylum = stringr::str_split_fixed(.$taxonomy, ";", 6)[,2]) %>%
-                         mutate(rank_class = stringr::str_split_fixed(.$taxonomy, ";", 6)[,3]) %>%
-                         mutate(rank_order = stringr::str_split_fixed(.$taxonomy, ";", 6)[,4]) %>%
-                         mutate(rank_family = stringr::str_split_fixed(.$taxonomy, ";", 6)[,5]) %>%
-                         mutate(rank_genus = stringr::str_split_fixed(.$taxonomy, ";", 6)[,6]) %>%
+                         mutate(rank_domain = stringr::str_split_fixed(.$taxonomy, ";", 7)[,1]) %>%
+                         mutate(rank_phylum = stringr::str_split_fixed(.$taxonomy, ";", 7)[,3]) %>%
+                         mutate(rank_class = stringr::str_split_fixed(.$taxonomy, ";", 7)[,4]) %>%
+                         mutate(rank_order = stringr::str_split_fixed(.$taxonomy, ";", 7)[,5]) %>%
+                         mutate(rank_family = stringr::str_split_fixed(.$taxonomy, ";", 7)[,6]) %>%
+                         mutate(rank_genus = stringr::str_split_fixed(.$taxonomy, ";", 7)[,7]) %>%
                          mutate(rank_species = gsub("'", "", species)) %>% #Replace instances where single quotations are in species name
                          mutate(genus_tmp = stringr::str_split_fixed(rank_species, " ", 2)[,1]) %>% #Fixing instances where genus is in wrong spot
                          mutate(genus_tmp = gsub("\\[|\\]", "", genus_tmp)) %>% #Fixing instances where genus is in wrong spot
