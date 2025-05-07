@@ -295,7 +295,7 @@ get_db <- function(db="16S_bac", force_update=FALSE, add_taxonomy=FALSE){
                          mutate(rank_class = ifelse(rank_class==rank_family, "", rank_class)) %>% #Fixing family upward
                          mutate(rank_order = ifelse(grepl("ales$", rank_class), rank_class, rank_order)) %>% #Fixing order upward
                          mutate(rank_class = ifelse(rank_class==rank_order, "", rank_class)) %>% #Fixing order upward
-                         mutate(rank_genus = stringr::str_split_fixed(species, ";", 2)[,1]) %>% 
+                         mutate(rank_genus = stringr::str_split_fixed(species, " ", 2)[,1]) %>% 
                          mutate(species = gsub(" ", "_", species)) %>% #Replace spaces in species name
                          mutate_at(vars(rank_class, rank_order, rank_family), funs(ifelse(. == "", "NA", .))) #Replace unknown ranks with "NA"
       )
