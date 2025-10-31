@@ -29,7 +29,7 @@ if (!requireNamespace("devtools", quietly = TRUE))
   install.packages("devtools")
   
 #Install the required Bioconductor dependencies
-BiocManager::install(c("Biostrings", "msa", "sangeranalyseR", "sangerseqR"), update=FALSE)
+BiocManager::install(c("Biostrings", "msa", "sangerseqR"), update=FALSE)
 
 #Install isolateR
 devtools::install_github("bdaisley/isolateR")
