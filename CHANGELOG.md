@@ -1,6 +1,12 @@
+## Update: 2025-10-31 (isolateR 1.0.3)
+- Fixed issue related to #18 (Error: object 'TreeLine' is not exported by 'namespace:DECIPHER') with internal dependency on the deprecated <code>TreeLine</code> function in later versions of the DECIPHER package.
+  - Changes made: <code>TreeLine</code> -> <code>Treeline</code> (Line 164 and Line 234) replacement in "isoLIB_function.R"
+- Fixed issue related to #16 causing working directory to be reset and isoQC/isoTAX/isoLIB requiring absolute paths.
+  - Changes made: Added <code>normalizePath()</code> functions to isoQC/isoTAX/isoLIB functions, allowing both absolute and relative paths to be speicifed as input.
+
 ## Update: 2025-01-20 (isolateR 1.0.2)
 - Updated <code>isoALL</code> function to allow input of custom databases (e.g. isoALL(.., db_path=/path/to/databases, ...)
-  - This was alreayd available using the isoTAX function but was not implemented through isoALL.
+  - This was already available using the isoTAX function but was not implemented through isoALL.
   - The path should be a FASTA-formatted database sequence file. Ignored if 'db' parameter is set to anything other than NULL or "custom".
   - Expects a semicolon (;) delimited FASTA header as follows: Accession_no;d__Domain;p__Phylum;c__Class; o__Order;f__Family;g__Genus;s__Species. See <code>get_db</code> function documentation for examples and details on automatically generating custom databaes for offline use or within an HPC cluster environment.
 - Fixed an issue causing the Phylum-level taxonomy to be shifted (e.g. the new Kingdom "Bacillati" incorrectly labelled as phylum in place of "Bacillota"). This issue arised from the recent subdivision of the domain Bacteria into the kingdoms Bacillati, Fusobacteriati, Pseudomonadati and Thermotogati. See [Göker and Oren (2024, International Journal of Systematic and Evolutionary Microbiology)](https://doi.org/10.1099/ijsem.0.006242) for more details (DOI:10.1099/ijsem.0.006242).

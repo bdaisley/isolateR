@@ -82,13 +82,16 @@ isoLIB <- function(input=NULL,
   }
   
   #Set paths------------------------------------------------------------
-  
-  new_lib <- stringr::str_replace_all(input, '\\\\', '/')
+
+  new_lib <- stringr::str_replace_all(normalizePath(input), '\\\\', '/') #Added normalizePath() function fix issue #16
+  #new_lib <- stringr::str_replace_all(input, '\\\\', '/')  #Commented out to fix issue #16
   new_lib_path <- paste(unlist(strsplit(new_lib, '/'))[1:(length(unlist(strsplit(new_lib, '/')))-1)],collapse="/")
   new_lib_file <- read.csv(new_lib) #, row.names = 1) removing row.names setting
   if(nrow(new_lib_file) < 2) stop("Command terminated. isoLIB requires at least 2 sequences to generate a library.", call.=FALSE)
   
-  setwd(new_lib_path)
+  original_dir <- getwd() #Added to fix issue #16
+  
+  #setwd(new_lib_path) #Commented out to fix issue #16
   
   #-------------------------------------------------
   #:::::::::::::::::::::::::::
@@ -161,7 +164,7 @@ isoLIB <- function(input=NULL,
     #Calculate distance matrix
     cluster.dist <- DECIPHER::DistanceMatrix(cluster.aln, type="matrix")
     #Cluster sequences
-    cluster.list <- DECIPHER::TreeLine(myXStringSet = cluster.aln,
+    cluster.list <- DECIPHER::Treeline(myXStringSet = cluster.aln,
                                        myDistMatrix = cluster.dist,
                                        cutoff = 1-group_cutoff,
                                        method = "ML", #UPGMA
@@ -231,7 +234,7 @@ isoLIB <- function(input=NULL,
       #Calculate distance matrix
       combined.cluster.dist <- DECIPHER::DistanceMatrix(combined.cluster.aln, type="matrix")
       #Cluster sequences
-      combined.cluster.list <- DECIPHER::TreeLine(myXStringSet = combined.cluster.aln,
+      combined.cluster.list <- DECIPHER::Treeline(myXStringSet = combined.cluster.aln,
                                                   myDistMatrix = combined.cluster.dist,
                                                   cutoff = 1-group_cutoff,
                                                   method = "ML", #UPGMA
@@ -709,6 +712,7 @@ isoLIB <- function(input=NULL,
   ###############
   
   #Set S4 class for outputs
+  setwd(new_lib_path)
   isolib.S4.1 <- df_to_isoLIB(merged.drep1)
   if(is.null(old_lib_csv)==FALSE){isolib.S4.2 <- df_to_isoLIB(merged.drep2)}
   
@@ -758,9 +762,9 @@ isoLIB <- function(input=NULL,
     }
   } else if(export_csv==FALSE){}
   
+  setwd(original_dir) #Added to fix issue #16
   if(is.null(old_lib_csv)==TRUE){return(isolib.S4.1)}
   if(is.null(old_lib_csv)==FALSE){return(isolib.S4.2)}
-  
 } #end of function
 
 ###########################################################################################################

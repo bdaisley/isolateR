@@ -80,9 +80,12 @@ isoTAX <- function(input=NULL,
 
 
   #Setting file paths-------------------------------------------------
-  input <- stringr::str_replace_all(input, '\\\\', '/')
-  path <- paste(unlist(strsplit(input, '/'))[1:(length(unlist(strsplit(input, '/')))-1)], collapse="/")
-  setwd(path)
+
+  input <- stringr::str_replace_all(normalizePath(input), '\\\\', '/') #Added normalizePath() function fix issue #16
+  #input <- stringr::str_replace_all(input, '\\\\', '/') #Commented out to fix issue #16
+  path <- paste(unlist(strsplit(input, '/'))[1:(length(unlist(strsplit(input, '/')))-1)], collapse="/") 
+  #setwd(path) #Commented out to fix issue #16
+  original_dir <- getwd() #Added to fix issue #16
   
   #:::::::::::::::::::::::::::::::::::::::::
   #Evaluate input file type
@@ -207,9 +210,9 @@ isoTAX <- function(input=NULL,
                           vsearch_path= vsearch_path,
                           iddef=iddef,
                           keep_temp_files=export_blast_table)
-  
+
   if(export_blast_table==TRUE){
-    blast.table <- read.csv("temp_vsearch/02_isoTAX_output.b6o", sep="\t", header = FALSE)
+    blast.table <- read.csv(file.path(path, "temp_vsearch/02_isoTAX_output.b6o"), sep="\t", header = FALSE)
     unlink("temp_vsearch",recursive=TRUE)
   }
   
@@ -375,7 +378,7 @@ isoTAX <- function(input=NULL,
   #:::::::::::::::::::::::::::::::
   # Outputs
   #:::::::::::::::::::::::::::::::
-  
+  setwd(path) #Modified path to fix issue #16
   #Set S4 class for outputs
   isoTAX <- df_to_isoTAX(merged.df3)
   isoTAX@phylum_threshold <- phylum_threshold
@@ -387,30 +390,33 @@ isoTAX <- function(input=NULL,
   
   #Set dataframe for outputs
   out_df <- S4_to_dataframe(isoTAX)
+  setwd(original_dir) #Modified path to fix issue #16
   
   #####################################################
   
   #Export messages
   message(cat(paste0("\033[97;", 40, "m","'isoTAX' steps completed. Exporting files...", "\033[0m")))
-  
+
   #Export HTML file----------------------------------------------------------------------
   if(export_html == TRUE) {
     output_name <- "02_isoTAX_results.html"
+    setwd(path) #Modified path to fix issue #16
     export_html(isoTAX, quick_search=quick_search, db=db)
+    setwd(original_dir) #Modified path to fix issue #16
     message(cat(paste0("\033[97;", 40, "m","HTML results exported: ", "\033[0m",
                        "\033[0;", 32, "m", " ", file.path(path, output_name),"\033[0m")))
   }
   #Export BLAST TABLE file----------------------------------------------------------------------
   if(export_blast_table == TRUE) {
     output_name <- "02_isoTAX_results_BLAST_formatted_table.tsv"
-    readr::write_tsv(blast.table, file=output_name, col_names=FALSE)
+    readr::write_tsv(blast.table, file=file.path(path, output_name), col_names=FALSE) #Modified path to fix issue #16
     message(cat(paste0("\033[97;", 40, "m","BLAST format results exported: ", "\033[0m",
                        "\033[0;", 32, "m", " ", file.path(path, output_name),"\033[0m")))
   }
   #export CSV files----------------------------------------------------------------------
   if(export_csv==TRUE) {
     output_name <- "02_isoTAX_results.csv"
-    write.csv(out_df, file=paste(output_name, sep=""), row.names = FALSE)
+    write.csv(out_df, file=file.path(path, output_name), row.names = FALSE) #Modified path to fix issue #16
     message(cat(paste0("\033[97;", 40, "m","CSV file exported:", "\033[0m",
                        "\033[0;", 32, "m", " ", file.path(path, output_name),"\033[0m",
                        "\033[0;", 31, "m", "  <--- Input for Step 3: 'isoLIB'","\033[0m")))

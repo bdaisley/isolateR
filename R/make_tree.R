@@ -47,6 +47,7 @@ make_tree <- function(input = NULL){
   
   
   #get paths
+  original_dir <- getwd() #Added to fix issue #16
   clean_input <- stringr::str_replace_all(input, '\\\\', '/')
   workingdir <- paste(unlist(strsplit(clean_input, '/'))[1:(length(unlist(strsplit(clean_input, '/')))-1)],collapse="/")
   proj_name <- unlist(strsplit(workingdir, '/'))[(length(unlist(strsplit(workingdir, '/')))-1)]
@@ -291,5 +292,6 @@ make_tree <- function(input = NULL){
       }
     }
   }
+  setwd(original_dir) #Added to fix issue #16
   return(viewtree)
 }

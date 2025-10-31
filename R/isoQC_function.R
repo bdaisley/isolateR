@@ -72,16 +72,16 @@ isoQC <- function(input=NULL,
   }
   
   #Setting folder paths for ABIF files----------------------------------------------------
-  
-  folder <- input
-  setwd(folder)
-  folder <- getwd()
+  original_dir <- getwd()
+  folder <- normalizePath(input) #Added normalizePath() function fix issue #16
+  #setwd(folder)       #Commented out to fix issue #16
+  #folder <- getwd()   #Commented out to fix issue #16
   path <- stringr::str_replace_all(folder, '\\\\', '/')
   fname <- list.files(path)
   pattern <- 'ab1'
   abif_files <- stringr::str_subset(fname, pattern)
   if(is.null(files_manual)==FALSE){abif_files <- files_manual}
-  
+
   #excluding specified files
   if(!is.null(exclude)) {
     
@@ -144,7 +144,7 @@ isoQC <- function(input=NULL,
     fpath <- file.path(path, abif_files[i]) # remove below
     
     fpath <- file.path(path, abif_files[i])
-    fpath
+    
     #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     # Basecalling and quality trimming steps
     #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -294,7 +294,7 @@ isoQC <- function(input=NULL,
   
   
   # building isoQC file--------------------------------------------------------
-  
+  setwd(path)
   isoQC <- new("isoQC", input=paste(path))
   
   isoQC@date <- checkseq$date
@@ -330,7 +330,7 @@ isoQC <- function(input=NULL,
            decision)
   
   #building output file--------------------------------------------------------------
-  
+
   seq.warnings <- (isoQC.df %>% filter(decision!="Pass"))$filename
   
   if(is.null(seq.warnings)==FALSE){
@@ -453,6 +453,7 @@ isoQC <- function(input=NULL,
   
   #remove the folder of misc files for the script
   unlink(paste0(fname,"_files/"),recursive = TRUE)
+  setwd(original_dir)
   return(isoQC)
 }
 

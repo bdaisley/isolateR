@@ -87,7 +87,7 @@ search_db <- function(query.path = NULL,
   Setting to anything other than NULL causes 'db.path' parameter to be ignored.", call.=FALSE)
 
   #set paths--------------------------------------------------------------------------------------------
-  setwd(path)
+  #setwd(path) #Commented out to fix issue #16
 
   #:::::::::::::::::::::::::::::::::
   #Download reference databases
@@ -134,18 +134,20 @@ search_db <- function(query.path = NULL,
   # Search function
   #:::::::::::::::::::::
   message(cat(paste0("\033[97;", 40, "m","Searching query sequences against NCBI database", "\033[0m")))
-  message(cat(paste0("\033[0;", 32, "m","This may take several minutes...", "\033[0m")))
+  message(cat(paste0("\033[0;", 32, "m","This may take several minutes. Try setting 'quick_search=TRUE' for faster results at the expense of slightly reduced accuracy", "\033[0m")))
 
   suppressWarnings(dir.create(file.path(path, "temp_vsearch")))
+  query.path <- file.path(path, query.path) #Added full path for query to fix issue #16
   path <- file.path(path, "temp_vsearch")
-  uc.out <- file.path("temp_vsearch", uc.out)
-  b6.out <- file.path("temp_vsearch", b6.out)
-
+  uc.out <- file.path(path, uc.out) #Changed "temp_vsearch" -> path to fix issue #16
+  b6.out <- file.path(path, b6.out) #Changed "temp_vsearch" -> path to fix issue #16
+  
   if(quick_search==TRUE){
     #Set compatible database path for VSEARCH
     invisible(file.copy(db.path, path, overwrite = TRUE))
     db.path.x <- unlist(strsplit(db.path, '/'))[length(unlist(strsplit(db.path, '/')))]
-    db.path.x <- file.path("temp_vsearch", db.path.x)
+    db.path.x <- file.path(path, db.path.x) #Changed "temp_vsearch" -> path to fix issue #16
+    paste(" --usearch_global ", query.path, " --db ", db.path.x, " --blast6out ", b6.out, " --uc ", uc.out, " --iddef ",iddef, " --id 0.7 -query_cov 0.95 --maxaccepts 100 --maxrejects 100 --top_hits_only --strand both", sep="")
     system2(vsearch.path, paste(" --usearch_global ", query.path, " --db ", db.path.x, " --blast6out ", b6.out, " --uc ", uc.out, " --iddef ",iddef, " --id 0.7 -query_cov 0.95 --maxaccepts 100 --maxrejects 100 --top_hits_only --strand both", sep=""), stdout="", stderr="")
     #Clean up
     unlink(file.path(path, db.path.x),recursive=TRUE)
@@ -154,7 +156,7 @@ search_db <- function(query.path = NULL,
     #Set compatible database path for VSEARCH
     invisible(file.copy(db.path, path, overwrite = TRUE))
     db.path.x <- unlist(strsplit(db.path, '/'))[length(unlist(strsplit(db.path, '/')))]
-    db.path.x <- file.path("temp_vsearch", db.path.x)
+    db.path.x <- file.path(path, db.path.x) #Changed "temp_vsearch" -> path to fix issue #16
     system2(vsearch.path, paste(" --usearch_global ", query.path, " --db ", db.path.x, " --blast6out ", b6.out, " --uc ", uc.out, " --iddef ",iddef, " --id 0.7 -query_cov 0.95 --maxaccepts 0 --maxrejects 0 --top_hits_only --strand both ", sep=""), stdout="", stderr="")
     #Clean up
     unlink(file.path(path, db.path.x),recursive=TRUE)
@@ -180,9 +182,9 @@ search_db <- function(query.path = NULL,
 
   if(keep_temp_files==FALSE){
     #Clean up files
-    unlink(file.path(path, uc.out),recursive=TRUE) #Remove UC file
-    unlink(file.path(path, b6.out),recursive=TRUE) #Remove B6 file
-    unlink(path,recursive=TRUE) #Remove temp directory
+    unlink(file.path(uc.out), recursive=TRUE) #Remove UC file #Corrected path to fix issue #16
+    unlink(file.path(b6.out), recursive=TRUE) #Remove B6 file #Corrected path to fix issue #16
+    unlink(path, recursive=TRUE) #Remove temp directory
   }
   return(uc.results)
 }
