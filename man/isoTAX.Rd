@@ -42,7 +42,7 @@ If TRUE, performs quick search equivalent to setting VSEARCH parameters "--maxac
 If FALSE, performs comprehensive search equivalent to setting VSEARCH parameters "--maxaccepts 0 --maxrejects 0"}
 
 \item{db}{(Default="16S_bac") Select database option(s) including "16S" (for searching against the NCBI Refseq targeted loci 16S rRNA database),
-"ITS" (for searching against the NCBI Refseq targeted loci ITS  database. For combined databases in cases where input sequences are derived from
+"ITS" (for searching against the NCBI Refseq targeted loci ITS database. For combined databases in cases where input sequences are derived from
 bacteria and fungi, select "16S|ITS". Setting to anything other than db=NULL or db="custom" causes 'db.path' parameter to be ignored.}
 
 \item{db_path}{Path of FASTA-formatted database sequence file. Ignored if 'db' parameter is set to anything other than NULL or "custom".

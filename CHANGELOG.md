@@ -1,3 +1,7 @@
+## Update: 2025-11-16 (isolateR 1.0.4)
+- Fixed issue related to #19 (taxonomy shifted in <code>isoTAX</code> output columns)
+  - Improved taxonomy string calls by implementing <code>entrez_link</code> and <code>entrez_fetch</code> functions from the <code>rentrez</code> package, and then parsing XML outputs to explicity extract each taxonomy rank by name (phylum, class, order, family, genus, and species).
+
 ## Update: 2025-10-31 (isolateR 1.0.3)
 - Fixed issue related to #18 (Error: object 'TreeLine' is not exported by 'namespace:DECIPHER') with internal dependency on the deprecated <code>TreeLine</code> function in later versions of the DECIPHER package.
   - Changes made: <code>TreeLine</code> -> <code>Treeline</code> (Line 164 and Line 234) replacement in "isoLIB_function.R"

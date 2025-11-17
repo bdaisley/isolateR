@@ -18,7 +18,7 @@ isolateR aims to enhance microbial isolation workflows and support the identific
 
 ## Installation
 
-### Install via GitHub
+### Install via GitHub (Development version)
 ```r
 #Install BiocManager if not already installed
 if (!requireNamespace("BiocManager", quietly = TRUE))
