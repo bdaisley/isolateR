@@ -1,3 +1,7 @@
+## Update: 2025-11-21 (isolateR 1.0.5)
+- Resolved persistent taxonomy-shifting in <code>isoTAX</code> (Issue #19). The underlying problem was only partially fixed in v1.0.4. In certain cases, higher-rank taxonomy did not align with species-level assignments due to subtle row-sorting differences introduced during internal calls to <code>entrez_link</code> and <code>entrez_fetch</code> (via the rentrez package). Row ordering is now explicitly controlled, and all taxonomy outputs appear stable and correct across test cases.
+- Addressed <code>isoQC</code> warning: “unimplemented legacy type found in file". This warning was triggered inconsistently depending on the Sanger sequencing instrument used. Some .ab1 files produced it while others from different instruments did not. Since the warning did not affect <code>isoQC</code> performance or outputs, it has now been silenced internally to avoid confusion. The message will no longer appear for users.
+
 ## Update: 2025-11-16 (isolateR 1.0.4)
 - Fixed issue related to #19 (taxonomy shifted in <code>isoTAX</code> output columns)
   - Improved taxonomy string calls by implementing <code>entrez_link</code> and <code>entrez_fetch</code> functions from the <code>rentrez</code> package, and then parsing XML outputs to explicity extract each taxonomy rank by name (phylum, class, order, family, genus, and species).

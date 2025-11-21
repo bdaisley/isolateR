@@ -136,19 +136,20 @@ isoQC <- function(input=NULL,
   #Get max sequence length info-----------------------------------------------------------
   for(i in 1:length(abif_files)){
     fpath <- file.path(path, abif_files[i])
-    length.list <- c(length.list, as.numeric(nchar(unlist((sangerseqR::read.abif(fpath))@data['PBAS.2'])))+5)
+    #Silently read in max sequence lengths
+    suppressWarnings(length.list <- c(length.list, as.numeric(nchar(unlist((sangerseqR::read.abif(fpath))@data['PBAS.2'])))+5))
+
   }
   length.list.max <- max(length.list)
-  
+
   for(i in 1:length(abif_files)){
-    fpath <- file.path(path, abif_files[i]) # remove below
-    
+
     fpath <- file.path(path, abif_files[i])
     
     #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     # Basecalling and quality trimming steps
     #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    abif.pre <- sangerseqR::read.abif(fpath)
+    suppressWarnings(abif.pre <- sangerseqR::read.abif(fpath))
     
     #Set sliding window----------
     if(is.null(sliding_window_cutoff)){
@@ -170,7 +171,7 @@ isoQC <- function(input=NULL,
     if(verbose==FALSE){
       invisible(capture.output(capture.output(abif1 <- tryCatch(
         {
-          sangeranalyseR::SangerRead(readFeature           = "Forward Read",
+          suppressWarnings(sangeranalyseR::SangerRead(readFeature           = "Forward Read",
                                      readFileName          = fpath,
                                      geneticCode           = GENETIC_CODE,
                                      TrimmingMethod        = "M2",
@@ -179,11 +180,11 @@ isoQC <- function(input=NULL,
                                      M2SlidingWindowSize   = sliding_window_size,
                                      baseNumPerRow         = 100,
                                      heightPerRow          = 200,
-                                     signalRatioCutoff     = 0.33)
+                                     signalRatioCutoff     = 0.33))
         },
         error = function(e) {
           message(cat(paste0("\033[97;", 41, "m","First trimming attempt failed, retrying with 'sliding window = 1'", "\033[0m")))
-          sangeranalyseR::SangerRead(readFeature           = "Forward Read",
+          suppressWarnings(sangeranalyseR::SangerRead(readFeature           = "Forward Read",
                                      readFileName          = fpath,
                                      geneticCode           = GENETIC_CODE,
                                      TrimmingMethod        = "M2",
@@ -192,12 +193,12 @@ isoQC <- function(input=NULL,
                                      M2SlidingWindowSize   = 1,
                                      baseNumPerRow         = 100,
                                      heightPerRow          = 200,
-                                     signalRatioCutoff     = 0.33)
+                                     signalRatioCutoff     = 0.33))
         }
       ), type="message"), type="output"))
     } else {abif1 <- tryCatch(
       {
-        sangeranalyseR::SangerRead(readFeature           = "Forward Read",
+        suppressWarnings(sangeranalyseR::SangerRead(readFeature           = "Forward Read",
                                    readFileName          = fpath,
                                    geneticCode           = GENETIC_CODE,
                                    TrimmingMethod        = "M2",
@@ -206,11 +207,11 @@ isoQC <- function(input=NULL,
                                    M2SlidingWindowSize   = sliding_window_size,
                                    baseNumPerRow         = 100,
                                    heightPerRow          = 200,
-                                   signalRatioCutoff     = 0.33)
+                                   signalRatioCutoff     = 0.33))
       },
       error = function(e) {
         message(cat(paste0("\033[97;", 41, "m","First trimming attempt failed, retrying with 'sliding window = 1'", "\033[0m")))
-        sangeranalyseR::SangerRead(readFeature           = "Forward Read",
+        suppressWarnings(sangeranalyseR::SangerRead(readFeature           = "Forward Read",
                                    readFileName          = fpath,
                                    geneticCode           = GENETIC_CODE,
                                    TrimmingMethod        = "M2",
@@ -219,7 +220,7 @@ isoQC <- function(input=NULL,
                                    M2SlidingWindowSize   = 1,
                                    baseNumPerRow         = 100,
                                    heightPerRow          = 200,
-                                   signalRatioCutoff     = 0.33)
+                                   signalRatioCutoff     = 0.33))
       }
     )}
     
@@ -316,7 +317,7 @@ isoQC <- function(input=NULL,
   # Output results
   #:::::::::::::::::::::::::::::::
   isoQC.df <- S4_to_dataframe(isoQC) %>%
-    select(date,
+    dplyr::select(date,
            filename,
            seqs_raw,
            phred_raw,

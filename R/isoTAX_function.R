@@ -170,7 +170,7 @@ isoTAX <- function(input=NULL,
     mutate(dup_count = row_number()) %>%
     mutate(filename = ifelse(dup_count > 1, paste(filename, "_dup", dup_count - 1, sep = ""), filename)) %>%
     mutate(duplicated = dup_count > 1) %>%
-    select(-dup_count) %>%
+    dplyr::select(-dup_count) %>%
     ungroup()
   
   if(length((raw.input %>% filter(duplicated==TRUE))$filename) > 0){
@@ -179,7 +179,7 @@ isoTAX <- function(input=NULL,
     message(cat(paste0("\033[0;", 30, "m",  paste((raw.input %>% filter(duplicated==TRUE))$filename, collapse="\n"), "\033[0m")))
   }
   
-  isoTAX.input <- raw.input %>% select(-duplicated)
+  isoTAX.input <- raw.input %>% dplyr::select(-duplicated)
   
   #:::::::::::::::::::::::::::::::::::::::::
   #Stage paths for taxonomic classification
@@ -297,6 +297,7 @@ isoTAX <- function(input=NULL,
       
       r_fetch2.df <- xmlconvert::xml_to_df(text = r_fetch2, records.tags = c("//INSDSeq"), check.datatypes=FALSE, check.names=TRUE) %>%
         dplyr::rowwise() %>%
+        mutate(taxid = unlist(strsplit(unlist(strsplit(INSDSeq_feature_table, 'INSDQualifier_value~taxon:', fixed=TRUE))[2], '|', fixed=TRUE))[1]) %>%
         mutate(strain = unlist(strsplit(unlist(strsplit(INSDSeq_feature_table, 'strain||INSDQualifier_value~', fixed=TRUE))[2], '|', fixed=TRUE))[1]) %>%
         mutate(culture_collection = gsub(":", " ", unlist(strsplit(unlist(strsplit(INSDSeq_feature_table, 'culture_collection||INSDQualifier_value~', fixed=TRUE))[2], '|', fixed=TRUE))[1])) %>%
         mutate(culture_collection = ifelse(is.na(culture_collection), strain, culture_collection)) %>%
@@ -323,9 +324,9 @@ isoTAX <- function(input=NULL,
         taxrank = xml2::xml_text(xml2::xml_find_all(lineage_nodes, "./Rank"))
         #------------------------------------------------------------------
         tibble(taxid = main_taxid,
-               INSDSeq_accession_version = r_fetch2.df$INSDSeq_accession_version[taxon_node],
-               accession = r_fetch2.df$INSDSeq_accession_version[taxon_node],
-               closest_match = r_fetch2.df$closest_match[taxon_node],
+               #INSDSeq_accession_version = r_fetch2.df$INSDSeq_accession_version[taxon_node],
+               #accession = r_fetch2.df$INSDSeq_accession_version[taxon_node],
+               #closest_match = r_fetch2.df$closest_match[taxon_node],
                domain =  ifelse(isEmpty(taxname[taxrank == "domain"]), "NA", taxname[taxrank == "domain"]),
                phylum =  ifelse(isEmpty(taxname[taxrank == "phylum"]), "NA", taxname[taxrank == "phylum"]),
                class =  ifelse(isEmpty(taxname[taxrank == "class"]), "NA", taxname[taxrank == "class"]),
@@ -337,15 +338,20 @@ isoTAX <- function(input=NULL,
       })
       
       all_lineages.df <- dplyr::bind_rows(all_lineages, .id = "column_label") %>% filter(taxid!=1) #%>% dplyr::relocate("accession", 1)
-      if(i == 1){fetch.list <- all_lineages.df}
-      if(i > 1){fetch.list <- rbind(fetch.list, all_lineages.df)}
+      if(i == 1){
+        fetch.list <- all_lineages.df
+        fetch.list2 <- r_fetch2.df}
+      if(i > 1){
+        fetch.list <- rbind(fetch.list, all_lineages.df)
+        fetch.list2 <- rbind(fetch.list2, r_fetch2.df)
+      }
       #Convert fetched XML file to dataframe format. In this case, the 'INSDSeq' node defines individual records within the XML tree
       #fetch.list[[paste("acc", i, sep="_")]] <- lapply(i, function(x) dplyr::bind_rows(all_lineages, .id = "column_label") %>% filter(taxid!=1) %>% mutate(accession=merged.df$NCBI_acc[ii]))
       #svMisc::progress(i, length(fetch.ids))
     }
     
     #Add columns of interest to lookup table
-    suppressWarnings(fetch.list.df <- fetch.list %>%
+    suppressWarnings(fetch.list.df <-  merge(fetch.list2, fetch.list, by="taxid", sort=FALSE, all=TRUE) %>%
                        #mutate(closest_match = paste(stringr::str_split_fixed(INSDSeq_organism, " ", 3)[,1], " ", stringr::str_split_fixed(INSDSeq_organism, " ", 3)[,2], " (", culture_collection, ")", sep="")) %>%
                        mutate(species = paste(stringr::str_split_fixed(closest_match, " ", 3)[,1],stringr::str_split_fixed(closest_match, " ", 3)[,2], sep=" ")) %>%
                        mutate(taxonomy = paste(domain, phylum, class, order, family, genus, species, sep=";")) %>%
@@ -406,7 +412,7 @@ isoTAX <- function(input=NULL,
   #::::::::::::::::::::::::
   #Make reactable output
   #::::::::::::::::::::::::
-  merged.df3 <- merged.df2 %>% select(warning, date,filename,seqs_raw, phred_raw,Ns_raw, length_raw, phred_spark_raw, seqs_trim, phred_trim,Ns_trim,length_trim, closest_match, NCBI_acc, ID, rank_phylum, rank_class, rank_order, rank_family, rank_genus, rank_species) %>%
+  merged.df3 <- merged.df2 %>% dplyr::select(warning, date,filename,seqs_raw, phred_raw,Ns_raw, length_raw, phred_spark_raw, seqs_trim, phred_trim,Ns_trim,length_trim, closest_match, NCBI_acc, ID, rank_phylum, rank_class, rank_order, rank_family, rank_genus, rank_species) %>%
     mutate(rank_genus= paste(stringr::str_split_fixed(rank_genus, ";", 3)[,1])) %>%
     mutate(rank_species = ifelse(grepl("No_match",rank_species) | rank_species == "", "No_match", rank_species)) %>%
     mutate(rank_phylum=ifelse(rank_phylum=="","No_match",rank_phylum)) %>%

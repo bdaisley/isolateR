@@ -138,7 +138,7 @@ isoLIB <- function(input=NULL,
     message(cat(paste0("\033[0;", 30, "m",  paste((new_lib_file %>% filter(duplicated==TRUE))$filename, collapse="\n"), "\033[0m")))
   }
   
-  new_lib_file <- new_lib_file %>% select(-undup, -duplicated, -duplicated2)
+  new_lib_file <- new_lib_file %>% dplyr::select(-undup, -duplicated, -duplicated2)
   
   new_lib_file$unique_filename <- paste(stringr::str_pad(1:nrow(new_lib_file), 4, pad="0"), new_lib_file$filename, sep="_")
   
@@ -222,7 +222,7 @@ isoLIB <- function(input=NULL,
         message(cat(paste0("\033[0;", 30, "m", paste((combined_lib_file %>% filter(duplicated==TRUE))$filename, collapse="\n"), "\033[0m")))
       }
       
-      combined_lib_file <- combined_lib_file %>% select(-undup, -duplicated, -duplicated2)
+      combined_lib_file <- combined_lib_file %>% dplyr::select(-undup, -duplicated, -duplicated2)
       
       #Make unique strain names incase any duplicated-----------------------
       combined_lib_file$unique_filename <- paste(stringr::str_pad(1:nrow(combined_lib_file), 4, pad="0"), combined_lib_file$filename, sep="_")
@@ -264,11 +264,11 @@ isoLIB <- function(input=NULL,
           dplyr::select(sequence_group, date, filename, seqs_trim, phred_trim, Ns_trim, length_trim, closest_match, NCBI_acc, ID,
                         rank_phylum, rank_class, rank_order, rank_family, rank_genus, rank_species, representative)
         
-        old.match.comparisons1 <- combined_lib_file %>% filter(representative!="") %>% select(filename, sequence_group) %>% distinct(filename, .keep_all=TRUE)
-        old.match.comparisons2 <- merged.drep2 %>% filter(filename %in% tmp$filename) %>% rename("sequence_group2" = "sequence_group") %>% distinct(filename, .keep_all=TRUE) %>% select(filename, sequence_group2)
+        old.match.comparisons1 <- combined_lib_file %>% filter(representative!="") %>% dplyr::select(filename, sequence_group) %>% distinct(filename, .keep_all=TRUE)
+        old.match.comparisons2 <- merged.drep2 %>% filter(filename %in% tmp$filename) %>% rename("sequence_group2" = "sequence_group") %>% distinct(filename, .keep_all=TRUE) %>% dplyr::select(filename, sequence_group2)
         
-        old.match.comparisons <- cbind(combined_lib_file %>% filter(representative!="") %>% select(filename, sequence_group) %>% distinct(filename, .keep_all=TRUE) %>% {tmp <<- .},
-                                       merged.drep2 %>% filter(filename %in% tmp$filename) %>% rename("sequence_group2" = "sequence_group") %>% distinct(filename, .keep_all=TRUE) %>% select(sequence_group2)) %>%
+        old.match.comparisons <- cbind(combined_lib_file %>% filter(representative!="") %>% dplyr::select(filename, sequence_group) %>% distinct(filename, .keep_all=TRUE) %>% {tmp <<- .},
+                                       merged.drep2 %>% filter(filename %in% tmp$filename) %>% rename("sequence_group2" = "sequence_group") %>% distinct(filename, .keep_all=TRUE) %>% dplyr::select(sequence_group2)) %>%
           filter(sequence_group != sequence_group2) #%>% `colnames<-`(c("filename", "Old", "New"))
         
         if(length(old.match.comparisons$filename) > 0){
@@ -363,7 +363,7 @@ isoLIB <- function(input=NULL,
         message(cat(paste0("\033[0;", 30, "m", paste((combined_lib_file %>% filter(duplicated==TRUE))$filename, collapse="\n"), "\033[0m")))
       }
       
-      combined_lib_file <- combined_lib_file %>% select(-undup, -duplicated, -duplicated2)
+      combined_lib_file <- combined_lib_file %>% dplyr::select(-undup, -duplicated, -duplicated2)
       
       #Make unique strain names incase any duplicated-----------------------
       combined_lib_file$unique_filename <- paste(stringr::str_pad(1:nrow(combined_lib_file), 4, pad="0"), combined_lib_file$filename, sep="_")
@@ -387,8 +387,8 @@ isoLIB <- function(input=NULL,
                         rank_phylum, rank_class, rank_order, rank_family, rank_genus, rank_species, representative)
         
         
-        old.match.comparisons <- cbind(combined_lib_file %>% filter(representative!="") %>% select(filename, sequence_group) %>% distinct(filename, .keep_all=TRUE) %>% {tmp <<- .},
-                                       merged.drep2 %>% filter(filename %in% tmp$filename) %>% rename("sequence_group2" = "sequence_group") %>% distinct(filename, .keep_all=TRUE) %>% select(sequence_group2)) %>% filter(sequence_group != sequence_group2)
+        old.match.comparisons <- cbind(combined_lib_file %>% filter(representative!="") %>% dplyr::select(filename, sequence_group) %>% distinct(filename, .keep_all=TRUE) %>% {tmp <<- .},
+                                       merged.drep2 %>% filter(filename %in% tmp$filename) %>% rename("sequence_group2" = "sequence_group") %>% distinct(filename, .keep_all=TRUE) %>% dplyr::select(sequence_group2)) %>% filter(sequence_group != sequence_group2)
         
         if(length(old.match.comparisons$filename) > 0){
           message(cat(paste0("\033[0;", 32, "m","Keeping original sequence representatives in place from old library. The following ", length(old.match.comparisons$filename), 
@@ -514,7 +514,7 @@ isoLIB <- function(input=NULL,
     
     #Subset only columns of interest------------------------------------------------------------------
     
-    merged.drep1 <- merged.drep %>% select(sequence_group, date, filename, representative, seqs_trim, phred_trim, Ns_trim, length_trim,
+    merged.drep1 <- merged.drep %>% dplyr::select(sequence_group, date, filename, representative, seqs_trim, phred_trim, Ns_trim, length_trim,
                                            closest_match, NCBI_acc, ID,
                                            rank_phylum, rank_class, rank_order, rank_family, rank_genus, rank_species)
     
@@ -551,7 +551,7 @@ isoLIB <- function(input=NULL,
         message(cat(paste0("\033[0;", 30, "m", paste((combined_lib_file %>% filter(duplicated==TRUE))$filename, collapse="\n"), "\033[0m")))
       }
       
-      combined_lib_file <- combined_lib_file %>% select(-undup, -duplicated, -duplicated2)
+      combined_lib_file <- combined_lib_file %>% dplyr::select(-undup, -duplicated, -duplicated2)
       
       #Make unique strain names incase any duplicated-----------------------
       combined_lib_file$unique_filename <- paste(stringr::str_pad(1:nrow(combined_lib_file), 4, pad="0"), combined_lib_file$filename, sep="_")
@@ -656,13 +656,13 @@ isoLIB <- function(input=NULL,
         #Remove unique identifier characters
         mutate(sequence_group = sapply(1:length(.$sequence_group),function(x) stringr::str_sub(.$sequence_group[x], 6, nchar(.$sequence_group[x]))))
       
-      merged.drep2 <- combined_lib_file_regroup %>% select(sequence_group, date, filename, representative, seqs_trim, phred_trim, Ns_trim, length_trim,
+      merged.drep2 <- combined_lib_file_regroup %>% dplyr::select(sequence_group, date, filename, representative, seqs_trim, phred_trim, Ns_trim, length_trim,
                                                            closest_match, NCBI_acc, ID,
                                                            rank_phylum, rank_class, rank_order, rank_family, rank_genus, rank_species)
       
       #---Sanity check
-      old.match.comparisons <- cbind(combined_lib_file %>% filter(representative!="") %>% select(filename, sequence_group) %>% distinct(filename, .keep_all=TRUE) %>% {tmp <<- .},
-                                     merged.drep2 %>% filter(filename %in% tmp$filename) %>% rename("sequence_group2" = "sequence_group") %>% distinct(filename, .keep_all=TRUE) %>% select(sequence_group2)) %>%
+      old.match.comparisons <- cbind(combined_lib_file %>% filter(representative!="") %>% dplyr::select(filename, sequence_group) %>% distinct(filename, .keep_all=TRUE) %>% {tmp <<- .},
+                                     merged.drep2 %>% filter(filename %in% tmp$filename) %>% rename("sequence_group2" = "sequence_group") %>% distinct(filename, .keep_all=TRUE) %>% dplyr::select(sequence_group2)) %>%
         filter(sequence_group != sequence_group2) #%>% `colnames<-`(c("filename", "Old", "New"))
       
       message(cat(paste0("\033[0;", 32, "m","**********Sanity check**********", "\033[0m")))
@@ -742,7 +742,7 @@ isoLIB <- function(input=NULL,
   if(export_csv==TRUE){
     if(is.null(old_lib_csv)==TRUE){
       output_name <- "03_isoLIB_results.csv"
-      csv_output <- S4_to_dataframe(isolib.S4.1) %>% select(sequence_group, date, filename, representative, seqs_trim, phred_trim, Ns_trim, length_trim,
+      csv_output <- S4_to_dataframe(isolib.S4.1) %>% dplyr::select(sequence_group, date, filename, representative, seqs_trim, phred_trim, Ns_trim, length_trim,
                                                             closest_match, NCBI_acc, ID,
                                                             rank_phylum, rank_class, rank_order, rank_family, rank_genus, rank_species)
       write.csv(csv_output, file=paste(output_name, sep=""), row.names = FALSE)
@@ -752,7 +752,7 @@ isoLIB <- function(input=NULL,
     }
     if(is.null(old_lib_csv)==FALSE){
       output_name <- "03_isoLIB_results_merged.csv"
-      csv_output <- S4_to_dataframe(isolib.S4.2) %>% select(sequence_group, date, filename, representative, seqs_trim, phred_trim, Ns_trim, length_trim,
+      csv_output <- S4_to_dataframe(isolib.S4.2) %>% dplyr::select(sequence_group, date, filename, representative, seqs_trim, phred_trim, Ns_trim, length_trim,
                                                             closest_match, NCBI_acc, ID,
                                                             rank_phylum, rank_class, rank_order, rank_family, rank_genus, rank_species)
       write.csv(csv_output, file=paste(output_name, sep=""), row.names = FALSE)
