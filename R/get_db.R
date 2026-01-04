@@ -3,7 +3,7 @@
 #' @description This function downloads taxonomic reference database and formats them for use.
 #' @param db Database selection. One of "16S", "16S_arc", "18S", "ITS", or "cpn60"
 #' @param force_update Forces new databases to be downloaded.
-#' @param add_taxonomy Add full taxonomy to header to enable classification of sequences offline. This is primarily for cases of operation with no internet or when computing within an HPC cluster without administrator access. Results in a semicolon (;) delimited FASTA header as follows: Accession_no;d__Domain;p__Phylum;c__Class;o__Order;f__Family;g__Genus;s__Species
+#' @param add_taxonomy Add full taxonomy to header to enable classification of sequences offline. This is primarily for cases of operation with no internet or when computing within an HPC cluster without administrator access. Results in a semicolon (;) delimited FASTA header as follows: >Accession_no;d__Domain;p__Phylum;c__Class;o__Order;f__Family;g__Genus;s__Species (e.g., >NR_042817.1;d__Bacteria;p__Verrucomicrobiota;c__Verrucomicrobiia;o__Verrucomicrobiales;f__Akkermansiaceae;g__Akkermansia;s__Akkermansia_muciniphila)
 #' @export
 #' @returns Returns file path for database of interest
 #' @importFrom utils download.file
@@ -13,7 +13,7 @@
 #' db.path <- get_db(db="16S", force_update=FALSE)
 
 get_db <- function(db="16S_bac", force_update=FALSE, add_taxonomy=FALSE){
-  
+
   #Check inputs----------------------------------------------------------------------------------------------------------------
   if(!grepl("^16S$|^16S_bac$|^16S_arc$|^18S_fun$|^cpn60$|^ITS$", db)) stop('Database entry incorrect. Please choose one of: "16S_bac", "16S_arc", "18S_fun", "cpn60", "ITS"')
   if(grepl("^16S$", db)) message('Note: Use of db="16S" defaults to the Targeted Loci Bacteria 16S rRNA database (db="16S_bac"). Please use db="16_arc" for Archaea.')
@@ -137,72 +137,121 @@ get_db <- function(db="16S_bac", force_update=FALSE, add_taxonomy=FALSE){
         for (i in 1:length(fetch.ids)) {
           ii <- fetch.ids[[i]]
           while(TRUE){
-            r_fetch.try <- try(rentrez::entrez_fetch(db="nucleotide", id=acc.list[ii], rettype="gbc")) # OR use rettype="xml" OR useing rettype="gbc", silent=TRUE)
+            links <- rentrez::entrez_link(dbfrom="nucleotide", id=acc.list[ii], db="taxonomy")
+            taxids <- links$links$nuccore_taxonomy
+            r_fetch.try <- try(rentrez::entrez_fetch(db="taxonomy", id=taxids, rettype="xml")) # OR use rettype="xml" OR useing rettype="gbc", silent=TRUE)
             if(is(r_fetch.try, 'try-error'))
               cat("Failed, trying again in 10 seconds...\n")
             Sys.sleep(3)
             if(!is(r_fetch.try, 'try-error')) break
           }
+          while(TRUE){
+            r_fetch.try2 <- try(rentrez::entrez_fetch(db="nucleotide", id=acc.list[ii], rettype="gbc")) # OR use rettype="xml" OR useing rettype="gbc", silent=TRUE)
+            if(is(r_fetch.try2, 'try-error'))
+              cat("Failed, trying again in 10 seconds...\n")
+            Sys.sleep(3)
+            if(!is(r_fetch.try2, 'try-error')) break
+          }
+          
+          #---------- Get type strain culture collection numbers
+          r_fetch2 <- stringr::str_replace_all(r_fetch.try2, "INSDSeq_update-date", "INSDSeq_update_date")
+          r_fetch2 <- stringr::str_replace_all(r_fetch2, "INSDSeq_create-date", "INSDSeq_create_date")
+          r_fetch2 <- stringr::str_replace_all(r_fetch2, "INSDSeq_primary.accession", "INSDSeq_primary_accession")
+          r_fetch2 <- stringr::str_replace_all(r_fetch2, "INSDSeq_accession.version", "INSDSeq_accession_version")
+          r_fetch2 <- stringr::str_replace_all(r_fetch2, "INSDSeq_other.seqids", "INSDSeq_other_seqids")
+          r_fetch2 <- stringr::str_replace_all(r_fetch2, "INSDSeq_feature-table", "INSDSeq_feature_table")
+          r_fetch2 <- stringr::str_replace_all(r_fetch2, "INSDSeq_feature-table", "INSDSeq_feature_table")
+          
+          r_fetch2.df <- xmlconvert::xml_to_df(text = r_fetch2, records.tags = c("//INSDSeq"), check.datatypes=FALSE, check.names=TRUE) %>%
+            dplyr::rowwise() %>%
+            mutate(taxid = unlist(strsplit(unlist(strsplit(INSDSeq_feature_table, 'INSDQualifier_value~taxon:', fixed=TRUE))[2], '|', fixed=TRUE))[1]) %>%
+            mutate(strain = unlist(strsplit(unlist(strsplit(INSDSeq_feature_table, 'strain||INSDQualifier_value~', fixed=TRUE))[2], '|', fixed=TRUE))[1]) %>%
+            mutate(culture_collection = gsub(":", " ", unlist(strsplit(unlist(strsplit(INSDSeq_feature_table, 'culture_collection||INSDQualifier_value~', fixed=TRUE))[2], '|', fixed=TRUE))[1])) %>%
+            mutate(culture_collection = ifelse(is.na(culture_collection), strain, culture_collection)) %>%
+            ungroup() %>%
+            mutate(culture_collection = ifelse(is.na(strain) & is.na(culture_collection), 
+                                               stringr::str_split_fixed(stringr::str_extract(INSDSeq_definition, " [A-Z]+.*"), " ITS | 16S ", 2)[,1],
+                                               culture_collection)) %>%
+            mutate(culture_collection = gsub("^ ", "", culture_collection)) %>%
+            mutate(closest_match = paste(stringr::str_split_fixed(INSDSeq_organism, " ", 3)[,1], " ", stringr::str_split_fixed(INSDSeq_organism, " ", 3)[,2], " (", culture_collection, ")", sep=""))
+          
+          #---------- #Get taxonomy lineage info
           r_fetch <- r_fetch.try
-          r_fetch <- stringr::str_replace_all(r_fetch, "INSDSeq_update-date", "INSDSeq_update_date")
-          r_fetch <- stringr::str_replace_all(r_fetch, "INSDSeq_create-date", "INSDSeq_create_date")
-          r_fetch <- stringr::str_replace_all(r_fetch, "INSDSeq_primary.accession", "INSDSeq_primary_accession")
-          r_fetch <- stringr::str_replace_all(r_fetch, "INSDSeq_accession.version", "INSDSeq_accession_version")
-          r_fetch <- stringr::str_replace_all(r_fetch, "INSDSeq_other.seqids", "INSDSeq_other_seqids")
-          r_fetch <- stringr::str_replace_all(r_fetch, "INSDSeq_feature-table", "INSDSeq_feature_table")
-          r_fetch <- stringr::str_replace_all(r_fetch, "INSDSeq_feature-table", "INSDSeq_feature_table")
-          #Convert fetched XML file to dataframe format. In this case, the 'INSDSeq' node defines individual records within the XML tree
-          fetch.list[[paste("acc", i, sep="_")]] <- lapply(i, function(x) xmlconvert::xml_to_df(text = r_fetch, records.tags = c("//INSDSeq"), check.datatypes=FALSE, check.names=TRUE))
+          r_fetch.xml <- xml2::read_xml(r_fetch)
+          top_taxa <- xml2::xml_find_all(r_fetch.xml, "//TaxaSet/Taxon")
+          
+          all_lineages <- lapply(1:length(top_taxa), function(taxon_node){
+            lineage_nodes <- xml2::xml_find_all(top_taxa[taxon_node], "./LineageEx/Taxon")
+            #------------------------------------------------------------------
+            main_taxid <- xml2::xml_text(xml2::xml_find_all(top_taxa[taxon_node], "./TaxId"))
+            main_species <- xml2::xml_text(xml2::xml_find_all(top_taxa[taxon_node], "./ScientificName"))
+            main_rank <- xml2::xml_text(xml2::xml_find_all(top_taxa[taxon_node], "./Rank"))
+            #------------------------------------------------------------------
+            taxname = xml2::xml_text(xml2::xml_find_all(lineage_nodes, "./ScientificName"))
+            taxrank = xml2::xml_text(xml2::xml_find_all(lineage_nodes, "./Rank"))
+            #------------------------------------------------------------------
+            tibble(taxid = main_taxid,
+                   #INSDSeq_accession_version = r_fetch2.df$INSDSeq_accession_version[taxon_node],
+                   #accession = r_fetch2.df$INSDSeq_accession_version[taxon_node],
+                   #closest_match = r_fetch2.df$closest_match[taxon_node],
+                   domain =  ifelse(isEmpty(taxname[taxrank == "domain"]), "NA", taxname[taxrank == "domain"]),
+                   phylum =  ifelse(isEmpty(taxname[taxrank == "phylum"]), "NA", taxname[taxrank == "phylum"]),
+                   class =  ifelse(isEmpty(taxname[taxrank == "class"]), "NA", taxname[taxrank == "class"]),
+                   order = ifelse(isEmpty(taxname[taxrank == "order"]), "NA", taxname[taxrank == "order"]),
+                   family = ifelse(isEmpty(taxname[taxrank == "family"]), "NA", taxname[taxrank == "family"]),
+                   genus = ifelse(isEmpty(taxname[taxrank == "genus"]), "NA", taxname[taxrank == "genus"]),
+                   species = ifelse(isEmpty(main_species), "NA", main_species))
+            
+          })
+          
+          all_lineages.df <- dplyr::bind_rows(all_lineages, .id = "column_label") %>% filter(taxid!=1) #%>% dplyr::relocate("accession", 1)
+          if(i == 1){
+            fetch.list <- all_lineages.df
+            fetch.list2 <- r_fetch2.df}
+          if(i > 1){
+            fetch.list <- rbind(fetch.list, all_lineages.df)
+            fetch.list2 <- rbind(fetch.list2, r_fetch2.df)
+          }
           svMisc::progress(max(fetch.ids[[i]]), length(acc.list))
         }
+        
         #Add columns of interest to lookup table
-        fetch.list.df <- dplyr::bind_rows(fetch.list, .id = "column_label") %>%
-          rowwise() %>%
-          mutate(NCBI_txid = unlist(strsplit(unlist(strsplit(INSDSeq_feature_table, 'INSDQualifier_name~db_xref||INSDQualifier_value~taxon:', fixed=TRUE))[2], '|', fixed=TRUE))[1]) %>%
-          mutate(isolation_source = unlist(strsplit(unlist(strsplit(INSDSeq_feature_table, 'isolation_source||INSDQualifier_value~', fixed=TRUE))[2], '|', fixed=TRUE))[1]) %>%
-          mutate(strain = unlist(strsplit(unlist(strsplit(INSDSeq_feature_table, 'strain||INSDQualifier_value~', fixed=TRUE))[2], '|', fixed=TRUE))[1]) %>%
-          mutate(culture_collection = gsub(":", " ", unlist(strsplit(unlist(strsplit(INSDSeq_feature_table, 'culture_collection||INSDQualifier_value~', fixed=TRUE))[2], '|', fixed=TRUE))[1])) %>%
-          mutate(culture_collection = ifelse(is.na(culture_collection), strain, culture_collection)) %>%
-          ungroup() %>%
-          mutate(closest_match = paste(stringr::str_split_fixed(INSDSeq_organism, " ", 3)[,1], " ", stringr::str_split_fixed(INSDSeq_organism, " ", 3)[,2], " (", culture_collection, ")", sep="")) %>%
-          mutate(species = paste(stringr::str_split_fixed(INSDSeq_organism, " ", 3)[,1],stringr::str_split_fixed(INSDSeq_organism, " ", 3)[,2], sep=" "))
-        
-        acc.list.x <- as.data.frame(cbind("INSDSeq_primary_accession" = stringr::str_split_fixed(acc.list, "[.]", 2)[,1]))
-        fetch.list.df.mer <- left_join(acc.list.x, fetch.list.df, by="INSDSeq_primary_accession") %>% select(INSDSeq_primary_accession, INSDSeq_accession_version, INSDSeq_taxonomy, closest_match, species)
-        
-        suppressWarnings(fetch.list.df.mer.x <- fetch.list.df.mer %>% #mutate(closest_match = dplyr::recode(NCBI_acc, !!!lookup.list2)) %>%
-                           #mutate(taxonomy = dplyr::recode(NCBI_acc, !!!lookup.list)) %>%
-                           mutate(taxonomy = gsub(" ", "", .$INSDSeq_taxonomy)) %>%
-                           mutate(taxonomy = gsub(";*[Gg]roup*;", ";", taxonomy, perl=TRUE)) %>% #Remove clade rank
-                           mutate(taxonomy = gsub(";[A-Za-z]+deae;", ";", taxonomy, perl=TRUE)) %>% #Remove subclass rank
-                           mutate(taxonomy = gsub("ales;[A-Za-z]+neae;", "ales;", taxonomy, perl=TRUE)) %>% #Remove suborder ranks
-                           mutate(taxonomy = gsub("aceae;[A-Za-z]+eae;", "aceae;", taxonomy, perl=TRUE)) %>% #Remove tribe ranks
-                           mutate(rank_domain = stringr::str_split_fixed(.$taxonomy, ";", 7)[,1]) %>%
-                           mutate(rank_phylum = stringr::str_split_fixed(.$taxonomy, ";", 7)[,3]) %>%
-                           mutate(rank_class = stringr::str_split_fixed(.$taxonomy, ";", 7)[,4]) %>%
-                           mutate(rank_order = stringr::str_split_fixed(.$taxonomy, ";", 7)[,5]) %>%
-                           mutate(rank_family = stringr::str_split_fixed(.$taxonomy, ";", 7)[,6]) %>%
-                           mutate(rank_genus = stringr::str_split_fixed(.$taxonomy, ";", 7)[,7]) %>%
+        suppressWarnings(fetch.list.df <-  merge(fetch.list2, fetch.list, by="taxid", sort=FALSE, all=TRUE) %>%
+                           #mutate(closest_match = paste(stringr::str_split_fixed(INSDSeq_organism, " ", 3)[,1], " ", stringr::str_split_fixed(INSDSeq_organism, " ", 3)[,2], " (", culture_collection, ")", sep="")) %>%
+                           mutate(species = paste(stringr::str_split_fixed(closest_match, " ", 3)[,1],stringr::str_split_fixed(closest_match, " ", 3)[,2], sep=" ")) %>%
+                           mutate(taxonomy = paste(domain, phylum, class, order, family, genus, species, sep=";")) %>%
+                           mutate(rank_domain = domain) %>%
+                           mutate(rank_phylum = phylum) %>%
+                           mutate(rank_class = class) %>%
+                           mutate(rank_order = order) %>%
+                           mutate(rank_family = family) %>%
+                           mutate(rank_genus = genus) %>%
                            mutate(rank_species = gsub("'", "", species)) %>% #Replace instances where single quotations are in species name
-                           mutate(genus_tmp = stringr::str_split_fixed(rank_species, " ", 2)[,1]) %>% #Fixing instances where genus is in wrong spot
-                           mutate(genus_tmp = gsub("\\[|\\]", "", genus_tmp)) %>% #Fixing instances where genus is in wrong spot
-                           mutate(rank_phylum = ifelse(genus_tmp == rank_phylum, "", rank_phylum)) %>% #Fixing instances where genus is in wrong spot
-                           mutate(rank_class = ifelse( genus_tmp == rank_class, "", rank_class)) %>% #Fixing instances where genus is in wrong spot
-                           mutate(rank_order = ifelse(genus_tmp == rank_order, "", rank_order)) %>% #Fixing instances where genus is in wrong spot
-                           mutate(rank_family = ifelse(genus_tmp == rank_family, "", rank_family)) %>% #Fixing instances where genus is in wrong spot
-                           mutate(rank_family = ifelse(grepl("aceae$", rank_order), rank_order, rank_family)) %>% #Fixing family upward
-                           mutate(rank_family = ifelse(grepl("aceae$", rank_class), rank_class, rank_family)) %>% #Fixing family upward
-                           mutate(rank_order = ifelse(rank_order==rank_family, "", rank_order)) %>% #Fixing family upward
-                           mutate(rank_class = ifelse(rank_class==rank_family, "", rank_class)) %>% #Fixing family upward
-                           mutate(rank_order = ifelse(grepl("ales$", rank_class), rank_class, rank_order)) %>% #Fixing order upward
-                           mutate(rank_class = ifelse(rank_class==rank_order, "", rank_class)) %>% #Fixing order upward
-                           mutate(rank_genus = stringr::str_split_fixed(species, " ", 2)[,1]) %>% 
+                           #mutate(genus_tmp = stringr::str_split_fixed(rank_species, " ", 2)[,1]) %>% #Fixing instances where genus is in wrong spot
+                           #mutate(genus_tmp = gsub("\\[|\\]", "", genus_tmp)) %>% #Fixing instances where genus is in wrong spot
                            mutate(species = gsub(" ", "_", species)) %>% #Replace spaces in species name
+                           mutate(rank_genus = stringr::str_split_fixed(species, "_", 2)[,1]) %>%
+                           mutate(INSDSeq_taxonomy = paste(rank_domain, rank_phylum, rank_class, rank_order, rank_family, rank_genus, rank_species, sep=";")) %>%
                            mutate_at(vars(rank_class, rank_order, rank_family), funs(ifelse(. == "", "NA", .))) #Replace unknown ranks with "NA"
         )
         
+        lookup.list <- setNames(fetch.list.df$INSDSeq_taxonomy, fetch.list.df$INSDSeq_accession_version)
+        lookup.list2 <- setNames(fetch.list.df$closest_match, fetch.list.df$INSDSeq_accession_version)
+        lookup.list3 <- setNames(fetch.list.df$species, fetch.list.df$INSDSeq_accession_version)
+
+        fetch.list.df.mer.x <- as.data.frame(cbind("NCBI_acc" = acc.list)) %>% 
+          mutate(taxonomy = dplyr::recode(NCBI_acc, !!!lookup.list)) %>%
+          mutate(taxonomy = gsub(" ", "", .$taxonomy)) %>%
+          mutate(rank_domain = stringr::str_split_fixed(.$taxonomy, ";", 7)[,1]) %>%
+          mutate(rank_phylum = stringr::str_split_fixed(.$taxonomy, ";", 7)[,2]) %>%
+          mutate(rank_class = stringr::str_split_fixed(.$taxonomy, ";", 7)[,3]) %>%
+          mutate(rank_order = stringr::str_split_fixed(.$taxonomy, ";", 7)[,4]) %>%
+          mutate(rank_family = stringr::str_split_fixed(.$taxonomy, ";", 7)[,5]) %>%
+          mutate(rank_genus = stringr::str_split_fixed(.$taxonomy, ";", 7)[,6]) %>%
+          mutate(species = dplyr::recode(NCBI_acc, !!!lookup.list3))
+        
         #Add taxonomy to fasta header for database sequences
-        names(db.fasta) <- paste(fetch.list.df.mer.x$INSDSeq_accession_version,
+        names(db.fasta) <- paste(fetch.list.df.mer.x$NCBI_acc,
                                  ";d__", fetch.list.df.mer.x$rank_domain, 
                                  ";p__", fetch.list.df.mer.x$rank_phylum, 
                                  ";c__", fetch.list.df.mer.x$rank_class, 
@@ -236,72 +285,121 @@ get_db <- function(db="16S_bac", force_update=FALSE, add_taxonomy=FALSE){
       for (i in 1:length(fetch.ids)) {
         ii <- fetch.ids[[i]]
         while(TRUE){
-          r_fetch.try <- try(rentrez::entrez_fetch(db="nucleotide", id=acc.list[ii], rettype="gbc")) # OR use rettype="xml" OR useing rettype="gbc", silent=TRUE)
+          links <- rentrez::entrez_link(dbfrom="nucleotide", id=acc.list[ii], db="taxonomy")
+          taxids <- links$links$nuccore_taxonomy
+          r_fetch.try <- try(rentrez::entrez_fetch(db="taxonomy", id=taxids, rettype="xml")) # OR use rettype="xml" OR useing rettype="gbc", silent=TRUE)
           if(is(r_fetch.try, 'try-error'))
             cat("Failed, trying again in 10 seconds...\n")
           Sys.sleep(3)
           if(!is(r_fetch.try, 'try-error')) break
         }
+        while(TRUE){
+          r_fetch.try2 <- try(rentrez::entrez_fetch(db="nucleotide", id=acc.list[ii], rettype="gbc")) # OR use rettype="xml" OR useing rettype="gbc", silent=TRUE)
+          if(is(r_fetch.try2, 'try-error'))
+            cat("Failed, trying again in 10 seconds...\n")
+          Sys.sleep(3)
+          if(!is(r_fetch.try2, 'try-error')) break
+        }
+        
+        #---------- Get type strain culture collection numbers
+        r_fetch2 <- stringr::str_replace_all(r_fetch.try2, "INSDSeq_update-date", "INSDSeq_update_date")
+        r_fetch2 <- stringr::str_replace_all(r_fetch2, "INSDSeq_create-date", "INSDSeq_create_date")
+        r_fetch2 <- stringr::str_replace_all(r_fetch2, "INSDSeq_primary.accession", "INSDSeq_primary_accession")
+        r_fetch2 <- stringr::str_replace_all(r_fetch2, "INSDSeq_accession.version", "INSDSeq_accession_version")
+        r_fetch2 <- stringr::str_replace_all(r_fetch2, "INSDSeq_other.seqids", "INSDSeq_other_seqids")
+        r_fetch2 <- stringr::str_replace_all(r_fetch2, "INSDSeq_feature-table", "INSDSeq_feature_table")
+        r_fetch2 <- stringr::str_replace_all(r_fetch2, "INSDSeq_feature-table", "INSDSeq_feature_table")
+        
+        r_fetch2.df <- xmlconvert::xml_to_df(text = r_fetch2, records.tags = c("//INSDSeq"), check.datatypes=FALSE, check.names=TRUE) %>%
+          dplyr::rowwise() %>%
+          mutate(taxid = unlist(strsplit(unlist(strsplit(INSDSeq_feature_table, 'INSDQualifier_value~taxon:', fixed=TRUE))[2], '|', fixed=TRUE))[1]) %>%
+          mutate(strain = unlist(strsplit(unlist(strsplit(INSDSeq_feature_table, 'strain||INSDQualifier_value~', fixed=TRUE))[2], '|', fixed=TRUE))[1]) %>%
+          mutate(culture_collection = gsub(":", " ", unlist(strsplit(unlist(strsplit(INSDSeq_feature_table, 'culture_collection||INSDQualifier_value~', fixed=TRUE))[2], '|', fixed=TRUE))[1])) %>%
+          mutate(culture_collection = ifelse(is.na(culture_collection), strain, culture_collection)) %>%
+          ungroup() %>%
+          mutate(culture_collection = ifelse(is.na(strain) & is.na(culture_collection), 
+                                             stringr::str_split_fixed(stringr::str_extract(INSDSeq_definition, " [A-Z]+.*"), " ITS | 16S ", 2)[,1],
+                                             culture_collection)) %>%
+          mutate(culture_collection = gsub("^ ", "", culture_collection)) %>%
+          mutate(closest_match = paste(stringr::str_split_fixed(INSDSeq_organism, " ", 3)[,1], " ", stringr::str_split_fixed(INSDSeq_organism, " ", 3)[,2], " (", culture_collection, ")", sep=""))
+        
+        #---------- #Get taxonomy lineage info
         r_fetch <- r_fetch.try
-        r_fetch <- stringr::str_replace_all(r_fetch, "INSDSeq_update-date", "INSDSeq_update_date")
-        r_fetch <- stringr::str_replace_all(r_fetch, "INSDSeq_create-date", "INSDSeq_create_date")
-        r_fetch <- stringr::str_replace_all(r_fetch, "INSDSeq_primary.accession", "INSDSeq_primary_accession")
-        r_fetch <- stringr::str_replace_all(r_fetch, "INSDSeq_accession.version", "INSDSeq_accession_version")
-        r_fetch <- stringr::str_replace_all(r_fetch, "INSDSeq_other.seqids", "INSDSeq_other_seqids")
-        r_fetch <- stringr::str_replace_all(r_fetch, "INSDSeq_feature-table", "INSDSeq_feature_table")
-        r_fetch <- stringr::str_replace_all(r_fetch, "INSDSeq_feature-table", "INSDSeq_feature_table")
-        #Convert fetched XML file to dataframe format. In this case, the 'INSDSeq' node defines individual records within the XML tree
-        fetch.list[[paste("acc", i, sep="_")]] <- lapply(i, function(x) xmlconvert::xml_to_df(text = r_fetch, records.tags = c("//INSDSeq"), check.datatypes=FALSE, check.names=TRUE))
+        r_fetch.xml <- xml2::read_xml(r_fetch)
+        top_taxa <- xml2::xml_find_all(r_fetch.xml, "//TaxaSet/Taxon")
+        
+        all_lineages <- lapply(1:length(top_taxa), function(taxon_node){
+          lineage_nodes <- xml2::xml_find_all(top_taxa[taxon_node], "./LineageEx/Taxon")
+          #------------------------------------------------------------------
+          main_taxid <- xml2::xml_text(xml2::xml_find_all(top_taxa[taxon_node], "./TaxId"))
+          main_species <- xml2::xml_text(xml2::xml_find_all(top_taxa[taxon_node], "./ScientificName"))
+          main_rank <- xml2::xml_text(xml2::xml_find_all(top_taxa[taxon_node], "./Rank"))
+          #------------------------------------------------------------------
+          taxname = xml2::xml_text(xml2::xml_find_all(lineage_nodes, "./ScientificName"))
+          taxrank = xml2::xml_text(xml2::xml_find_all(lineage_nodes, "./Rank"))
+          #------------------------------------------------------------------
+          tibble(taxid = main_taxid,
+                 #INSDSeq_accession_version = r_fetch2.df$INSDSeq_accession_version[taxon_node],
+                 #accession = r_fetch2.df$INSDSeq_accession_version[taxon_node],
+                 #closest_match = r_fetch2.df$closest_match[taxon_node],
+                 domain =  ifelse(isEmpty(taxname[taxrank == "domain"]), "NA", taxname[taxrank == "domain"]),
+                 phylum =  ifelse(isEmpty(taxname[taxrank == "phylum"]), "NA", taxname[taxrank == "phylum"]),
+                 class =  ifelse(isEmpty(taxname[taxrank == "class"]), "NA", taxname[taxrank == "class"]),
+                 order = ifelse(isEmpty(taxname[taxrank == "order"]), "NA", taxname[taxrank == "order"]),
+                 family = ifelse(isEmpty(taxname[taxrank == "family"]), "NA", taxname[taxrank == "family"]),
+                 genus = ifelse(isEmpty(taxname[taxrank == "genus"]), "NA", taxname[taxrank == "genus"]),
+                 species = ifelse(isEmpty(main_species), "NA", main_species))
+          
+        })
+        
+        all_lineages.df <- dplyr::bind_rows(all_lineages, .id = "column_label") %>% filter(taxid!=1) #%>% dplyr::relocate("accession", 1)
+        if(i == 1){
+          fetch.list <- all_lineages.df
+          fetch.list2 <- r_fetch2.df}
+        if(i > 1){
+          fetch.list <- rbind(fetch.list, all_lineages.df)
+          fetch.list2 <- rbind(fetch.list2, r_fetch2.df)
+        }
         svMisc::progress(max(fetch.ids[[i]]), length(acc.list))
       }
+      
       #Add columns of interest to lookup table
-      fetch.list.df <- dplyr::bind_rows(fetch.list, .id = "column_label") %>%
-        rowwise() %>%
-        mutate(NCBI_txid = unlist(strsplit(unlist(strsplit(INSDSeq_feature_table, 'INSDQualifier_name~db_xref||INSDQualifier_value~taxon:', fixed=TRUE))[2], '|', fixed=TRUE))[1]) %>%
-        mutate(isolation_source = unlist(strsplit(unlist(strsplit(INSDSeq_feature_table, 'isolation_source||INSDQualifier_value~', fixed=TRUE))[2], '|', fixed=TRUE))[1]) %>%
-        mutate(strain = unlist(strsplit(unlist(strsplit(INSDSeq_feature_table, 'strain||INSDQualifier_value~', fixed=TRUE))[2], '|', fixed=TRUE))[1]) %>%
-        mutate(culture_collection = gsub(":", " ", unlist(strsplit(unlist(strsplit(INSDSeq_feature_table, 'culture_collection||INSDQualifier_value~', fixed=TRUE))[2], '|', fixed=TRUE))[1])) %>%
-        mutate(culture_collection = ifelse(is.na(culture_collection), strain, culture_collection)) %>%
-        ungroup() %>%
-        mutate(closest_match = paste(stringr::str_split_fixed(INSDSeq_organism, " ", 3)[,1], " ", stringr::str_split_fixed(INSDSeq_organism, " ", 3)[,2], " (", culture_collection, ")", sep="")) %>%
-        mutate(species = paste(stringr::str_split_fixed(INSDSeq_organism, " ", 3)[,1],stringr::str_split_fixed(INSDSeq_organism, " ", 3)[,2], sep=" "))
-      
-      acc.list.x <- as.data.frame(cbind("INSDSeq_primary_accession" = stringr::str_split_fixed(acc.list, "[.]", 2)[,1]))
-      fetch.list.df.mer <- left_join(acc.list.x, fetch.list.df, by="INSDSeq_primary_accession") %>% select(INSDSeq_primary_accession, INSDSeq_accession_version, INSDSeq_taxonomy, closest_match, species)
-      
-      suppressWarnings(fetch.list.df.mer.x <- fetch.list.df.mer %>% #mutate(closest_match = dplyr::recode(NCBI_acc, !!!lookup.list2)) %>%
-                         #mutate(taxonomy = dplyr::recode(NCBI_acc, !!!lookup.list)) %>%
-                         mutate(taxonomy = gsub(" ", "", .$INSDSeq_taxonomy)) %>%
-                         mutate(taxonomy = gsub(";*[Gg]roup*;", ";", taxonomy, perl=TRUE)) %>% #Remove clade rank
-                         mutate(taxonomy = gsub(";[A-Za-z]+deae;", ";", taxonomy, perl=TRUE)) %>% #Remove subclass rank
-                         mutate(taxonomy = gsub("ales;[A-Za-z]+neae;", "ales;", taxonomy, perl=TRUE)) %>% #Remove suborder ranks
-                         mutate(taxonomy = gsub("aceae;[A-Za-z]+eae;", "aceae;", taxonomy, perl=TRUE)) %>% #Remove tribe ranks
-                         mutate(rank_domain = stringr::str_split_fixed(.$taxonomy, ";", 7)[,1]) %>%
-                         mutate(rank_phylum = stringr::str_split_fixed(.$taxonomy, ";", 7)[,3]) %>%
-                         mutate(rank_class = stringr::str_split_fixed(.$taxonomy, ";", 7)[,4]) %>%
-                         mutate(rank_order = stringr::str_split_fixed(.$taxonomy, ";", 7)[,5]) %>%
-                         mutate(rank_family = stringr::str_split_fixed(.$taxonomy, ";", 7)[,6]) %>%
-                         mutate(rank_genus = stringr::str_split_fixed(.$taxonomy, ";", 7)[,7]) %>%
+      suppressWarnings(fetch.list.df <-  merge(fetch.list2, fetch.list, by="taxid", sort=FALSE, all=TRUE) %>%
+                         #mutate(closest_match = paste(stringr::str_split_fixed(INSDSeq_organism, " ", 3)[,1], " ", stringr::str_split_fixed(INSDSeq_organism, " ", 3)[,2], " (", culture_collection, ")", sep="")) %>%
+                         mutate(species = paste(stringr::str_split_fixed(closest_match, " ", 3)[,1],stringr::str_split_fixed(closest_match, " ", 3)[,2], sep=" ")) %>%
+                         mutate(taxonomy = paste(domain, phylum, class, order, family, genus, species, sep=";")) %>%
+                         mutate(rank_domain = domain) %>%
+                         mutate(rank_phylum = phylum) %>%
+                         mutate(rank_class = class) %>%
+                         mutate(rank_order = order) %>%
+                         mutate(rank_family = family) %>%
+                         mutate(rank_genus = genus) %>%
                          mutate(rank_species = gsub("'", "", species)) %>% #Replace instances where single quotations are in species name
-                         mutate(genus_tmp = stringr::str_split_fixed(rank_species, " ", 2)[,1]) %>% #Fixing instances where genus is in wrong spot
-                         mutate(genus_tmp = gsub("\\[|\\]", "", genus_tmp)) %>% #Fixing instances where genus is in wrong spot
-                         mutate(rank_phylum = ifelse(genus_tmp == rank_phylum, "", rank_phylum)) %>% #Fixing instances where genus is in wrong spot
-                         mutate(rank_class = ifelse( genus_tmp == rank_class, "", rank_class)) %>% #Fixing instances where genus is in wrong spot
-                         mutate(rank_order = ifelse(genus_tmp == rank_order, "", rank_order)) %>% #Fixing instances where genus is in wrong spot
-                         mutate(rank_family = ifelse(genus_tmp == rank_family, "", rank_family)) %>% #Fixing instances where genus is in wrong spot
-                         mutate(rank_family = ifelse(grepl("aceae$", rank_order), rank_order, rank_family)) %>% #Fixing family upward
-                         mutate(rank_family = ifelse(grepl("aceae$", rank_class), rank_class, rank_family)) %>% #Fixing family upward
-                         mutate(rank_order = ifelse(rank_order==rank_family, "", rank_order)) %>% #Fixing family upward
-                         mutate(rank_class = ifelse(rank_class==rank_family, "", rank_class)) %>% #Fixing family upward
-                         mutate(rank_order = ifelse(grepl("ales$", rank_class), rank_class, rank_order)) %>% #Fixing order upward
-                         mutate(rank_class = ifelse(rank_class==rank_order, "", rank_class)) %>% #Fixing order upward
-                         mutate(rank_genus = stringr::str_split_fixed(species, " ", 2)[,1]) %>% 
+                         #mutate(genus_tmp = stringr::str_split_fixed(rank_species, " ", 2)[,1]) %>% #Fixing instances where genus is in wrong spot
+                         #mutate(genus_tmp = gsub("\\[|\\]", "", genus_tmp)) %>% #Fixing instances where genus is in wrong spot
                          mutate(species = gsub(" ", "_", species)) %>% #Replace spaces in species name
+                         mutate(rank_genus = stringr::str_split_fixed(species, "_", 2)[,1]) %>%
+                         mutate(INSDSeq_taxonomy = paste(rank_domain, rank_phylum, rank_class, rank_order, rank_family, rank_genus, rank_species, sep=";")) %>%
                          mutate_at(vars(rank_class, rank_order, rank_family), funs(ifelse(. == "", "NA", .))) #Replace unknown ranks with "NA"
       )
       
+      lookup.list <- setNames(fetch.list.df$INSDSeq_taxonomy, fetch.list.df$INSDSeq_accession_version)
+      lookup.list2 <- setNames(fetch.list.df$closest_match, fetch.list.df$INSDSeq_accession_version)
+      lookup.list3 <- setNames(fetch.list.df$species, fetch.list.df$INSDSeq_accession_version)
+      
+      fetch.list.df.mer.x <- as.data.frame(cbind("NCBI_acc" = acc.list)) %>% 
+        mutate(taxonomy = dplyr::recode(NCBI_acc, !!!lookup.list)) %>%
+        mutate(taxonomy = gsub(" ", "", .$taxonomy)) %>%
+        mutate(rank_domain = stringr::str_split_fixed(.$taxonomy, ";", 7)[,1]) %>%
+        mutate(rank_phylum = stringr::str_split_fixed(.$taxonomy, ";", 7)[,2]) %>%
+        mutate(rank_class = stringr::str_split_fixed(.$taxonomy, ";", 7)[,3]) %>%
+        mutate(rank_order = stringr::str_split_fixed(.$taxonomy, ";", 7)[,4]) %>%
+        mutate(rank_family = stringr::str_split_fixed(.$taxonomy, ";", 7)[,5]) %>%
+        mutate(rank_genus = stringr::str_split_fixed(.$taxonomy, ";", 7)[,6]) %>%
+        mutate(species = dplyr::recode(NCBI_acc, !!!lookup.list3))
+      
       #Add taxonomy to fasta header for database sequences
-      names(db.fasta) <- paste(fetch.list.df.mer.x$INSDSeq_accession_version,
+      names(db.fasta) <- paste(fetch.list.df.mer.x$NCBI_acc,
                                ";d__", fetch.list.df.mer.x$rank_domain, 
                                ";p__", fetch.list.df.mer.x$rank_phylum, 
                                ";c__", fetch.list.df.mer.x$rank_class, 
@@ -321,6 +419,3 @@ get_db <- function(db="16S_bac", force_update=FALSE, add_taxonomy=FALSE){
   #message("Database path:")
   return(db.fasta.path)
 }
-
-
-

@@ -1,8 +1,8 @@
 Package: isolateR
 Type: Package
 Title: Automated processing of Sanger sequencing data, taxonomic profiling, and generation of microbial strain libraries
-Version: 1.0.5
-Date: 2025-11-21
+Version: 1.0.6
+Date: 2025-01-04
 Author: Brendan Daisley, Sarah J Vancuren, Dylan J.L. Brettingham, Jacob Wilde, Simone Renwick, Christine V Macpherson, David A. Good, Alexander J. Botschner, Sandi Yen, Janet E. Hill, Matthew T. Sorbara, Emma Allen-Vercoe.
 Maintainer: Brendan Daisley <bdaisley@uoguelph.ca>
 URL: https://github.com/bdaisley/isolateR
@@ -13,7 +13,7 @@ License: GPL (>= 2)
 Encoding: UTF-8
 LazyData: true
 biocViews:
-Imports: ape, BiocManager, Biostrings, crosstalk, cowplot, dataui, dplyr, getPass, ggtree, ggbeeswarm, ggiraph, IRanges, plotly, htmltools, patchwork, LPSN, methods, msa, pander, R.utils, reactable, reactablefmtr, rentrez, S4Vectors, sangeranalyseR, sangerseqR, scales, seqinr, shiny, stringr, svMisc, xmlconvert
+Imports: ape, BiocManager, Biostrings, crosstalk, cowplot, dataui, dplyr, getPass, ggtree, ggbeeswarm, ggiraph, IRanges, plotly, pwalign, htmltools, patchwork, LPSN, methods, msa, pander, R.utils, reactable, reactablefmtr, rentrez, S4Vectors, sangeranalyseR, sangerseqR, scales, seqinr, shiny, stringr, svMisc, xmlconvert
 Depends: R (>= 4.0), Biostrings, dplyr
 Remotes: timelyportfolio/dataui, glin/reactable, thomasp85/patchwork, bdaisley/sangeranalyseR
 Roxygen: list(markdown = TRUE)

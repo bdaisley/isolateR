@@ -46,7 +46,7 @@ If FALSE, performs comprehensive search equivalent to setting VSEARCH parameters
 bacteria and fungi, select "16S|ITS". Setting to anything other than db=NULL or db="custom" causes 'db.path' parameter to be ignored.}
 
 \item{db_path}{Path of FASTA-formatted database sequence file. Ignored if 'db' parameter is set to anything other than NULL or "custom".
-Expects a semicolon (;) delimited FASTA header as follows: Accession_no;d__Domain;p__Phylum;c__Class; o__Order;f__Family;g__Genus;s__Species.
+Expects a semicolon (;) delimited FASTA header as follows:  >Accession_no;d__Domain;p__Phylum;c__Class;o__Order;f__Family;g__Genus;s__Species (e.g., >NR_042817.1;d__Bacteria;p__Verrucomicrobiota;c__Verrucomicrobiia;o__Verrucomicrobiales;f__Akkermansiaceae;g__Akkermansia;s__Akkermansia_muciniphila)
 See \code{\link{get_db}} function for examples and details on automatically generating custom databaes for offline use or within an HPC cluster environment.}
 
 \item{vsearch_path}{Path of VSEARCH software if manually downloaded in a custom directory. If NULL (Default), will attempt automatic download.}

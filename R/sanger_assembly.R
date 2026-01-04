@@ -17,6 +17,8 @@
 #' @importFrom DECIPHER ConsensusSequence
 #' @importFrom Biostrings reverseComplement
 #' @importFrom stringr str_subset
+#' @importFrom pwalign pattern
+#' @importFrom pwalign pairwiseAlignment
 #' @importFrom stringr str_replace_all
 #' @importFrom stringr str_split_fixed
 #' @importFrom stringr str_remove
@@ -91,9 +93,9 @@ sanger_assembly <- function(input=NULL,
     #---------------
     while(length(seqs) > 0){
       #Evaluate input sequences as is
-      suppressWarnings(eval.1 <-unlist(lapply(seqs, function(x){Biostrings::pairwiseAlignment(pattern=x, subject=init.seq, type = "local", substitutionMatrix = NULL, scoreOnly=TRUE)})))
+      suppressWarnings(eval.1 <-unlist(lapply(seqs, function(x){pwalign::pairwiseAlignment(pattern=x, subject=init.seq, type = "local", substitutionMatrix = NULL, scoreOnly=TRUE)})))
       #Evaluate reverse complement of input sequences
-      suppressWarnings(eval.2 <-unlist(lapply(seqs.rc, function(x){Biostrings::pairwiseAlignment(pattern=x, subject=init.seq, type = "local", substitutionMatrix = NULL, scoreOnly=TRUE)})))
+      suppressWarnings(eval.2 <-unlist(lapply(seqs.rc, function(x){pwalign::pairwiseAlignment(pattern=x, subject=init.seq, type = "local", substitutionMatrix = NULL, scoreOnly=TRUE)})))
       #Get best matching seq based on alignment score
       best.match.index <- ifelse(max(eval.1) > max(eval.2), which.max(eval.1), which.max(eval.2))
       best.match.score <- ifelse(max(eval.1) > max(eval.2), eval.1[which.max(eval.1)], eval.2[which.max(eval.2)])
@@ -102,20 +104,20 @@ sanger_assembly <- function(input=NULL,
 
       
       #ALIGN OVERLAPPING SEQUENCES-----------------------------
-      suppressWarnings(seq_aligned <- Biostrings::pairwiseAlignment(pattern = init.seq, subject = best.match, 
+      suppressWarnings(seq_aligned <- pwalign::pairwiseAlignment(pattern = init.seq, subject = best.match, 
                                                    type = "local", substitutionMatrix = NULL, 
                                                    scoreOnly = FALSE))
-      combined_sequence1 <- paste0(Biostrings::substr(init.seq, 1, (start(pattern(seq_aligned))-1)),
-                                   pattern(seq_aligned),
+      combined_sequence1 <- paste0(Biostrings::substr(init.seq, 1, (start(pwalign::pattern(seq_aligned))-1)),
+                                   pwalign::pattern(seq_aligned),
                                    Biostrings::substr(best.match, end(subject(seq_aligned)) + 1, width(best.match)))
       
-      combined_sequence2 <- paste0(Biostrings::substr(init.seq, 1, (start(pattern(seq_aligned))-1)),
+      combined_sequence2 <- paste0(Biostrings::substr(init.seq, 1, (start(pwalign::pattern(seq_aligned))-1)),
                                    subject(seq_aligned),
                                    Biostrings::substr(best.match, end(subject(seq_aligned)) + 1, width(best.match)))
       
       eval.3 <- DNAStringSet(c(combined_sequence1, combined_sequence2))
       
-      if(nchar(gsub("-","", subject(seq_aligned))) <=10 | nchar(gsub("-","", pattern(seq_aligned))) <=10){
+      if(nchar(gsub("-","", subject(seq_aligned))) <=10 | nchar(gsub("-","", pwalign::pattern(seq_aligned))) <=10){
         best.match.score = 0
       }
       
